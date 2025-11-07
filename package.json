@@ -1,0 +1,28 @@
+{
+  "name": "vendemascrm",
+  "version": "1.0.0",
+  "description": "Vende+CRM - Sistema de gestión de clientes y ventas con Supabase",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "crm",
+    "ventas",
+    "supabase",
+    "sales",
+    "pipeline",
+    "customers"
+  ],
+  "author": "Tu Nombre",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TU-USUARIO/vendemascrm.git"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
+
