@@ -16,7 +16,7 @@
 Los siguientes archivos ya están configurados:
 - ✅ `vercel.json` - Configuración de Vercel
 - ✅ `.gitignore` - Archivos a ignorar en Git
-- ✅ `embudo-crm-saas.html` - Detecta automáticamente la URL
+- ✅ `app.html` - Detecta automáticamente la URL
 
 ---
 
@@ -279,7 +279,7 @@ Si quieres ocultar las credenciales de Supabase:
 
 ### La página muestra "404"
 - Verifica que `vercel.json` esté en la raíz del proyecto
-- Verifica que `embudo-crm-saas.html` esté en la raíz
+- Verifica que `app.html` esté en la raíz
 
 ### Los cambios no se reflejan
 - Espera 1-2 minutos después de hacer push

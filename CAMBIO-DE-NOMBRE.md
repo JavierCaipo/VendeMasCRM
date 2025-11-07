@@ -10,7 +10,7 @@ El proyecto ha sido renombrado de **EmbudoCRM** a **Vende+CRM** en todos los arc
 
 ### 1. **Archivos Principales**
 
-#### `embudo-crm-saas.html`
+#### `app.html`
 - ✅ Título: `Vende+CRM - SaaS`
 - ✅ Logo en pantalla de login: `Vende+CRM`
 - ✅ Logo en sidebar: `Vende+CRM`
@@ -95,7 +95,7 @@ Todos los archivos de documentación han sido actualizados:
 ```
 CRM/
 ├── index.html                    # ← Vende+CRM
-├── embudo-crm-saas.html         # ← Aplicación principal (Vende+CRM)
+├── app.html         # ← Aplicación principal (Vende+CRM)
 ├── server.js                     # ← Servidor para Vende+CRM
 ├── package.json                  # ← vendemascrm
 ├── LICENSE                       # ← Copyright Vende+CRM
@@ -194,7 +194,7 @@ Si quieres personalizar más el branding:
 
 ### Cambiar Colores
 
-Edita `embudo-crm-saas.html`, busca:
+Edita `app.html`, busca:
 ```css
 :root {
     --primary: #4361ee;      /* Color principal */
@@ -285,7 +285,7 @@ Tu proyecto ahora se llama **Vende+CRM** y está listo para:
 
 ## 📞 Notas Importantes
 
-1. **El archivo HTML** sigue siendo `embudo-crm-saas.html` (no es necesario renombrarlo)
+1. **El archivo HTML** sigue siendo `app.html` (no es necesario renombrarlo)
 2. **El repositorio GitHub** debe llamarse `vendemascrm`
 3. **El proyecto en Vercel** debe llamarse `vendemascrm`
 4. **Todos los textos visibles** ahora dicen "Vende+CRM"

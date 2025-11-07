@@ -2,7 +2,7 @@
 
 ## ✅ ARCHIVOS CREADOS
 
-### 1. **embudo-crm-saas.html**
+### 1. **app.html**
 Tu aplicación CRM completa con:
 - Sistema de login y registro
 - Autenticación con Supabase
@@ -46,7 +46,7 @@ Documentación completa del proyecto
 
 ### PASO 3: Usar tu CRM
 
-1. Abre `embudo-crm-saas.html` en tu navegador
+1. Abre `app.html` en tu navegador
 2. Haz clic en **"Registrarse"**
 3. Ingresa tu email y contraseña
 4. Confirma tu email (revisa spam si no llega)
@@ -151,7 +151,7 @@ Cada usuario **SOLO** puede ver y modificar sus propios datos:
 ## 🎨 PERSONALIZACIÓN
 
 ### Cambiar Colores
-Edita las variables CSS en `embudo-crm-saas.html`:
+Edita las variables CSS en `app.html`:
 ```css
 :root {
     --primary: #4361ee;      /* Color principal */

@@ -71,7 +71,7 @@ python3 -m http.server 3000
 python -m SimpleHTTPServer 3000
 ```
 
-Luego abre: **http://localhost:3000/embudo-crm-saas.html**
+Luego abre: **http://localhost:3000/app.html**
 
 ---
 
@@ -80,7 +80,7 @@ Luego abre: **http://localhost:3000/embudo-crm-saas.html**
 Si usas Visual Studio Code:
 
 1. Instala la extensión **"Live Server"**
-2. Abre el archivo `embudo-crm-saas.html`
+2. Abre el archivo `app.html`
 3. Haz clic derecho → **"Open with Live Server"**
 4. Se abrirá en `http://127.0.0.1:5500`
 
@@ -98,7 +98,7 @@ Si tienes npm instalado:
 npx http-server -p 3000
 ```
 
-Luego abre: **http://localhost:3000/embudo-crm-saas.html**
+Luego abre: **http://localhost:3000/app.html**
 
 ---
 

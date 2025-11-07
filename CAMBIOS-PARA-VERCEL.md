@@ -26,7 +26,7 @@ Configuración de Vercel para servir correctamente la aplicación.
 ### 2. **index.html**
 Página de entrada que redirige automáticamente a la aplicación principal.
 - Muestra un loader mientras redirige
-- Redirige a `embudo-crm-saas.html`
+- Redirige a `app.html`
 
 ### 3. **.gitignore**
 Define qué archivos NO subir a GitHub:
@@ -91,7 +91,7 @@ Este archivo - Resumen de todos los cambios.
 
 ## 🔧 Archivos Modificados
 
-### 1. **embudo-crm-saas.html**
+### 1. **app.html**
 **Cambio**: Detección automática de URL para redirección de email.
 
 **Antes**:

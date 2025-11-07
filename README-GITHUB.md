@@ -95,7 +95,7 @@ start.bat   # Windows
 ```
 vendemascrm/
 ├── index.html                    # Página de entrada
-├── embudo-crm-saas.html         # Aplicación principal
+├── app.html         # Aplicación principal
 ├── server.js                     # Servidor de desarrollo
 ├── setup-supabase.sql           # Script de base de datos
 ├── vercel.json                   # Configuración de Vercel

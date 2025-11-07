@@ -7,11 +7,11 @@ const PORT = 3000;
 
 const server = http.createServer((req, res) => {
     // Servir el archivo HTML principal
-    let filePath = './embudo-crm-saas.html';
+    let filePath = './app.html';
 
     // Si la ruta es raíz, servir el HTML
     if (req.url === '/' || req.url.startsWith('/?') || req.url.startsWith('/#')) {
-        filePath = './embudo-crm-saas.html';
+        filePath = './app.html';
     }
 
     fs.readFile(filePath, (err, content) => {

@@ -5,7 +5,7 @@
 ```
 CRM/
 ├── README.md                      ← Estás aquí
-├── embudo-crm-saas.html          ← 🎯 APLICACIÓN PRINCIPAL (con autenticación)
+├── app.html          ← 🎯 APLICACIÓN PRINCIPAL (con autenticación)
 ├── server.js                     ← 🌐 Servidor web para la aplicación
 ├── start.sh                      ← 🚀 Script de inicio (Mac/Linux)
 ├── start.bat                     ← 🚀 Script de inicio (Windows)
@@ -107,7 +107,7 @@ Deberías ver:
 
 ## 📋 Descripción de Archivos
 
-### 🎯 embudo-crm-saas.html
+### 🎯 app.html
 **Aplicación principal del CRM con autenticación Supabase**
 
 Características:
@@ -134,7 +134,7 @@ Contiene:
 URL: https://vshlisqaouqptlskcjzg.supabase.co
 ```
 
-**Ya están configuradas en embudo-crm-saas.html** ✅
+**Ya están configuradas en app.html** ✅
 
 ---
 

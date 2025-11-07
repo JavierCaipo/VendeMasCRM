@@ -2,7 +2,7 @@
 
 ## ✅ Datos de Supabase Ya Configurados
 
-El archivo `embudo-crm-saas.html` ya tiene configurados tus datos de Supabase:
+El archivo `app.html` ya tiene configurados tus datos de Supabase:
 
 - **URL**: `https://vshlisqaouqptlskcjzg.supabase.co`
 - **Anon Key**: Ya incluida en el código
@@ -180,7 +180,7 @@ El archivo HTML ya incluye:
 
 ## 🧪 Probar la Aplicación
 
-1. Abre el archivo `embudo-crm-saas.html` en tu navegador
+1. Abre el archivo `app.html` en tu navegador
 2. Regístrate con un email válido
 3. Confirma tu email (revisa spam si no llega)
 4. Inicia sesión

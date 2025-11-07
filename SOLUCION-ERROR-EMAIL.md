@@ -45,7 +45,7 @@ python3 -m http.server 3000
 python -m SimpleHTTPServer 3000
 ```
 
-Luego abre: http://localhost:3000/embudo-crm-saas.html
+Luego abre: http://localhost:3000/app.html
 
 **Ver más opciones en el archivo `COMO-INICIAR.md`**
 
@@ -82,7 +82,7 @@ Luego abre: http://localhost:3000/embudo-crm-saas.html
 
 ### PASO 2: Código Ya Actualizado ✅
 
-El archivo `embudo-crm-saas.html` ya ha sido actualizado con la configuración correcta:
+El archivo `app.html` ya ha sido actualizado con la configuración correcta:
 
 ```javascript
 const { data, error } = await supabaseClient.auth.signUp({
