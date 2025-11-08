@@ -276,7 +276,7 @@
         }
 
         .logo img {
-            max-width: 180px;
+            max-width: 140px;
             height: auto;
         }
 
@@ -395,6 +395,18 @@
             font-weight: bold;
         }
 
+        .user-info h4 {
+            color: var(--text-primary);
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .user-info p {
+            color: var(--text-secondary);
+            margin: 0;
+            font-size: 12px;
+        }
+
         .dashboard {
             display: none;
         }
@@ -502,6 +514,121 @@
         .status-negociacion { background-color: rgba(247, 37, 133, 0.2); color: var(--warning); }
         .status-ganado { background-color: rgba(40, 167, 69, 0.2); color: #28a745; }
 
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: slideDown 0.3s;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .modal-header h3 {
+            color: var(--text-primary);
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.3s;
+        }
+
+        .modal-close:hover {
+            color: var(--warning);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn-secondary {
+            background-color: var(--gray);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
         @media (max-width: 768px) {
             .auth-container {
                 flex-direction: column;
@@ -521,7 +648,10 @@
         <div class="auth-container">
             <div class="auth-left">
                 <div style="text-align: center; margin-bottom: 30px;">
-                    <img src="logo-dark.png" alt="Vende+CRM" style="max-width: 250px; height: auto;">
+                    <img src="logo-dark.png" alt="Vende+CRM" style="max-width: 250px; height: auto;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <h1 style="display: none; color: white; font-size: 36px; margin: 0;">
+                        <i class="fas fa-chart-line"></i> Vende+CRM
+                    </h1>
                 </div>
                 <p>La plataforma completa para gestionar tus ventas y convertir más prospectos en clientes.</p>
                 <ul class="auth-features">
@@ -600,7 +730,11 @@
     <div class="crm-container" id="crmContainer">
         <div class="sidebar">
             <div class="logo">
-                <img src="logo-dark.png" alt="Vende+CRM" id="sidebarLogo">
+                <img src="logo-dark.png" alt="Vende+CRM" id="sidebarLogo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div style="display: none; align-items: center; gap: 10px;">
+                    <i class="fas fa-chart-line" style="font-size: 28px;"></i>
+                    <h1 style="margin: 0; font-size: 18px;">Vende+CRM</h1>
+                </div>
             </div>
             <ul class="menu">
                 <li class="menu-item active" data-target="dashboard">
@@ -684,32 +818,181 @@
             <div class="clientes">
                 <div class="header">
                     <h2>Gestión de Clientes</h2>
-                    <button class="btn btn-primary" id="addClientBtn">
-                        <i class="fas fa-plus"></i> Nuevo Cliente
-                    </button>
+                    <div class="header-actions">
+                        <button class="btn btn-secondary" id="bulkUploadBtn">
+                            <i class="fas fa-file-upload"></i> Carga Masiva
+                        </button>
+                        <button class="btn btn-primary" id="addClientBtn">
+                            <i class="fas fa-plus"></i> Nuevo Cliente
+                        </button>
+                    </div>
                 </div>
 
                 <div class="table-container">
                     <table>
                         <thead>
                             <tr>
+                                <th>ID Cliente</th>
                                 <th>Nombre</th>
                                 <th>Empresa</th>
                                 <th>Email</th>
                                 <th>Teléfono</th>
+                                <th>Ciudad</th>
+                                <th>Estado</th>
                                 <th>Etapa</th>
-                                <th>Último Contacto</th>
                             </tr>
                         </thead>
                         <tbody id="clientesTableBody">
                             <tr>
-                                <td colspan="6" style="text-align: center; padding: 40px;">
+                                <td colspan="8" style="text-align: center; padding: 40px;">
                                     No hay clientes registrados. Haz clic en "Nuevo Cliente" para agregar uno.
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nuevo Cliente -->
+    <div class="modal" id="clientModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-plus"></i> Nuevo Cliente</h3>
+                <button class="modal-close" id="closeClientModal">&times;</button>
+            </div>
+            <form id="clientForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="clientName">Nombre Completo *</label>
+                        <input type="text" id="clientName" required placeholder="Juan Pérez">
+                    </div>
+                    <div class="form-group">
+                        <label for="clientCompany">Empresa *</label>
+                        <input type="text" id="clientCompany" required placeholder="Construcción">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="clientContact">Contacto Principal</label>
+                        <input type="text" id="clientContact" placeholder="Juan Pérez">
+                    </div>
+                    <div class="form-group">
+                        <label for="clientEmail">Email *</label>
+                        <input type="email" id="clientEmail" required placeholder="juan@empresa.com">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="clientPhone">Teléfono</label>
+                        <input type="tel" id="clientPhone" placeholder="999111222">
+                    </div>
+                    <div class="form-group">
+                        <label for="clientDocType">Tipo Documento</label>
+                        <select id="clientDocType">
+                            <option value="DNI">DNI</option>
+                            <option value="RUC">RUC</option>
+                            <option value="ONI">ONI</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="clientDocNumber">Número Documento</label>
+                        <input type="text" id="clientDocNumber" placeholder="12345678">
+                    </div>
+                    <div class="form-group">
+                        <label for="clientCity">Ciudad</label>
+                        <input type="text" id="clientCity" placeholder="Arequipa">
+                    </div>
+                </div>
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label for="clientAddress">Dirección</label>
+                        <input type="text" id="clientAddress" placeholder="Av. Independencia 123 - Arequipa">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="clientCountry">País</label>
+                        <select id="clientCountry">
+                            <option value="Perú" selected>Perú</option>
+                            <option value="Chile">Chile</option>
+                            <option value="Argentina">Argentina</option>
+                            <option value="Colombia">Colombia</option>
+                            <option value="México">México</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="clientStatus">Estado</label>
+                        <select id="clientStatus">
+                            <option value="Activo" selected>Activo</option>
+                            <option value="Inactivo">Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label for="clientStage">Etapa del Cliente</label>
+                        <select id="clientStage">
+                            <option value="prospecto">Prospecto</option>
+                            <option value="contactado">Contactado</option>
+                            <option value="calificado">Calificado</option>
+                            <option value="negociacion">Negociación</option>
+                            <option value="ganado">Ganado</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelClientBtn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar Cliente
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Carga Masiva -->
+    <div class="modal" id="bulkUploadModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-file-upload"></i> Carga Masiva de Clientes</h3>
+                <button class="modal-close" id="closeBulkModal">&times;</button>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                    Sube un archivo CSV con los datos de tus clientes. Formatos aceptados:
+                </p>
+                <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <p style="color: var(--text-primary); font-size: 13px; margin: 0 0 10px 0;"><strong>Formato Completo (Excel):</strong></p>
+                    <code style="color: var(--text-primary); font-size: 11px; display: block; overflow-x: auto;">
+                        customer_id,name,company,contact_person,email1,phone_number,tipo_documento,numero_documento,direccion,ciudad,pais,estado_cliente
+                    </code>
+                    <p style="color: var(--text-primary); font-size: 13px; margin: 15px 0 5px 0;"><strong>Formato Simple:</strong></p>
+                    <code style="color: var(--text-primary); font-size: 11px;">
+                        nombre,empresa,email,telefono,etapa
+                    </code>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 12px;">
+                    💡 <strong>Tip:</strong> Puedes exportar directamente desde Excel como CSV y subirlo aquí.
+                </p>
+            </div>
+            <div class="form-group">
+                <label for="csvFile">Seleccionar archivo CSV</label>
+                <input type="file" id="csvFile" accept=".csv" style="padding: 10px; border: 2px dashed var(--border-color); border-radius: 8px; width: 100%;">
+            </div>
+            <div id="uploadPreview" style="margin-top: 20px; display: none;">
+                <h4 style="color: var(--text-primary); margin-bottom: 10px;">Vista Previa:</h4>
+                <div id="previewContent" style="max-height: 200px; overflow-y: auto; background: var(--bg-secondary); padding: 10px; border-radius: 8px;">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="cancelBulkBtn">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="uploadBulkBtn" disabled>
+                    <i class="fas fa-upload"></i> Cargar Clientes
+                </button>
             </div>
         </div>
     </div>
@@ -879,6 +1162,9 @@
 
         // Cargar datos del dashboard
         async function loadDashboardData() {
+            // Cargar clientes
+            loadClientesData();
+
             // Aquí puedes cargar datos reales desde Supabase
             document.getElementById('totalClientes').textContent = '0';
             document.getElementById('totalOportunidades').textContent = '0';
@@ -951,6 +1237,307 @@
         function updateLogo(theme) {
             if (sidebarLogo) {
                 sidebarLogo.src = theme === 'dark' ? 'logo-dark.png' : 'logo-light.png';
+            }
+        }
+
+        // Modal de Cliente
+        const clientModal = document.getElementById('clientModal');
+        const addClientBtn = document.getElementById('addClientBtn');
+        const closeClientModal = document.getElementById('closeClientModal');
+        const cancelClientBtn = document.getElementById('cancelClientBtn');
+        const clientForm = document.getElementById('clientForm');
+
+        // Abrir modal de cliente
+        addClientBtn.addEventListener('click', () => {
+            clientModal.classList.add('active');
+        });
+
+        // Cerrar modal de cliente
+        closeClientModal.addEventListener('click', () => {
+            clientModal.classList.remove('active');
+            clientForm.reset();
+        });
+
+        cancelClientBtn.addEventListener('click', () => {
+            clientModal.classList.remove('active');
+            clientForm.reset();
+        });
+
+        // Cerrar modal al hacer clic fuera
+        clientModal.addEventListener('click', (e) => {
+            if (e.target === clientModal) {
+                clientModal.classList.remove('active');
+                clientForm.reset();
+            }
+        });
+
+        // Guardar cliente
+        clientForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Generar customer_id automático
+            const customerCount = await getCustomerCount();
+            const customerId = `CUST-${String(customerCount + 1).padStart(3, '0')}`;
+
+            const clientData = {
+                customer_id: customerId,
+                nombre: document.getElementById('clientName').value,
+                empresa: document.getElementById('clientCompany').value,
+                contacto_principal: document.getElementById('clientContact').value,
+                email: document.getElementById('clientEmail').value,
+                telefono: document.getElementById('clientPhone').value,
+                tipo_documento: document.getElementById('clientDocType').value,
+                numero_documento: document.getElementById('clientDocNumber').value,
+                direccion: document.getElementById('clientAddress').value,
+                ciudad: document.getElementById('clientCity').value,
+                pais: document.getElementById('clientCountry').value,
+                estado_cliente: document.getElementById('clientStatus').value,
+                etapa: document.getElementById('clientStage').value,
+                fecha_registro: new Date().toISOString().split('T')[0],
+                usuario_registro: currentUser.email,
+                ultimo_contacto: new Date().toISOString(),
+                user_id: currentUser.id
+            };
+
+            try {
+                showAlert('Guardando cliente...', 'info');
+
+                const { data, error } = await supabaseClient
+                    .from('clientes')
+                    .insert([clientData]);
+
+                if (error) throw error;
+
+                showAlert('Cliente guardado exitosamente', 'success');
+                clientModal.classList.remove('active');
+                clientForm.reset();
+                loadClientesData();
+            } catch (error) {
+                console.error('Error al guardar cliente:', error);
+                showAlert('Error al guardar cliente: ' + error.message, 'error');
+            }
+        });
+
+        // Obtener conteo de clientes para generar ID
+        async function getCustomerCount() {
+            try {
+                const { count, error } = await supabaseClient
+                    .from('clientes')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('user_id', currentUser.id);
+
+                if (error) throw error;
+                return count || 0;
+            } catch (error) {
+                console.error('Error al contar clientes:', error);
+                return 0;
+            }
+        }
+
+        // Modal de Carga Masiva
+        const bulkUploadModal = document.getElementById('bulkUploadModal');
+        const bulkUploadBtn = document.getElementById('bulkUploadBtn');
+        const closeBulkModal = document.getElementById('closeBulkModal');
+        const cancelBulkBtn = document.getElementById('cancelBulkBtn');
+        const csvFileInput = document.getElementById('csvFile');
+        const uploadBulkBtn = document.getElementById('uploadBulkBtn');
+        const uploadPreview = document.getElementById('uploadPreview');
+        const previewContent = document.getElementById('previewContent');
+        let parsedCSVData = [];
+
+        // Abrir modal de carga masiva
+        bulkUploadBtn.addEventListener('click', () => {
+            bulkUploadModal.classList.add('active');
+        });
+
+        // Cerrar modal de carga masiva
+        closeBulkModal.addEventListener('click', () => {
+            bulkUploadModal.classList.remove('active');
+            csvFileInput.value = '';
+            uploadPreview.style.display = 'none';
+            parsedCSVData = [];
+            uploadBulkBtn.disabled = true;
+        });
+
+        cancelBulkBtn.addEventListener('click', () => {
+            bulkUploadModal.classList.remove('active');
+            csvFileInput.value = '';
+            uploadPreview.style.display = 'none';
+            parsedCSVData = [];
+            uploadBulkBtn.disabled = true;
+        });
+
+        bulkUploadModal.addEventListener('click', (e) => {
+            if (e.target === bulkUploadModal) {
+                bulkUploadModal.classList.remove('active');
+                csvFileInput.value = '';
+                uploadPreview.style.display = 'none';
+                parsedCSVData = [];
+                uploadBulkBtn.disabled = true;
+            }
+        });
+
+        // Procesar archivo CSV
+        csvFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const csv = event.target.result;
+                parsedCSVData = parseCSV(csv);
+
+                if (parsedCSVData.length > 0) {
+                    displayPreview(parsedCSVData);
+                    uploadBulkBtn.disabled = false;
+                } else {
+                    showAlert('No se pudieron leer datos del archivo CSV', 'error');
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // Parsear CSV
+        function parseCSV(csv) {
+            const lines = csv.split('\n').filter(line => line.trim());
+            const result = [];
+
+            // Detectar si es el formato del Excel (con más columnas)
+            const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
+            const isExcelFormat = headers.includes('customer_id') || headers.includes('tipo_documento');
+
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(v => v.trim());
+
+                if (isExcelFormat && values.length >= 10) {
+                    // Formato Excel completo
+                    result.push({
+                        customer_id: values[0] || `CUST-${String(i).padStart(3, '0')}`,
+                        nombre: values[1] || '',
+                        empresa: values[2] || '',
+                        contacto_principal: values[3] || values[1] || '',
+                        email: values[4] || '',
+                        telefono: values[5] || '',
+                        tipo_documento: values[6] || 'DNI',
+                        numero_documento: values[7] || '',
+                        direccion: values[8] || '',
+                        ciudad: values[9] || '',
+                        pais: values[10] || 'Perú',
+                        estado_cliente: values[11] || 'Activo',
+                        etapa: 'prospecto'
+                    });
+                } else if (values.length >= 3) {
+                    // Formato simple
+                    result.push({
+                        customer_id: `CUST-${String(i).padStart(3, '0')}`,
+                        nombre: values[0] || '',
+                        empresa: values[1] || '',
+                        contacto_principal: values[0] || '',
+                        email: values[2] || '',
+                        telefono: values[3] || '',
+                        tipo_documento: 'DNI',
+                        numero_documento: '',
+                        direccion: '',
+                        ciudad: '',
+                        pais: 'Perú',
+                        estado_cliente: 'Activo',
+                        etapa: values[4] || 'prospecto'
+                    });
+                }
+            }
+
+            return result;
+        }
+
+        // Mostrar vista previa
+        function displayPreview(data) {
+            const preview = data.slice(0, 5).map(client => `
+                <div style="padding: 8px; border-bottom: 1px solid var(--border-color);">
+                    <strong style="color: var(--text-primary);">${client.nombre}</strong> -
+                    <span style="color: var(--text-secondary);">${client.email}</span>
+                </div>
+            `).join('');
+
+            previewContent.innerHTML = preview +
+                (data.length > 5 ? `<p style="color: var(--text-secondary); padding: 8px;">...y ${data.length - 5} más</p>` : '');
+            uploadPreview.style.display = 'block';
+        }
+
+        // Cargar clientes masivamente
+        uploadBulkBtn.addEventListener('click', async () => {
+            if (parsedCSVData.length === 0) return;
+
+            try {
+                showAlert(`Cargando ${parsedCSVData.length} clientes...`, 'info');
+
+                const clientsWithUser = parsedCSVData.map(client => ({
+                    ...client,
+                    fecha_registro: new Date().toISOString().split('T')[0],
+                    usuario_registro: currentUser.email,
+                    ultimo_contacto: new Date().toISOString(),
+                    user_id: currentUser.id
+                }));
+
+                const { data, error } = await supabaseClient
+                    .from('clientes')
+                    .insert(clientsWithUser);
+
+                if (error) throw error;
+
+                showAlert(`${parsedCSVData.length} clientes cargados exitosamente`, 'success');
+                bulkUploadModal.classList.remove('active');
+                csvFileInput.value = '';
+                uploadPreview.style.display = 'none';
+                parsedCSVData = [];
+                uploadBulkBtn.disabled = true;
+                loadClientesData();
+            } catch (error) {
+                console.error('Error al cargar clientes:', error);
+                showAlert('Error al cargar clientes: ' + error.message, 'error');
+            }
+        });
+
+        // Cargar datos de clientes
+        async function loadClientesData() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('clientes')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                const tbody = document.getElementById('clientesTableBody');
+
+                if (data && data.length > 0) {
+                    tbody.innerHTML = data.map(client => `
+                        <tr>
+                            <td><strong>${client.customer_id || '-'}</strong></td>
+                            <td>${client.nombre}</td>
+                            <td>${client.empresa || '-'}</td>
+                            <td>${client.email}</td>
+                            <td>${client.telefono || '-'}</td>
+                            <td>${client.ciudad || '-'}</td>
+                            <td><span class="status ${client.estado_cliente === 'Activo' ? 'status-ganado' : 'status-perdido'}">${client.estado_cliente || 'Activo'}</span></td>
+                            <td><span class="status status-${client.etapa}">${client.etapa}</span></td>
+                        </tr>
+                    `).join('');
+
+                    // Actualizar contador en dashboard
+                    document.getElementById('totalClientes').textContent = data.length;
+                } else {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                                No hay clientes registrados. Haz clic en "Nuevo Cliente" para agregar uno.
+                            </td>
+                        </tr>
+                    `;
+                    document.getElementById('totalClientes').textContent = '0';
+                }
+            } catch (error) {
+                console.error('Error al cargar clientes:', error);
             }
         }
     </script>

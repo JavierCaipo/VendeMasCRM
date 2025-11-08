@@ -1,0 +1,7 @@
+customer_id,name,company,contact_person,email1,phone_number,tipo_documento,numero_documento,direccion,ciudad,pais,estado_cliente
+CUST-001,Juan Pérez,Construcción,Juan Pérez,juan.perez@email.com,999111222,DNI,12345678,Av. Independencia 123 - Arequipa,Arequipa,Perú,Activo
+CUST-002,María García,Manufactura,María García,maria.garcia@email.com,988333444,DNI,87654321,Calle Los Olivos 456 - Lima,Lima,Perú,Activo
+CUST-003,Carlos López,Salud,Carlos López,carlos.lopez@empresa.com,977555666,RUC,20556788012,Jr. Comercio 789 - Cusco,Cusco,Perú,Activo
+CUST-004,Ana Martínez,Comercio,Ana Martínez,ana.martinez@email.com,966777888,DNI,11223344,Av. La Paz 101 - Trujillo,Trujillo,Perú,Activo
+CUST-005,Roberto Díaz,Logística,Roberto Díaz,roberto.diaz@calzadoseguro.com,955999000,RUC,20567890123,Mz. B Lt. 12 Urb. Segura - Arequipa,Arequipa,Perú,Activo
+
