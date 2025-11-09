@@ -986,6 +986,14 @@
                     <i class="fas fa-bullseye"></i>
                     <span>Oportunidades</span>
                 </li>
+                <li class="menu-item" data-target="productos">
+                    <i class="fas fa-box"></i>
+                    <span>Productos</span>
+                </li>
+                <li class="menu-item" data-target="presupuestos">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Presupuestos</span>
+                </li>
                 <li class="menu-item" data-target="citas">
                     <i class="fas fa-calendar-alt"></i>
                     <span>Citas & Llamadas</span>
@@ -1902,6 +1910,469 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Productos Section -->
+    <div class="section productos">
+        <div class="header">
+            <h2><i class="fas fa-box"></i> Gestión de Productos e Inventario</h2>
+            <div class="header-actions">
+                <button class="btn btn-secondary" id="refreshProductosBtn">
+                    <i class="fas fa-sync-alt"></i> Actualizar
+                </button>
+                <button class="btn btn-secondary" id="importProductosBtn">
+                    <i class="fas fa-file-import"></i> Importar CSV
+                </button>
+                <button class="btn btn-secondary" id="exportProductosBtn">
+                    <i class="fas fa-file-export"></i> Exportar
+                </button>
+                <button class="btn btn-primary" id="addProductoBtn">
+                    <i class="fas fa-plus"></i> Nuevo Producto
+                </button>
+            </div>
+        </div>
+
+        <!-- Filtros y Búsqueda -->
+        <div class="filters">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchProductos" placeholder="Buscar por nombre, SKU, categoría...">
+            </div>
+            <select id="filterCategoriaProducto">
+                <option value="">Todas las Categorías</option>
+            </select>
+            <select id="filterEstadoProducto">
+                <option value="">Todos los Estados</option>
+                <option value="activo">Activo</option>
+                <option value="inactivo">Inactivo</option>
+                <option value="descontinuado">Descontinuado</option>
+            </select>
+        </div>
+
+        <!-- Tabla de Productos -->
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Imagen</th>
+                        <th class="sortable" data-column="nombre">
+                            Nombre <i class="fas fa-sort"></i>
+                        </th>
+                        <th class="sortable" data-column="sku">
+                            SKU <i class="fas fa-sort"></i>
+                        </th>
+                        <th class="sortable" data-column="categoria">
+                            Categoría <i class="fas fa-sort"></i>
+                        </th>
+                        <th class="sortable" data-column="precio">
+                            Precio <i class="fas fa-sort"></i>
+                        </th>
+                        <th class="sortable" data-column="stock_disponible">
+                            Stock <i class="fas fa-sort"></i>
+                        </th>
+                        <th>Unidad</th>
+                        <th>Proveedor</th>
+                        <th class="sortable" data-column="estado">
+                            Estado <i class="fas fa-sort"></i>
+                        </th>
+                        <th style="width: 150px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="productosTableBody">
+                    <tr>
+                        <td colspan="10" style="text-align: center; padding: 40px;">
+                            <i class="fas fa-box" style="font-size: 48px; color: var(--text-secondary); margin-bottom: 10px;"></i>
+                            <p style="color: var(--text-secondary);">No hay productos registrados</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        <div class="pagination" id="productoPagination"></div>
+    </div>
+
+    <!-- Modal Importar Productos -->
+    <div class="modal" id="importProductosModal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-file-import"></i> Importar Productos desde CSV</h3>
+                <button class="modal-close" id="closeImportProductosModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #2196f3;">
+                    <h4 style="color: #1976d2; margin-bottom: 10px;"><i class="fas fa-info-circle"></i> Formato del CSV</h4>
+                    <p style="margin-bottom: 10px; color: #555;">El archivo CSV debe tener las siguientes columnas (en este orden):</p>
+                    <code style="display: block; background: white; padding: 10px; border-radius: 4px; font-size: 12px; overflow-x: auto;">
+                        nombre,descripcion,categoria,sku,codigo_barras,precio,costo,stock_disponible,stock_minimo,unidad,proveedor,codigo_proveedor,imagen_url,estado,notas,tags
+                    </code>
+                    <p style="margin-top: 10px; font-size: 13px; color: #666;">
+                        <strong>Nota:</strong> La primera fila debe contener los encabezados. Los campos obligatorios son: <strong>nombre</strong> y <strong>precio</strong>.
+                    </p>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-secondary" onclick="descargarPlantillaCSV()" style="width: 100%;">
+                        <i class="fas fa-download"></i> Descargar Plantilla CSV de Ejemplo
+                    </button>
+                </div>
+
+                <div class="form-group">
+                    <label for="csvFileInput">Seleccionar archivo CSV:</label>
+                    <input type="file" id="csvFileInput" accept=".csv" style="width: 100%; padding: 10px; border: 2px dashed var(--border-color); border-radius: 8px; cursor: pointer;">
+                </div>
+
+                <div id="importPreview" style="display: none; margin-top: 20px;">
+                    <h4 style="color: var(--primary); margin-bottom: 10px;">Vista Previa (primeras 5 filas):</h4>
+                    <div style="max-height: 300px; overflow: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+                        <table id="previewTable" style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                            <thead style="background: var(--primary); color: white; position: sticky; top: 0;">
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p id="importStats" style="margin-top: 10px; color: var(--text-secondary);"></p>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="cancelImportProductosBtn">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="executeImportBtn" style="display: none;">
+                    <i class="fas fa-upload"></i> <span id="importBtnText">Importar Productos</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Producto -->
+    <div class="modal" id="productoModal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-box"></i> <span id="productoModalTitle">Nuevo Producto</span></h3>
+                <button class="modal-close" id="closeProductoModal">&times;</button>
+            </div>
+            <form id="productoForm">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <!-- Columna Izquierda -->
+                    <div>
+                        <div class="form-group">
+                            <label for="productoNombre">Nombre del Producto *</label>
+                            <input type="text" id="productoNombre" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productoDescripcion">Descripción</label>
+                            <textarea id="productoDescripcion" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="productoCategoria">Categoría</label>
+                            <input type="text" id="productoCategoria" list="categoriasList">
+                            <datalist id="categoriasList"></datalist>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="form-group">
+                                <label for="productoSKU">SKU</label>
+                                <input type="text" id="productoSKU">
+                            </div>
+                            <div class="form-group">
+                                <label for="productoCodigoBarras">Código de Barras</label>
+                                <input type="text" id="productoCodigoBarras">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Columna Derecha -->
+                    <div>
+                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+                            <div class="form-group">
+                                <label for="productoPrecio">Precio *</label>
+                                <input type="number" id="productoPrecio" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="productoMoneda">Moneda</label>
+                                <select id="productoMoneda">
+                                    <option value="PEN">PEN</option>
+                                    <option value="USD">USD</option>
+                                    <option value="EUR">EUR</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="productoCosto">Costo</label>
+                            <input type="number" id="productoCosto" step="0.01">
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="form-group">
+                                <label for="productoStock">Stock Disponible</label>
+                                <input type="number" id="productoStock" step="0.01" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="productoUnidad">Unidad</label>
+                                <select id="productoUnidad">
+                                    <option value="unidad">Unidad</option>
+                                    <option value="kg">Kilogramo (kg)</option>
+                                    <option value="litro">Litro</option>
+                                    <option value="metro">Metro</option>
+                                    <option value="caja">Caja</option>
+                                    <option value="paquete">Paquete</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="productoProveedor">Proveedor</label>
+                            <input type="text" id="productoProveedor">
+                        </div>
+                        <div class="form-group">
+                            <label for="productoEstado">Estado</label>
+                            <select id="productoEstado">
+                                <option value="activo">Activo</option>
+                                <option value="inactivo">Inactivo</option>
+                                <option value="descontinuado">Descontinuado</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="productoImagenUrl">URL de Imagen</label>
+                    <input type="url" id="productoImagenUrl" placeholder="https://ejemplo.com/imagen.jpg">
+                </div>
+
+                <div class="form-group">
+                    <label for="productoNotas">Notas</label>
+                    <textarea id="productoNotas" rows="2"></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelProductoBtn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> <span id="productoSubmitText">Crear Producto</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Presupuestos Section -->
+    <div class="section presupuestos">
+        <div class="header">
+            <h2><i class="fas fa-file-invoice-dollar"></i> Gestión de Presupuestos</h2>
+            <div class="header-actions">
+                <button class="btn btn-secondary" id="refreshPresupuestosBtn">
+                    <i class="fas fa-sync-alt"></i> Actualizar
+                </button>
+                <button class="btn btn-secondary" id="exportPresupuestosBtn">
+                    <i class="fas fa-file-export"></i> Exportar
+                </button>
+                <button class="btn btn-primary" id="addPresupuestoBtn">
+                    <i class="fas fa-plus"></i> Nuevo Presupuesto
+                </button>
+            </div>
+        </div>
+
+        <!-- Métricas Rápidas -->
+        <div class="kanban-stats" style="margin-bottom: 20px;">
+            <div class="kanban-stat-card">
+                <div class="kanban-stat-label">Total Presupuestos</div>
+                <div class="kanban-stat-value" id="totalPresupuestosCount">0</div>
+            </div>
+            <div class="kanban-stat-card">
+                <div class="kanban-stat-label">Valor Total Cotizado</div>
+                <div class="kanban-stat-value" id="valorTotalPresupuestos">S/ 0</div>
+            </div>
+            <div class="kanban-stat-card">
+                <div class="kanban-stat-label">Tasa de Aprobación</div>
+                <div class="kanban-stat-value" id="tasaAprobacionPresupuestos">0%</div>
+            </div>
+            <div class="kanban-stat-card">
+                <div class="kanban-stat-label">Pendientes</div>
+                <div class="kanban-stat-value" id="presupuestosPendientes" style="color: #f39c12;">0</div>
+            </div>
+        </div>
+
+        <!-- Filtros y Búsqueda -->
+        <div class="filters">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchPresupuestos" placeholder="Buscar por número, cliente...">
+            </div>
+            <select id="filterEstadoPresupuesto">
+                <option value="">Todos los Estados</option>
+                <option value="pendiente">Pendiente</option>
+                <option value="aprobado">Aprobado</option>
+                <option value="rechazado">Rechazado</option>
+                <option value="vencido">Vencido</option>
+            </select>
+        </div>
+
+        <!-- Tabla de Presupuestos -->
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-column="numero">
+                            Número <i class="fas fa-sort"></i>
+                        </th>
+                        <th class="sortable" data-column="cliente">
+                            Cliente <i class="fas fa-sort"></i>
+                        </th>
+                        <th class="sortable" data-column="fecha_emision">
+                            Fecha Emisión <i class="fas fa-sort"></i>
+                        </th>
+                        <th class="sortable" data-column="fecha_vencimiento">
+                            Vencimiento <i class="fas fa-sort"></i>
+                        </th>
+                        <th class="sortable" data-column="total">
+                            Total <i class="fas fa-sort"></i>
+                        </th>
+                        <th class="sortable" data-column="estado">
+                            Estado <i class="fas fa-sort"></i>
+                        </th>
+                        <th style="width: 200px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="presupuestosTableBody">
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px;">
+                            <i class="fas fa-file-invoice-dollar" style="font-size: 48px; color: var(--text-secondary); margin-bottom: 10px;"></i>
+                            <p style="color: var(--text-secondary);">No hay presupuestos registrados</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        <div class="pagination" id="presupuestoPagination"></div>
+    </div>
+
+    <!-- Modal Presupuesto -->
+    <div class="modal" id="presupuestoModal">
+        <div class="modal-content" style="max-width: 1000px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-file-invoice-dollar"></i> <span id="presupuestoModalTitle">Nuevo Presupuesto</span></h3>
+                <button class="modal-close" id="closePresupuestoModal">&times;</button>
+            </div>
+            <form id="presupuestoForm">
+                <!-- Información General -->
+                <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h4 style="color: var(--primary); margin-bottom: 15px; font-size: 14px;">
+                        <i class="fas fa-info-circle"></i> Información General
+                    </h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label for="presupuestoCliente">Cliente *</label>
+                            <select id="presupuestoCliente" required>
+                                <option value="">Seleccionar cliente...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="presupuestoNumero">Número</label>
+                            <input type="text" id="presupuestoNumero" placeholder="Se generará automáticamente" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="presupuestoFechaEmision">Fecha de Emisión *</label>
+                            <input type="date" id="presupuestoFechaEmision" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="presupuestoFechaVencimiento">Fecha de Vencimiento *</label>
+                            <input type="date" id="presupuestoFechaVencimiento" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Items del Presupuesto -->
+                <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h4 style="color: var(--primary); font-size: 14px; margin: 0;">
+                            <i class="fas fa-list"></i> Items del Presupuesto
+                        </h4>
+                        <button type="button" class="btn btn-sm btn-primary" id="addItemBtn">
+                            <i class="fas fa-plus"></i> Agregar Item
+                        </button>
+                    </div>
+                    <div id="itemsContainer">
+                        <!-- Los items se agregarán dinámicamente aquí -->
+                    </div>
+                </div>
+
+                <!-- Totales -->
+                <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h4 style="color: var(--primary); margin-bottom: 15px; font-size: 14px;">
+                        <i class="fas fa-calculator"></i> Totales
+                    </h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label for="presupuestoDescuento">Descuento (%)</label>
+                            <input type="number" id="presupuestoDescuento" step="0.01" value="0" min="0" max="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="presupuestoImpuesto">Impuesto (%) - IGV</label>
+                            <input type="number" id="presupuestoImpuesto" step="0.01" value="18" min="0" max="100">
+                        </div>
+                    </div>
+                    <div style="border-top: 2px solid var(--border-color); padding-top: 15px; margin-top: 15px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="color: var(--text-secondary);">Subtotal:</span>
+                            <span style="font-weight: 600; color: var(--text-primary);" id="presupuestoSubtotalDisplay">S/ 0.00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="color: var(--text-secondary);">Descuento:</span>
+                            <span style="font-weight: 600; color: #e74c3c;" id="presupuestoDescuentoDisplay">- S/ 0.00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="color: var(--text-secondary);">IGV (18%):</span>
+                            <span style="font-weight: 600; color: var(--text-primary);" id="presupuestoImpuestoDisplay">S/ 0.00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 2px solid var(--primary);">
+                            <span style="font-size: 18px; font-weight: 700; color: var(--primary);">TOTAL:</span>
+                            <span style="font-size: 20px; font-weight: 700; color: var(--primary);" id="presupuestoTotalDisplay">S/ 0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notas y Términos -->
+                <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h4 style="color: var(--primary); margin-bottom: 15px; font-size: 14px;">
+                        <i class="fas fa-file-alt"></i> Notas y Términos
+                    </h4>
+                    <div class="form-group">
+                        <label for="presupuestoNotas">Notas</label>
+                        <textarea id="presupuestoNotas" rows="2" placeholder="Notas adicionales para el cliente..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="presupuestoTerminos">Términos y Condiciones</label>
+                        <textarea id="presupuestoTerminos" rows="3" placeholder="Términos y condiciones del presupuesto..."></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelPresupuestoBtn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> <span id="presupuestoSubmitText">Crear Presupuesto</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Vista Previa Presupuesto -->
+    <div class="modal" id="vistaPresupuestoModal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-eye"></i> Vista Previa del Presupuesto</h3>
+                <button class="modal-close" id="closeVistaPresupuestoModal">&times;</button>
+            </div>
+            <div id="vistaPresupuestoContent" style="padding: 20px;">
+                <!-- El contenido se generará dinámicamente -->
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="closeVistaBtn">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="copiarLinkBtn">
+                    <i class="fas fa-link"></i> Copiar Link Público
+                </button>
+            </div>
         </div>
     </div>
 
@@ -3565,6 +4036,1144 @@
         const refreshOportunidadesBtn = document.getElementById('refreshOportunidadesBtn');
         if (refreshOportunidadesBtn) {
             refreshOportunidadesBtn.addEventListener('click', loadOportunidadesData);
+        }
+
+        // ============================================
+        // PRODUCTOS - Variables y Estado
+        // ============================================
+        let allProductos = [];
+        let filteredProductos = [];
+        let currentPageProductos = 1;
+        const itemsPerPageProductos = 15;
+        let currentEditingProductoId = null;
+
+        // Elementos del DOM - Productos
+        const productosSection = document.querySelector('.productos');
+        const productosTableBody = document.getElementById('productosTableBody');
+        const productoPagination = document.getElementById('productoPagination');
+        const searchProductos = document.getElementById('searchProductos');
+        const filterCategoriaProducto = document.getElementById('filterCategoriaProducto');
+        const filterEstadoProducto = document.getElementById('filterEstadoProducto');
+        const addProductoBtn = document.getElementById('addProductoBtn');
+        const refreshProductosBtn = document.getElementById('refreshProductosBtn');
+        const exportProductosBtn = document.getElementById('exportProductosBtn');
+        const productoModal = document.getElementById('productoModal');
+        const closeProductoModal = document.getElementById('closeProductoModal');
+        const cancelProductoBtn = document.getElementById('cancelProductoBtn');
+        const productoForm = document.getElementById('productoForm');
+
+        // ============================================
+        // PRODUCTOS - Funciones
+        // ============================================
+
+        async function loadProductosData() {
+            try {
+                showLoading(true);
+                const { data, error } = await supabaseClient
+                    .from('productos')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                allProductos = data || [];
+                filteredProductos = [...allProductos];
+
+                // Actualizar filtro de categorías
+                updateCategoriasFilter();
+
+                renderProductos();
+                showLoading(false);
+            } catch (error) {
+                console.error('Error al cargar productos:', error);
+                showAlert('Error al cargar productos: ' + error.message, 'error');
+                showLoading(false);
+            }
+        }
+
+        function updateCategoriasFilter() {
+            const categorias = [...new Set(allProductos.map(p => p.categoria).filter(Boolean))];
+            filterCategoriaProducto.innerHTML = '<option value="">Todas las Categorías</option>';
+            categorias.forEach(cat => {
+                filterCategoriaProducto.innerHTML += `<option value="${cat}">${cat}</option>`;
+            });
+        }
+
+        function applyProductosFilters() {
+            const searchTerm = searchProductos.value.toLowerCase();
+            const categoriaFilter = filterCategoriaProducto.value;
+            const estadoFilter = filterEstadoProducto.value;
+
+            filteredProductos = allProductos.filter(producto => {
+                const matchesSearch = !searchTerm ||
+                    producto.nombre?.toLowerCase().includes(searchTerm) ||
+                    producto.sku?.toLowerCase().includes(searchTerm) ||
+                    producto.categoria?.toLowerCase().includes(searchTerm) ||
+                    producto.descripcion?.toLowerCase().includes(searchTerm);
+
+                const matchesCategoria = !categoriaFilter || producto.categoria === categoriaFilter;
+                const matchesEstado = !estadoFilter || producto.estado === estadoFilter;
+
+                return matchesSearch && matchesCategoria && matchesEstado;
+            });
+
+            currentPageProductos = 1;
+            renderProductos();
+        }
+
+        function renderProductos() {
+            const startIndex = (currentPageProductos - 1) * itemsPerPageProductos;
+            const endIndex = startIndex + itemsPerPageProductos;
+            const productosToShow = filteredProductos.slice(startIndex, endIndex);
+
+            if (productosToShow.length === 0) {
+                productosTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="10" style="text-align: center; padding: 40px;">
+                            <i class="fas fa-box" style="font-size: 48px; color: var(--text-secondary); margin-bottom: 10px;"></i>
+                            <p style="color: var(--text-secondary);">No hay productos que coincidan con los filtros</p>
+                        </td>
+                    </tr>
+                `;
+                productoPagination.innerHTML = '';
+                return;
+            }
+
+            productosTableBody.innerHTML = productosToShow.map(producto => {
+                const stockClass = producto.stock_disponible <= (producto.stock_minimo || 0) ? 'style="color: #e74c3c; font-weight: 600;"' : '';
+                const estadoBadge = getEstadoBadge(producto.estado);
+                const imagenHtml = producto.imagen_url
+                    ? `<img src="${producto.imagen_url}" alt="${producto.nombre}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">`
+                    : '<i class="fas fa-image" style="font-size: 30px; color: var(--text-secondary);"></i>';
+
+                return `
+                    <tr>
+                        <td style="text-align: center;">${imagenHtml}</td>
+                        <td><strong>${producto.nombre}</strong></td>
+                        <td>${producto.sku || '-'}</td>
+                        <td>${producto.categoria || '-'}</td>
+                        <td><strong>${producto.moneda} ${parseFloat(producto.precio || 0).toFixed(2)}</strong></td>
+                        <td ${stockClass}>${parseFloat(producto.stock_disponible || 0).toFixed(2)}</td>
+                        <td>${producto.unidad || 'unidad'}</td>
+                        <td>${producto.proveedor || '-'}</td>
+                        <td>${estadoBadge}</td>
+                        <td>
+                            <button class="btn btn-sm btn-secondary" onclick="editProducto('${producto.id}')" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteProducto('${producto.id}')" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            renderProductoPagination();
+        }
+
+        function renderProductoPagination() {
+            const totalPages = Math.ceil(filteredProductos.length / itemsPerPageProductos);
+
+            if (totalPages <= 1) {
+                productoPagination.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '';
+
+            if (currentPageProductos > 1) {
+                paginationHTML += `<button class="btn btn-sm btn-secondary" onclick="changeProductoPage(${currentPageProductos - 1})">Anterior</button>`;
+            }
+
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === currentPageProductos) {
+                    paginationHTML += `<button class="btn btn-sm btn-primary">${i}</button>`;
+                } else if (i === 1 || i === totalPages || (i >= currentPageProductos - 1 && i <= currentPageProductos + 1)) {
+                    paginationHTML += `<button class="btn btn-sm btn-secondary" onclick="changeProductoPage(${i})">${i}</button>`;
+                } else if (i === currentPageProductos - 2 || i === currentPageProductos + 2) {
+                    paginationHTML += `<span>...</span>`;
+                }
+            }
+
+            if (currentPageProductos < totalPages) {
+                paginationHTML += `<button class="btn btn-sm btn-secondary" onclick="changeProductoPage(${currentPageProductos + 1})">Siguiente</button>`;
+            }
+
+            productoPagination.innerHTML = paginationHTML;
+        }
+
+        window.changeProductoPage = function(page) {
+            currentPageProductos = page;
+            renderProductos();
+        };
+
+        window.editProducto = async function(id) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('productos')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
+
+                if (error) throw error;
+
+                currentEditingProductoId = id;
+                document.getElementById('productoModalTitle').textContent = 'Editar Producto';
+                document.getElementById('productoSubmitText').textContent = 'Actualizar Producto';
+
+                // Llenar el formulario
+                document.getElementById('productoNombre').value = data.nombre || '';
+                document.getElementById('productoDescripcion').value = data.descripcion || '';
+                document.getElementById('productoCategoria').value = data.categoria || '';
+                document.getElementById('productoSKU').value = data.sku || '';
+                document.getElementById('productoCodigoBarras').value = data.codigo_barras || '';
+                document.getElementById('productoPrecio').value = data.precio || 0;
+                document.getElementById('productoMoneda').value = data.moneda || 'PEN';
+                document.getElementById('productoCosto').value = data.costo || 0;
+                document.getElementById('productoStock').value = data.stock_disponible || 0;
+                document.getElementById('productoUnidad').value = data.unidad || 'unidad';
+                document.getElementById('productoProveedor').value = data.proveedor || '';
+                document.getElementById('productoEstado').value = data.estado || 'activo';
+                document.getElementById('productoImagenUrl').value = data.imagen_url || '';
+                document.getElementById('productoNotas').value = data.notas || '';
+
+                productoModal.classList.add('active');
+            } catch (error) {
+                console.error('Error al cargar producto:', error);
+                showAlert('Error al cargar producto: ' + error.message, 'error');
+            }
+        };
+
+        window.deleteProducto = async function(id) {
+            if (!confirm('¿Estás seguro de que deseas eliminar este producto?')) return;
+
+            try {
+                showLoading(true);
+                const { error } = await supabaseClient
+                    .from('productos')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                showAlert('✅ Producto eliminado exitosamente', 'success');
+                await loadProductosData();
+            } catch (error) {
+                console.error('Error al eliminar producto:', error);
+                showAlert('Error al eliminar producto: ' + error.message, 'error');
+                showLoading(false);
+            }
+        };
+
+        // Event Listeners - Productos
+        if (addProductoBtn) {
+            addProductoBtn.addEventListener('click', () => {
+                currentEditingProductoId = null;
+                productoForm.reset();
+                document.getElementById('productoModalTitle').textContent = 'Nuevo Producto';
+                document.getElementById('productoSubmitText').textContent = 'Crear Producto';
+                document.getElementById('presupuestoFechaEmision').value = new Date().toISOString().split('T')[0];
+                productoModal.classList.add('active');
+            });
+        }
+
+        if (closeProductoModal) {
+            closeProductoModal.addEventListener('click', () => {
+                productoModal.classList.remove('active');
+            });
+        }
+
+        if (cancelProductoBtn) {
+            cancelProductoBtn.addEventListener('click', () => {
+                productoModal.classList.remove('active');
+            });
+        }
+
+        if (productoForm) {
+            productoForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                try {
+                    showLoading(true);
+
+                    const productoData = {
+                        user_id: currentUser.id,
+                        nombre: document.getElementById('productoNombre').value,
+                        descripcion: document.getElementById('productoDescripcion').value || null,
+                        categoria: document.getElementById('productoCategoria').value || null,
+                        sku: document.getElementById('productoSKU').value || null,
+                        codigo_barras: document.getElementById('productoCodigoBarras').value || null,
+                        precio: parseFloat(document.getElementById('productoPrecio').value) || 0,
+                        moneda: document.getElementById('productoMoneda').value,
+                        costo: parseFloat(document.getElementById('productoCosto').value) || 0,
+                        stock_disponible: parseFloat(document.getElementById('productoStock').value) || 0,
+                        unidad: document.getElementById('productoUnidad').value,
+                        proveedor: document.getElementById('productoProveedor').value || null,
+                        estado: document.getElementById('productoEstado').value,
+                        imagen_url: document.getElementById('productoImagenUrl').value || null,
+                        notas: document.getElementById('productoNotas').value || null
+                    };
+
+                    if (currentEditingProductoId) {
+                        // Actualizar
+                        const { error } = await supabaseClient
+                            .from('productos')
+                            .update(productoData)
+                            .eq('id', currentEditingProductoId);
+
+                        if (error) throw error;
+                        showAlert('✅ Producto actualizado exitosamente', 'success');
+                    } else {
+                        // Crear
+                        const { error } = await supabaseClient
+                            .from('productos')
+                            .insert([productoData]);
+
+                        if (error) throw error;
+                        showAlert('✅ Producto creado exitosamente', 'success');
+                    }
+
+                    productoModal.classList.remove('active');
+                    await loadProductosData();
+                } catch (error) {
+                    console.error('Error al guardar producto:', error);
+                    showAlert('Error al guardar producto: ' + error.message, 'error');
+                    showLoading(false);
+                }
+            });
+        }
+
+        if (searchProductos) {
+            searchProductos.addEventListener('input', applyProductosFilters);
+        }
+
+        if (filterCategoriaProducto) {
+            filterCategoriaProducto.addEventListener('change', applyProductosFilters);
+        }
+
+        if (filterEstadoProducto) {
+            filterEstadoProducto.addEventListener('change', applyProductosFilters);
+        }
+
+        if (refreshProductosBtn) {
+            refreshProductosBtn.addEventListener('click', loadProductosData);
+        }
+
+        if (exportProductosBtn) {
+            exportProductosBtn.addEventListener('click', () => {
+                exportToCSV(filteredProductos, 'productos');
+            });
+        }
+
+        // ============================================
+        // IMPORTACIÓN MASIVA DE PRODUCTOS
+        // ============================================
+        const importProductosBtn = document.getElementById('importProductosBtn');
+        const importProductosModal = document.getElementById('importProductosModal');
+        const closeImportProductosModal = document.getElementById('closeImportProductosModal');
+        const cancelImportProductosBtn = document.getElementById('cancelImportProductosBtn');
+        const csvFileInput = document.getElementById('csvFileInput');
+        const importPreview = document.getElementById('importPreview');
+        const executeImportBtn = document.getElementById('executeImportBtn');
+        let parsedCSVData = [];
+
+        if (importProductosBtn) {
+            importProductosBtn.addEventListener('click', () => {
+                parsedCSVData = [];
+                csvFileInput.value = '';
+                importPreview.style.display = 'none';
+                executeImportBtn.style.display = 'none';
+                importProductosModal.classList.add('active');
+            });
+        }
+
+        if (closeImportProductosModal) {
+            closeImportProductosModal.addEventListener('click', () => {
+                importProductosModal.classList.remove('active');
+            });
+        }
+
+        if (cancelImportProductosBtn) {
+            cancelImportProductosBtn.addEventListener('click', () => {
+                importProductosModal.classList.remove('active');
+            });
+        }
+
+        if (csvFileInput) {
+            csvFileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const csv = event.target.result;
+                        parsedCSVData = parseCSV(csv);
+
+                        if (parsedCSVData.length === 0) {
+                            showAlert('El archivo CSV está vacío o no tiene el formato correcto', 'error');
+                            return;
+                        }
+
+                        mostrarVistaPrevia(parsedCSVData);
+                        executeImportBtn.style.display = 'inline-flex';
+                    } catch (error) {
+                        console.error('Error al leer CSV:', error);
+                        showAlert('Error al leer el archivo CSV: ' + error.message, 'error');
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        function parseCSV(csv) {
+            const lines = csv.split('\n').filter(line => line.trim());
+            if (lines.length < 2) return [];
+
+            const headers = lines[0].split(',').map(h => h.trim());
+            const data = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(v => v.trim());
+                const row = {};
+
+                headers.forEach((header, index) => {
+                    row[header] = values[index] || '';
+                });
+
+                // Validar campos obligatorios
+                if (row.nombre && row.precio) {
+                    data.push(row);
+                }
+            }
+
+            return data;
+        }
+
+        function mostrarVistaPrevia(data) {
+            const previewTable = document.getElementById('previewTable');
+            const importStats = document.getElementById('importStats');
+
+            // Mostrar primeras 5 filas
+            const preview = data.slice(0, 5);
+
+            // Headers
+            const headers = Object.keys(preview[0]);
+            previewTable.querySelector('thead').innerHTML = `
+                <tr>
+                    ${headers.map(h => `<th style="padding: 8px; text-align: left;">${h}</th>`).join('')}
+                </tr>
+            `;
+
+            // Rows
+            previewTable.querySelector('tbody').innerHTML = preview.map(row => `
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    ${headers.map(h => `<td style="padding: 8px;">${row[h] || '-'}</td>`).join('')}
+                </tr>
+            `).join('');
+
+            importStats.textContent = `Se importarán ${data.length} productos`;
+            importPreview.style.display = 'block';
+
+            document.getElementById('importBtnText').textContent = `Importar ${data.length} Productos`;
+        }
+
+        function descargarPlantillaCSV() {
+            const headers = 'nombre,descripcion,categoria,sku,codigo_barras,precio,costo,stock_disponible,stock_minimo,unidad,proveedor,codigo_proveedor,imagen_url,estado,notas,tags';
+            const ejemplo1 = 'Laptop HP 15,Laptop HP 15 pulgadas 8GB RAM,Electrónica,LAP-001,7501234567890,2500.00,2000.00,10,5,unidad,HP Inc,HP-LAP-15,https://ejemplo.com/laptop.jpg,activo,Producto de alta demanda,tecnologia;computadoras';
+            const ejemplo2 = 'Mouse Inalámbrico,Mouse inalámbrico Logitech,Accesorios,MOU-001,7509876543210,45.00,30.00,50,10,unidad,Logitech,LOG-M185,https://ejemplo.com/mouse.jpg,activo,,accesorios;perifericos';
+            const ejemplo3 = 'Teclado Mecánico,Teclado mecánico RGB,Accesorios,TEC-001,,150.00,100.00,20,5,unidad,Redragon,RED-K552,,,gaming;teclados';
+
+            const csv = `${headers}\n${ejemplo1}\n${ejemplo2}\n${ejemplo3}`;
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'plantilla_productos.csv';
+            link.click();
+        }
+
+        if (executeImportBtn) {
+            executeImportBtn.addEventListener('click', async () => {
+                if (parsedCSVData.length === 0) {
+                    showAlert('No hay datos para importar', 'error');
+                    return;
+                }
+
+                if (!confirm(`¿Estás seguro de que deseas importar ${parsedCSVData.length} productos?`)) {
+                    return;
+                }
+
+                try {
+                    showLoading(true);
+
+                    const productosToInsert = parsedCSVData.map(row => ({
+                        user_id: currentUser.id,
+                        nombre: row.nombre,
+                        descripcion: row.descripcion || null,
+                        categoria: row.categoria || null,
+                        sku: row.sku || null,
+                        codigo_barras: row.codigo_barras || null,
+                        precio: parseFloat(row.precio) || 0,
+                        costo: parseFloat(row.costo) || 0,
+                        stock_disponible: parseFloat(row.stock_disponible) || 0,
+                        stock_minimo: parseFloat(row.stock_minimo) || 0,
+                        unidad: row.unidad || 'unidad',
+                        proveedor: row.proveedor || null,
+                        codigo_proveedor: row.codigo_proveedor || null,
+                        imagen_url: row.imagen_url || null,
+                        estado: row.estado || 'activo',
+                        notas: row.notas || null,
+                        tags: row.tags || null,
+                        moneda: 'PEN'
+                    }));
+
+                    const { data, error } = await supabaseClient
+                        .from('productos')
+                        .insert(productosToInsert);
+
+                    if (error) throw error;
+
+                    showAlert(`✅ ${parsedCSVData.length} productos importados exitosamente`, 'success');
+                    importProductosModal.classList.remove('active');
+                    await loadProductosData();
+                } catch (error) {
+                    console.error('Error al importar productos:', error);
+                    showAlert('Error al importar productos: ' + error.message, 'error');
+                    showLoading(false);
+                }
+            });
+        }
+
+        // ============================================
+        // PRESUPUESTOS - Variables y Estado
+        // ============================================
+        let allPresupuestos = [];
+        let filteredPresupuestos = [];
+        let currentPagePresupuestos = 1;
+        const itemsPerPagePresupuestos = 15;
+        let currentEditingPresupuestoId = null;
+        let presupuestoItems = [];
+        let itemCounter = 0;
+
+        // Elementos del DOM - Presupuestos
+        const presupuestosSection = document.querySelector('.presupuestos');
+        const presupuestosTableBody = document.getElementById('presupuestosTableBody');
+        const presupuestoPagination = document.getElementById('presupuestoPagination');
+        const searchPresupuestos = document.getElementById('searchPresupuestos');
+        const filterEstadoPresupuesto = document.getElementById('filterEstadoPresupuesto');
+        const addPresupuestoBtn = document.getElementById('addPresupuestoBtn');
+        const refreshPresupuestosBtn = document.getElementById('refreshPresupuestosBtn');
+        const exportPresupuestosBtn = document.getElementById('exportPresupuestosBtn');
+        const presupuestoModal = document.getElementById('presupuestoModal');
+        const closePresupuestoModal = document.getElementById('closePresupuestoModal');
+        const cancelPresupuestoBtn = document.getElementById('cancelPresupuestoBtn');
+        const presupuestoForm = document.getElementById('presupuestoForm');
+        const addItemBtn = document.getElementById('addItemBtn');
+        const itemsContainer = document.getElementById('itemsContainer');
+        const vistaPresupuestoModal = document.getElementById('vistaPresupuestoModal');
+        const closeVistaPresupuestoModal = document.getElementById('closeVistaPresupuestoModal');
+        const closeVistaBtn = document.getElementById('closeVistaBtn');
+        const copiarLinkBtn = document.getElementById('copiarLinkBtn');
+
+        // ============================================
+        // PRESUPUESTOS - Funciones
+        // ============================================
+
+        async function loadPresupuestosData() {
+            try {
+                showLoading(true);
+                const { data, error } = await supabaseClient
+                    .from('presupuestos')
+                    .select(`
+                        *,
+                        clientes (
+                            nombre,
+                            email
+                        )
+                    `)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                allPresupuestos = data || [];
+                filteredPresupuestos = [...allPresupuestos];
+
+                renderPresupuestos();
+                updatePresupuestosMetrics();
+                showLoading(false);
+            } catch (error) {
+                console.error('Error al cargar presupuestos:', error);
+                showAlert('Error al cargar presupuestos: ' + error.message, 'error');
+                showLoading(false);
+            }
+        }
+
+        function updatePresupuestosMetrics() {
+            const total = allPresupuestos.length;
+            const valorTotal = allPresupuestos.reduce((sum, p) => sum + parseFloat(p.total || 0), 0);
+            const aprobados = allPresupuestos.filter(p => p.estado === 'aprobado').length;
+            const tasaAprobacion = total > 0 ? ((aprobados / total) * 100).toFixed(1) : 0;
+            const pendientes = allPresupuestos.filter(p => p.estado === 'pendiente').length;
+
+            document.getElementById('totalPresupuestosCount').textContent = total;
+            document.getElementById('valorTotalPresupuestos').textContent = `S/ ${valorTotal.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`;
+            document.getElementById('tasaAprobacionPresupuestos').textContent = `${tasaAprobacion}%`;
+            document.getElementById('presupuestosPendientes').textContent = pendientes;
+        }
+
+        function applyPresupuestosFilters() {
+            const searchTerm = searchPresupuestos.value.toLowerCase();
+            const estadoFilter = filterEstadoPresupuesto.value;
+
+            filteredPresupuestos = allPresupuestos.filter(presupuesto => {
+                const matchesSearch = !searchTerm ||
+                    presupuesto.numero?.toLowerCase().includes(searchTerm) ||
+                    presupuesto.clientes?.nombre?.toLowerCase().includes(searchTerm);
+
+                const matchesEstado = !estadoFilter || presupuesto.estado === estadoFilter;
+
+                return matchesSearch && matchesEstado;
+            });
+
+            currentPagePresupuestos = 1;
+            renderPresupuestos();
+        }
+
+        function renderPresupuestos() {
+            const startIndex = (currentPagePresupuestos - 1) * itemsPerPagePresupuestos;
+            const endIndex = startIndex + itemsPerPagePresupuestos;
+            const presupuestosToShow = filteredPresupuestos.slice(startIndex, endIndex);
+
+            if (presupuestosToShow.length === 0) {
+                presupuestosTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px;">
+                            <i class="fas fa-file-invoice-dollar" style="font-size: 48px; color: var(--text-secondary); margin-bottom: 10px;"></i>
+                            <p style="color: var(--text-secondary);">No hay presupuestos que coincidan con los filtros</p>
+                        </td>
+                    </tr>
+                `;
+                presupuestoPagination.innerHTML = '';
+                return;
+            }
+
+            presupuestosTableBody.innerHTML = presupuestosToShow.map(presupuesto => {
+                const estadoBadge = getPresupuestoEstadoBadge(presupuesto.estado);
+                const clienteNombre = presupuesto.clientes?.nombre || 'Sin cliente';
+                const fechaEmision = new Date(presupuesto.fecha_emision).toLocaleDateString('es-PE');
+                const fechaVencimiento = new Date(presupuesto.fecha_vencimiento).toLocaleDateString('es-PE');
+                const total = parseFloat(presupuesto.total || 0).toFixed(2);
+
+                return `
+                    <tr>
+                        <td><strong>${presupuesto.numero}</strong></td>
+                        <td>${clienteNombre}</td>
+                        <td>${fechaEmision}</td>
+                        <td>${fechaVencimiento}</td>
+                        <td><strong>${presupuesto.moneda} ${total}</strong></td>
+                        <td>${estadoBadge}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="verPresupuesto('${presupuesto.id}')" title="Ver">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-secondary" onclick="editPresupuesto('${presupuesto.id}')" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deletePresupuesto('${presupuesto.id}')" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            renderPresupuestoPagination();
+        }
+
+        function getPresupuestoEstadoBadge(estado) {
+            const badges = {
+                'pendiente': '<span class="badge" style="background: #f39c12;">Pendiente</span>',
+                'aprobado': '<span class="badge" style="background: #27ae60;">Aprobado</span>',
+                'rechazado': '<span class="badge" style="background: #e74c3c;">Rechazado</span>',
+                'vencido': '<span class="badge" style="background: #95a5a6;">Vencido</span>'
+            };
+            return badges[estado] || '<span class="badge">Desconocido</span>';
+        }
+
+        function renderPresupuestoPagination() {
+            const totalPages = Math.ceil(filteredPresupuestos.length / itemsPerPagePresupuestos);
+
+            if (totalPages <= 1) {
+                presupuestoPagination.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '';
+
+            if (currentPagePresupuestos > 1) {
+                paginationHTML += `<button class="btn btn-sm btn-secondary" onclick="changePresupuestoPage(${currentPagePresupuestos - 1})">Anterior</button>`;
+            }
+
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === currentPagePresupuestos) {
+                    paginationHTML += `<button class="btn btn-sm btn-primary">${i}</button>`;
+                } else if (i === 1 || i === totalPages || (i >= currentPagePresupuestos - 1 && i <= currentPagePresupuestos + 1)) {
+                    paginationHTML += `<button class="btn btn-sm btn-secondary" onclick="changePresupuestoPage(${i})">${i}</button>`;
+                } else if (i === currentPagePresupuestos - 2 || i === currentPagePresupuestos + 2) {
+                    paginationHTML += `<span>...</span>`;
+                }
+            }
+
+            if (currentPagePresupuestos < totalPages) {
+                paginationHTML += `<button class="btn btn-sm btn-secondary" onclick="changePresupuestoPage(${currentPagePresupuestos + 1})">Siguiente</button>`;
+            }
+
+            presupuestoPagination.innerHTML = paginationHTML;
+        }
+
+        window.changePresupuestoPage = function(page) {
+            currentPagePresupuestos = page;
+            renderPresupuestos();
+        };
+
+        // Gestión de Items del Presupuesto
+        function addPresupuestoItem(itemData = null) {
+            itemCounter++;
+            const itemId = itemData?.id || `temp_${itemCounter}`;
+
+            const itemHTML = `
+                <div class="presupuesto-item" data-item-id="${itemId}" style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--border-color);">
+                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; align-items: end;">
+                        <div class="form-group" style="margin: 0;">
+                            <label>Descripción *</label>
+                            <input type="text" class="item-descripcion" value="${itemData?.descripcion || ''}" required>
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label>Cantidad *</label>
+                            <input type="number" class="item-cantidad" value="${itemData?.cantidad || 1}" step="0.01" min="0.01" required>
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label>Precio Unit. *</label>
+                            <input type="number" class="item-precio" value="${itemData?.precio_unitario || 0}" step="0.01" min="0" required>
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label>Total</label>
+                            <input type="text" class="item-total" value="S/ 0.00" readonly style="background: var(--bg-secondary); font-weight: 600;">
+                        </div>
+                        <div style="padding-top: 20px;">
+                            <button type="button" class="btn btn-sm btn-danger" onclick="removePresupuestoItem('${itemId}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            itemsContainer.insertAdjacentHTML('beforeend', itemHTML);
+
+            // Agregar event listeners para recalcular
+            const itemElement = itemsContainer.querySelector(`[data-item-id="${itemId}"]`);
+            itemElement.querySelector('.item-cantidad').addEventListener('input', recalcularTotalesPresupuesto);
+            itemElement.querySelector('.item-precio').addEventListener('input', recalcularTotalesPresupuesto);
+
+            recalcularTotalesPresupuesto();
+        }
+
+        window.removePresupuestoItem = function(itemId) {
+            const itemElement = itemsContainer.querySelector(`[data-item-id="${itemId}"]`);
+            if (itemElement) {
+                itemElement.remove();
+                recalcularTotalesPresupuesto();
+            }
+        };
+
+        function recalcularTotalesPresupuesto() {
+            let subtotal = 0;
+
+            // Calcular subtotal de todos los items
+            const items = itemsContainer.querySelectorAll('.presupuesto-item');
+            items.forEach(item => {
+                const cantidad = parseFloat(item.querySelector('.item-cantidad').value) || 0;
+                const precio = parseFloat(item.querySelector('.item-precio').value) || 0;
+                const total = cantidad * precio;
+
+                item.querySelector('.item-total').value = `S/ ${total.toFixed(2)}`;
+                subtotal += total;
+            });
+
+            // Obtener porcentajes
+            const descuentoPct = parseFloat(document.getElementById('presupuestoDescuento').value) || 0;
+            const impuestoPct = parseFloat(document.getElementById('presupuestoImpuesto').value) || 0;
+
+            // Calcular descuento
+            const descuentoMonto = subtotal * (descuentoPct / 100);
+
+            // Calcular impuesto sobre (subtotal - descuento)
+            const baseImponible = subtotal - descuentoMonto;
+            const impuestoMonto = baseImponible * (impuestoPct / 100);
+
+            // Calcular total
+            const total = baseImponible + impuestoMonto;
+
+            // Actualizar displays
+            document.getElementById('presupuestoSubtotalDisplay').textContent = `S/ ${subtotal.toFixed(2)}`;
+            document.getElementById('presupuestoDescuentoDisplay').textContent = `- S/ ${descuentoMonto.toFixed(2)}`;
+            document.getElementById('presupuestoImpuestoDisplay').textContent = `S/ ${impuestoMonto.toFixed(2)}`;
+            document.getElementById('presupuestoTotalDisplay').textContent = `S/ ${total.toFixed(2)}`;
+        }
+
+        async function loadClientesForPresupuesto() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('clientes')
+                    .select('id, nombre')
+                    .order('nombre');
+
+                if (error) throw error;
+
+                const select = document.getElementById('presupuestoCliente');
+                select.innerHTML = '<option value="">Seleccionar cliente...</option>';
+
+                data.forEach(cliente => {
+                    select.innerHTML += `<option value="${cliente.id}">${cliente.nombre}</option>`;
+                });
+            } catch (error) {
+                console.error('Error al cargar clientes:', error);
+            }
+        }
+
+        window.verPresupuesto = async function(id) {
+            try {
+                showLoading(true);
+
+                // Cargar presupuesto con items
+                const { data: presupuesto, error: presError } = await supabaseClient
+                    .from('presupuestos')
+                    .select(`
+                        *,
+                        clientes (
+                            nombre,
+                            email,
+                            telefono,
+                            direccion
+                        )
+                    `)
+                    .eq('id', id)
+                    .single();
+
+                if (presError) throw presError;
+
+                const { data: items, error: itemsError } = await supabaseClient
+                    .from('presupuesto_items')
+                    .select('*')
+                    .eq('presupuesto_id', id)
+                    .order('orden');
+
+                if (itemsError) throw itemsError;
+
+                // Generar vista previa
+                const vistaContent = document.getElementById('vistaPresupuestoContent');
+                const linkPublico = `${window.location.origin}/presupuesto.html?id=${presupuesto.link_publico}`;
+
+                vistaContent.innerHTML = `
+                    <div style="max-width: 800px; margin: 0 auto; font-family: Arial, sans-serif;">
+                        <!-- Header -->
+                        <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid var(--primary);">
+                            <h1 style="color: var(--primary); margin: 0;">PRESUPUESTO</h1>
+                            <p style="font-size: 18px; color: var(--text-secondary); margin: 5px 0;">${presupuesto.numero}</p>
+                        </div>
+
+                        <!-- Info Cliente y Fechas -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+                            <div>
+                                <h3 style="color: var(--primary); margin-bottom: 10px;">Cliente:</h3>
+                                <p style="margin: 5px 0;"><strong>${presupuesto.clientes?.nombre || 'Sin cliente'}</strong></p>
+                                <p style="margin: 5px 0; color: var(--text-secondary);">${presupuesto.clientes?.email || ''}</p>
+                                <p style="margin: 5px 0; color: var(--text-secondary);">${presupuesto.clientes?.telefono || ''}</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <p style="margin: 5px 0;"><strong>Fecha Emisión:</strong> ${new Date(presupuesto.fecha_emision).toLocaleDateString('es-PE')}</p>
+                                <p style="margin: 5px 0;"><strong>Vencimiento:</strong> ${new Date(presupuesto.fecha_vencimiento).toLocaleDateString('es-PE')}</p>
+                                <p style="margin: 5px 0;"><strong>Estado:</strong> ${getPresupuestoEstadoBadge(presupuesto.estado)}</p>
+                            </div>
+                        </div>
+
+                        <!-- Items -->
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                            <thead>
+                                <tr style="background: var(--primary); color: white;">
+                                    <th style="padding: 12px; text-align: left;">Descripción</th>
+                                    <th style="padding: 12px; text-align: center;">Cantidad</th>
+                                    <th style="padding: 12px; text-align: right;">Precio Unit.</th>
+                                    <th style="padding: 12px; text-align: right;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${items.map((item, index) => `
+                                    <tr style="border-bottom: 1px solid var(--border-color); ${index % 2 === 0 ? 'background: var(--bg-secondary);' : ''}">
+                                        <td style="padding: 12px;">${item.descripcion}</td>
+                                        <td style="padding: 12px; text-align: center;">${parseFloat(item.cantidad).toFixed(2)}</td>
+                                        <td style="padding: 12px; text-align: right;">${presupuesto.moneda} ${parseFloat(item.precio_unitario).toFixed(2)}</td>
+                                        <td style="padding: 12px; text-align: right; font-weight: 600;">${presupuesto.moneda} ${parseFloat(item.total).toFixed(2)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+
+                        <!-- Totales -->
+                        <div style="margin-left: auto; max-width: 300px;">
+                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                                <span>Subtotal:</span>
+                                <span style="font-weight: 600;">${presupuesto.moneda} ${parseFloat(presupuesto.subtotal).toFixed(2)}</span>
+                            </div>
+                            ${presupuesto.descuento_monto > 0 ? `
+                                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color); color: #e74c3c;">
+                                    <span>Descuento (${presupuesto.descuento_porcentaje}%):</span>
+                                    <span style="font-weight: 600;">- ${presupuesto.moneda} ${parseFloat(presupuesto.descuento_monto).toFixed(2)}</span>
+                                </div>
+                            ` : ''}
+                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                                <span>IGV (${presupuesto.impuesto_porcentaje}%):</span>
+                                <span style="font-weight: 600;">${presupuesto.moneda} ${parseFloat(presupuesto.impuesto_monto).toFixed(2)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 20px; font-weight: 700; color: var(--primary);">
+                                <span>TOTAL:</span>
+                                <span>${presupuesto.moneda} ${parseFloat(presupuesto.total).toFixed(2)}</span>
+                            </div>
+                        </div>
+
+                        ${presupuesto.notas ? `
+                            <div style="margin-top: 30px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
+                                <h4 style="color: var(--primary); margin-bottom: 10px;">Notas:</h4>
+                                <p style="margin: 0; white-space: pre-wrap;">${presupuesto.notas}</p>
+                            </div>
+                        ` : ''}
+
+                        ${presupuesto.terminos_condiciones ? `
+                            <div style="margin-top: 20px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
+                                <h4 style="color: var(--primary); margin-bottom: 10px;">Términos y Condiciones:</h4>
+                                <p style="margin: 0; white-space: pre-wrap; font-size: 12px; color: var(--text-secondary);">${presupuesto.terminos_condiciones}</p>
+                            </div>
+                        ` : ''}
+
+                        <!-- Link Público -->
+                        <div style="margin-top: 30px; padding: 20px; background: #e8f5e9; border-radius: 8px; border: 2px solid #27ae60;">
+                            <h4 style="color: #27ae60; margin-bottom: 10px;"><i class="fas fa-link"></i> Link Público:</h4>
+                            <p style="margin: 0; word-break: break-all; font-family: monospace; font-size: 12px;">${linkPublico}</p>
+                        </div>
+                    </div>
+                `;
+
+                // Guardar link para copiar
+                copiarLinkBtn.setAttribute('data-link', linkPublico);
+
+                vistaPresupuestoModal.classList.add('active');
+                showLoading(false);
+            } catch (error) {
+                console.error('Error al cargar presupuesto:', error);
+                showAlert('Error al cargar presupuesto: ' + error.message, 'error');
+                showLoading(false);
+            }
+        };
+
+        window.editPresupuesto = async function(id) {
+            showAlert('La edición de presupuestos estará disponible próximamente', 'info');
+        };
+
+        window.deletePresupuesto = async function(id) {
+            if (!confirm('¿Estás seguro de que deseas eliminar este presupuesto?')) return;
+
+            try {
+                showLoading(true);
+                const { error } = await supabaseClient
+                    .from('presupuestos')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                showAlert('✅ Presupuesto eliminado exitosamente', 'success');
+                await loadPresupuestosData();
+            } catch (error) {
+                console.error('Error al eliminar presupuesto:', error);
+                showAlert('Error al eliminar presupuesto: ' + error.message, 'error');
+                showLoading(false);
+            }
+        };
+
+        // Event Listeners - Presupuestos
+        if (addPresupuestoBtn) {
+            addPresupuestoBtn.addEventListener('click', async () => {
+                currentEditingPresupuestoId = null;
+                presupuestoForm.reset();
+                itemsContainer.innerHTML = '';
+                presupuestoItems = [];
+                itemCounter = 0;
+
+                document.getElementById('presupuestoModalTitle').textContent = 'Nuevo Presupuesto';
+                document.getElementById('presupuestoSubmitText').textContent = 'Crear Presupuesto';
+
+                // Establecer fechas por defecto
+                const today = new Date().toISOString().split('T')[0];
+                const nextMonth = new Date();
+                nextMonth.setMonth(nextMonth.getMonth() + 1);
+                const vencimiento = nextMonth.toISOString().split('T')[0];
+
+                document.getElementById('presupuestoFechaEmision').value = today;
+                document.getElementById('presupuestoFechaVencimiento').value = vencimiento;
+                document.getElementById('presupuestoImpuesto').value = '18';
+
+                await loadClientesForPresupuesto();
+
+                // Agregar un item por defecto
+                addPresupuestoItem();
+
+                presupuestoModal.classList.add('active');
+            });
+        }
+
+        if (addItemBtn) {
+            addItemBtn.addEventListener('click', () => {
+                addPresupuestoItem();
+            });
+        }
+
+        if (closePresupuestoModal) {
+            closePresupuestoModal.addEventListener('click', () => {
+                presupuestoModal.classList.remove('active');
+            });
+        }
+
+        if (cancelPresupuestoBtn) {
+            cancelPresupuestoBtn.addEventListener('click', () => {
+                presupuestoModal.classList.remove('active');
+            });
+        }
+
+        if (document.getElementById('presupuestoDescuento')) {
+            document.getElementById('presupuestoDescuento').addEventListener('input', recalcularTotalesPresupuesto);
+        }
+
+        if (document.getElementById('presupuestoImpuesto')) {
+            document.getElementById('presupuestoImpuesto').addEventListener('input', recalcularTotalesPresupuesto);
+        }
+
+        if (presupuestoForm) {
+            presupuestoForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                try {
+                    showLoading(true);
+
+                    // Validar que haya al menos un item
+                    const items = itemsContainer.querySelectorAll('.presupuesto-item');
+                    if (items.length === 0) {
+                        showAlert('Debes agregar al menos un item al presupuesto', 'error');
+                        showLoading(false);
+                        return;
+                    }
+
+                    // Recopilar datos del presupuesto
+                    const presupuestoData = {
+                        user_id: currentUser.id,
+                        cliente_id: document.getElementById('presupuestoCliente').value || null,
+                        fecha_emision: document.getElementById('presupuestoFechaEmision').value,
+                        fecha_vencimiento: document.getElementById('presupuestoFechaVencimiento').value,
+                        descuento_porcentaje: parseFloat(document.getElementById('presupuestoDescuento').value) || 0,
+                        impuesto_porcentaje: parseFloat(document.getElementById('presupuestoImpuesto').value) || 18,
+                        notas: document.getElementById('presupuestoNotas').value || null,
+                        terminos_condiciones: document.getElementById('presupuestoTerminos').value || null,
+                        moneda: 'PEN'
+                    };
+
+                    // Crear presupuesto
+                    const { data: presupuesto, error: presError } = await supabaseClient
+                        .from('presupuestos')
+                        .insert([presupuestoData])
+                        .select()
+                        .single();
+
+                    if (presError) throw presError;
+
+                    // Crear items
+                    const itemsData = [];
+                    items.forEach((item, index) => {
+                        const cantidad = parseFloat(item.querySelector('.item-cantidad').value) || 0;
+                        const precioUnitario = parseFloat(item.querySelector('.item-precio').value) || 0;
+                        const descripcion = item.querySelector('.item-descripcion').value;
+
+                        itemsData.push({
+                            presupuesto_id: presupuesto.id,
+                            descripcion: descripcion,
+                            cantidad: cantidad,
+                            precio_unitario: precioUnitario,
+                            subtotal: cantidad * precioUnitario,
+                            total: cantidad * precioUnitario,
+                            orden: index
+                        });
+                    });
+
+                    const { error: itemsError } = await supabaseClient
+                        .from('presupuesto_items')
+                        .insert(itemsData);
+
+                    if (itemsError) throw itemsError;
+
+                    showAlert('✅ Presupuesto creado exitosamente', 'success');
+                    presupuestoModal.classList.remove('active');
+                    await loadPresupuestosData();
+
+                    // Mostrar vista previa automáticamente
+                    setTimeout(() => verPresupuesto(presupuesto.id), 500);
+                } catch (error) {
+                    console.error('Error al guardar presupuesto:', error);
+                    showAlert('Error al guardar presupuesto: ' + error.message, 'error');
+                    showLoading(false);
+                }
+            });
+        }
+
+        if (searchPresupuestos) {
+            searchPresupuestos.addEventListener('input', applyPresupuestosFilters);
+        }
+
+        if (filterEstadoPresupuesto) {
+            filterEstadoPresupuesto.addEventListener('change', applyPresupuestosFilters);
+        }
+
+        if (refreshPresupuestosBtn) {
+            refreshPresupuestosBtn.addEventListener('click', loadPresupuestosData);
+        }
+
+        if (exportPresupuestosBtn) {
+            exportPresupuestosBtn.addEventListener('click', () => {
+                exportToCSV(filteredPresupuestos, 'presupuestos');
+            });
+        }
+
+        if (closeVistaPresupuestoModal) {
+            closeVistaPresupuestoModal.addEventListener('click', () => {
+                vistaPresupuestoModal.classList.remove('active');
+            });
+        }
+
+        if (closeVistaBtn) {
+            closeVistaBtn.addEventListener('click', () => {
+                vistaPresupuestoModal.classList.remove('active');
+            });
+        }
+
+        if (copiarLinkBtn) {
+            copiarLinkBtn.addEventListener('click', () => {
+                const link = copiarLinkBtn.getAttribute('data-link');
+                navigator.clipboard.writeText(link).then(() => {
+                    showAlert('✅ Link copiado al portapapeles', 'success');
+                }).catch(err => {
+                    showAlert('Error al copiar link', 'error');
+                });
+            });
         }
     </script>
 </body>

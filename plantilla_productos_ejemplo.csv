@@ -1,0 +1,22 @@
+nombre,descripcion,categoria,sku,codigo_barras,precio,costo,stock_disponible,stock_minimo,unidad,proveedor,codigo_proveedor,imagen_url,estado,notas,tags
+Laptop HP 15,Laptop HP 15 pulgadas 8GB RAM 256GB SSD,Electrónica,LAP-001,7501234567890,2500.00,2000.00,10,5,unidad,HP Inc,HP-LAP-15,https://ejemplo.com/laptop.jpg,activo,Producto de alta demanda,tecnologia;computadoras
+Mouse Inalámbrico Logitech,Mouse inalámbrico Logitech M185,Accesorios,MOU-001,7509876543210,45.00,30.00,50,10,unidad,Logitech,LOG-M185,https://ejemplo.com/mouse.jpg,activo,Stock suficiente,accesorios;perifericos
+Teclado Mecánico RGB,Teclado mecánico RGB retroiluminado,Accesorios,TEC-001,7501122334455,150.00,100.00,20,5,unidad,Redragon,RED-K552,,activo,,gaming;teclados
+Monitor LG 24 pulgadas,Monitor LG 24 pulgadas Full HD IPS,Electrónica,MON-001,7506677889900,450.00,350.00,15,3,unidad,LG Electronics,LG-24MK430H,,activo,Excelente calidad de imagen,monitores;pantallas
+Silla Gamer,Silla gamer ergonómica con soporte lumbar,Muebles,SIL-001,,350.00,250.00,8,2,unidad,DXRacer,DXR-OH-FH11,,activo,Muy cómoda,muebles;gaming
+Escritorio de Oficina,Escritorio de oficina 120x60cm color blanco,Muebles,ESC-001,,280.00,200.00,12,3,unidad,IKEA,IKEA-MALM,,activo,,muebles;oficina
+Auriculares Bluetooth,Auriculares Bluetooth con cancelación de ruido,Accesorios,AUR-001,7502233445566,180.00,120.00,25,5,unidad,Sony,SONY-WH1000XM4,,activo,Excelente calidad de sonido,audio;accesorios
+Webcam HD,Webcam Full HD 1080p con micrófono integrado,Accesorios,WEB-001,7503344556677,120.00,80.00,30,8,unidad,Logitech,LOG-C920,,activo,,video;accesorios
+Disco Duro Externo 1TB,Disco duro externo portátil 1TB USB 3.0,Almacenamiento,HDD-001,7504455667788,180.00,140.00,40,10,unidad,Western Digital,WD-MY-PASSPORT,,activo,Backup confiable,almacenamiento;datos
+Memoria USB 64GB,Memoria USB 3.0 64GB alta velocidad,Almacenamiento,USB-001,7505566778899,35.00,20.00,100,20,unidad,SanDisk,SD-ULTRA-64GB,,activo,,almacenamiento;usb
+Cable HDMI 2m,Cable HDMI 2.0 de 2 metros 4K,Cables,CAB-001,7506677889900,25.00,15.00,80,15,unidad,Belkin,BEL-HDMI-2M,,activo,,cables;video
+Adaptador USB-C,Adaptador USB-C a USB 3.0 multipuerto,Accesorios,ADP-001,7507788990011,45.00,30.00,60,12,unidad,Anker,ANK-USB-C-HUB,,activo,,adaptadores;usb
+Mousepad Gaming,Mousepad gaming XXL 90x40cm,Accesorios,PAD-001,,30.00,18.00,50,10,unidad,HyperX,HX-MPFS-XL,,activo,,gaming;accesorios
+Lámpara LED Escritorio,Lámpara LED de escritorio regulable,Iluminación,LAM-001,,65.00,40.00,20,5,unidad,Philips,PHI-LED-DESK,,activo,Ahorro de energía,iluminacion;oficina
+Soporte para Laptop,Soporte ajustable para laptop aluminio,Accesorios,SOP-001,,55.00,35.00,25,5,unidad,Rain Design,RAIN-MSTAND,,activo,Mejora la postura,accesorios;ergonomia
+Impresora Multifuncional,Impresora multifuncional HP DeskJet,Oficina,IMP-001,7508899001122,350.00,280.00,8,2,unidad,HP Inc,HP-DESKJET-2720,,activo,Imprime copia escanea,impresoras;oficina
+Router WiFi 6,Router WiFi 6 doble banda AC1200,Redes,ROU-001,7509900112233,180.00,130.00,15,3,unidad,TP-Link,TPL-ARCHER-AX10,,activo,Alta velocidad,redes;wifi
+Switch Ethernet 8 puertos,Switch Ethernet Gigabit 8 puertos,Redes,SWI-001,7500011223344,85.00,60.00,12,3,unidad,Netgear,NET-GS308,,activo,,redes;ethernet
+Cámara de Seguridad,Cámara de seguridad WiFi 1080p,Seguridad,CAM-001,7501122334455,120.00,85.00,18,4,unidad,Xiaomi,XIA-MI-HOME-CAM,,activo,Visión nocturna,seguridad;camaras
+Batería Externa 20000mAh,Batería externa portátil 20000mAh,Accesorios,BAT-001,7502233445566,75.00,50.00,35,8,unidad,Anker,ANK-POWERCORE-20K,,activo,Carga rápida,baterias;portatil
+
