@@ -2480,7 +2480,7 @@
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             showLoading(true);
-            
+
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
 
@@ -2490,12 +2490,34 @@
                     password
                 });
 
-                if (error) throw error;
+                if (error) {
+                    console.error('Error de login:', error);
 
-                showAlert('¡Inicio de sesión exitoso!', 'success');
-                currentUser = data.user;
-                showCRM();
+                    // Mensajes de error más amigables
+                    let errorMessage = 'Error al iniciar sesión';
+
+                    if (error.message.includes('Invalid login credentials')) {
+                        errorMessage = 'Email o contraseña incorrectos';
+                    } else if (error.message.includes('Email not confirmed')) {
+                        errorMessage = 'Por favor confirma tu email antes de iniciar sesión';
+                    } else if (error.message.includes('User not found')) {
+                        errorMessage = 'No existe una cuenta con este email';
+                    } else {
+                        errorMessage = error.message;
+                    }
+
+                    throw new Error(errorMessage);
+                }
+
+                if (data.user) {
+                    showAlert('¡Inicio de sesión exitoso!', 'success');
+                    currentUser = data.user;
+                    showCRM();
+                } else {
+                    throw new Error('No se pudo iniciar sesión. Por favor intenta de nuevo.');
+                }
             } catch (error) {
+                console.error('Error en login:', error);
                 showAlert(error.message || 'Error al iniciar sesión');
             } finally {
                 showLoading(false);
@@ -2506,7 +2528,7 @@
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             showLoading(true);
-            
+
             const name = document.getElementById('registerName').value;
             const email = document.getElementById('registerEmail').value;
             const password = document.getElementById('registerPassword').value;
@@ -2535,13 +2557,35 @@
 
                 if (error) throw error;
 
-                showAlert('¡Cuenta creada exitosamente! Revisa tu email para confirmar.', 'success');
-                
-                // Cambiar a tab de login
-                setTimeout(() => {
-                    document.querySelector('.auth-tab[data-tab="login"]').click();
-                }, 2000);
+                // Si el usuario fue creado exitosamente
+                if (data.user) {
+                    // Verificar si necesita confirmación de email
+                    if (data.user.confirmed_at || data.session) {
+                        // Email auto-confirmado o sesión creada
+                        showAlert('¡Cuenta creada exitosamente! Iniciando sesión...', 'success');
+                        currentUser = data.user;
+
+                        // Si hay sesión, mostrar CRM directamente
+                        if (data.session) {
+                            setTimeout(() => {
+                                showCRM();
+                            }, 1000);
+                        } else {
+                            // Si no hay sesión, ir a login
+                            setTimeout(() => {
+                                document.querySelector('.auth-tab[data-tab="login"]').click();
+                            }, 1500);
+                        }
+                    } else {
+                        // Necesita confirmación de email
+                        showAlert('¡Cuenta creada! Por favor revisa tu email para confirmar tu cuenta.', 'success');
+                        setTimeout(() => {
+                            document.querySelector('.auth-tab[data-tab="login"]').click();
+                        }, 2000);
+                    }
+                }
             } catch (error) {
+                console.error('Error en registro:', error);
                 showAlert(error.message || 'Error al crear la cuenta');
             } finally {
                 showLoading(false);
