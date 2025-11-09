@@ -2481,8 +2481,10 @@
             e.preventDefault();
             showLoading(true);
 
-            const email = document.getElementById('loginEmail').value;
+            const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
+
+            console.log('🔐 Intentando iniciar sesión con:', email);
 
             try {
                 const { data, error } = await supabaseClient.auth.signInWithPassword({
@@ -2490,34 +2492,40 @@
                     password
                 });
 
+                console.log('📊 Respuesta de Supabase:', { data, error });
+
                 if (error) {
-                    console.error('Error de login:', error);
+                    console.error('❌ Error de login:', error);
 
                     // Mensajes de error más amigables
                     let errorMessage = 'Error al iniciar sesión';
 
                     if (error.message.includes('Invalid login credentials')) {
-                        errorMessage = 'Email o contraseña incorrectos';
+                        errorMessage = '❌ Email o contraseña incorrectos.\n\nCredenciales de prueba:\nEmail: admin@vendemas.com\nPassword: Admin123456';
                     } else if (error.message.includes('Email not confirmed')) {
-                        errorMessage = 'Por favor confirma tu email antes de iniciar sesión';
+                        errorMessage = '⚠️ Tu email no está confirmado.\n\nPor favor, ve a Supabase > Authentication > Settings\ny deshabilita "Enable email confirmations"';
                     } else if (error.message.includes('User not found')) {
-                        errorMessage = 'No existe una cuenta con este email';
+                        errorMessage = '❌ No existe una cuenta con este email.\n\nPrueba con: admin@vendemas.com';
+                    } else if (error.message.includes('Invalid Refresh Token')) {
+                        errorMessage = '⚠️ Sesión expirada. Por favor intenta de nuevo.';
                     } else {
-                        errorMessage = error.message;
+                        errorMessage = `❌ Error: ${error.message}`;
                     }
 
                     throw new Error(errorMessage);
                 }
 
                 if (data.user) {
+                    console.log('✅ Login exitoso! Usuario:', data.user.email);
                     showAlert('¡Inicio de sesión exitoso!', 'success');
                     currentUser = data.user;
                     showCRM();
                 } else {
+                    console.error('❌ No se recibió usuario en la respuesta');
                     throw new Error('No se pudo iniciar sesión. Por favor intenta de nuevo.');
                 }
             } catch (error) {
-                console.error('Error en login:', error);
+                console.error('❌ Error en login:', error);
                 showAlert(error.message || 'Error al iniciar sesión');
             } finally {
                 showLoading(false);
@@ -2529,13 +2537,21 @@
             e.preventDefault();
             showLoading(true);
 
-            const name = document.getElementById('registerName').value;
-            const email = document.getElementById('registerEmail').value;
+            const name = document.getElementById('registerName').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
             const password = document.getElementById('registerPassword').value;
             const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
 
+            console.log('📝 Intentando registrar usuario:', email);
+
             if (password !== passwordConfirm) {
-                showAlert('Las contraseñas no coinciden');
+                showAlert('❌ Las contraseñas no coinciden');
+                showLoading(false);
+                return;
+            }
+
+            if (password.length < 6) {
+                showAlert('❌ La contraseña debe tener al menos 6 caracteres');
                 showLoading(false);
                 return;
             }
@@ -2543,6 +2559,8 @@
             try {
                 // Detectar automáticamente la URL correcta (localhost o producción)
                 const redirectUrl = window.location.origin;
+
+                console.log('📤 Enviando solicitud de registro a Supabase...');
 
                 const { data, error } = await supabaseClient.auth.signUp({
                     email,
@@ -2555,13 +2573,32 @@
                     }
                 });
 
-                if (error) throw error;
+                console.log('📊 Respuesta de registro:', { data, error });
+
+                if (error) {
+                    console.error('❌ Error en registro:', error);
+
+                    let errorMessage = error.message;
+
+                    if (error.message.includes('User already registered')) {
+                        errorMessage = '❌ Este email ya está registrado.\n\nPrueba iniciar sesión en su lugar.';
+                    } else if (error.message.includes('Password should be at least')) {
+                        errorMessage = '❌ La contraseña debe tener al menos 6 caracteres.';
+                    } else if (error.message.includes('Invalid email')) {
+                        errorMessage = '❌ El email no es válido.';
+                    }
+
+                    throw new Error(errorMessage);
+                }
 
                 // Si el usuario fue creado exitosamente
                 if (data.user) {
+                    console.log('✅ Usuario creado:', data.user.email);
+
                     // Verificar si necesita confirmación de email
                     if (data.user.confirmed_at || data.session) {
                         // Email auto-confirmado o sesión creada
+                        console.log('✅ Email auto-confirmado, iniciando sesión...');
                         showAlert('¡Cuenta creada exitosamente! Iniciando sesión...', 'success');
                         currentUser = data.user;
 
@@ -2578,14 +2615,15 @@
                         }
                     } else {
                         // Necesita confirmación de email
-                        showAlert('¡Cuenta creada! Por favor revisa tu email para confirmar tu cuenta.', 'success');
+                        console.log('⚠️ Requiere confirmación de email');
+                        showAlert('⚠️ Cuenta creada, pero necesitas confirmar tu email.\n\nPor favor, ve a Supabase > Authentication > Settings\ny deshabilita "Enable email confirmations"', 'success');
                         setTimeout(() => {
                             document.querySelector('.auth-tab[data-tab="login"]').click();
-                        }, 2000);
+                        }, 3000);
                     }
                 }
             } catch (error) {
-                console.error('Error en registro:', error);
+                console.error('❌ Error en registro:', error);
                 showAlert(error.message || 'Error al crear la cuenta');
             } finally {
                 showLoading(false);
