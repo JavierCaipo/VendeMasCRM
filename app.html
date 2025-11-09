@@ -4498,7 +4498,7 @@
         const importProductosModal = document.getElementById('importProductosModal');
         const closeImportProductosModal = document.getElementById('closeImportProductosModal');
         const cancelImportProductosBtn = document.getElementById('cancelImportProductosBtn');
-        const csvFileInput = document.getElementById('csvFileInput');
+        const csvFileInputProductos = document.getElementById('csvFileInput');
         const importPreview = document.getElementById('importPreview');
         const executeImportBtn = document.getElementById('executeImportBtn');
         let parsedCSVData = [];
@@ -4506,7 +4506,7 @@
         if (importProductosBtn) {
             importProductosBtn.addEventListener('click', () => {
                 parsedCSVData = [];
-                csvFileInput.value = '';
+                csvFileInputProductos.value = '';
                 importPreview.style.display = 'none';
                 executeImportBtn.style.display = 'none';
                 importProductosModal.classList.add('active');
@@ -4525,8 +4525,8 @@
             });
         }
 
-        if (csvFileInput) {
-            csvFileInput.addEventListener('change', (e) => {
+        if (csvFileInputProductos) {
+            csvFileInputProductos.addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
 
