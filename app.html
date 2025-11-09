@@ -60,6 +60,17 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 9999;
+            overflow-y: auto;
+        }
+
+        .auth-wrapper.hidden {
+            display: none !important;
         }
 
         .auth-container {
@@ -459,8 +470,40 @@
         .clientes {
             display: none;
         }
-        
+
         .clientes.active {
+            display: block;
+        }
+
+        .pipeline {
+            display: none;
+        }
+
+        .pipeline.active {
+            display: block;
+        }
+
+        .oportunidades {
+            display: none;
+        }
+
+        .oportunidades.active {
+            display: block;
+        }
+
+        .productos {
+            display: none;
+        }
+
+        .productos.active {
+            display: block;
+        }
+
+        .presupuestos {
+            display: none;
+        }
+
+        .presupuestos.active {
             display: block;
         }
         
@@ -2518,22 +2561,22 @@
 
         // Mostrar CRM
         function showCRM() {
-            authWrapper.style.display = 'none';
+            authWrapper.classList.add('hidden');
             crmContainer.classList.add('active');
-            
+
             if (currentUser) {
                 const userName = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
                 document.getElementById('userName').textContent = userName;
                 document.getElementById('userEmail').textContent = currentUser.email;
                 document.getElementById('userAvatar').textContent = getInitials(userName);
-                
+
                 loadDashboardData();
             }
         }
 
         // Mostrar Auth
         function showAuth() {
-            authWrapper.style.display = 'flex';
+            authWrapper.classList.remove('hidden');
             crmContainer.classList.remove('active');
             loginForm.reset();
             registerForm.reset();
