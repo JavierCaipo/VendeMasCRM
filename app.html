@@ -1293,14 +1293,37 @@
             <!-- Oportunidades -->
             <div class="oportunidades">
                 <div class="header">
-                    <h2>Gestión de Oportunidades</h2>
+                    <h2><i class="fas fa-bullseye"></i> Gestión de Oportunidades de Venta</h2>
                     <div class="header-actions">
+                        <button class="btn btn-secondary" id="refreshOportunidadesBtn">
+                            <i class="fas fa-sync-alt"></i> Actualizar
+                        </button>
                         <button class="btn btn-secondary" id="exportOportunidadesBtn">
                             <i class="fas fa-file-export"></i> Exportar
                         </button>
                         <button class="btn btn-primary" id="addOportunidadBtn">
                             <i class="fas fa-plus"></i> Nueva Oportunidad
                         </button>
+                    </div>
+                </div>
+
+                <!-- Métricas Rápidas -->
+                <div class="kanban-stats" style="margin-bottom: 20px;">
+                    <div class="kanban-stat-card">
+                        <div class="kanban-stat-label">Total Oportunidades</div>
+                        <div class="kanban-stat-value" id="totalOportunidadesCount">0</div>
+                    </div>
+                    <div class="kanban-stat-card">
+                        <div class="kanban-stat-label">Valor Total Pipeline</div>
+                        <div class="kanban-stat-value" id="valorTotalOportunidades">S/ 0</div>
+                    </div>
+                    <div class="kanban-stat-card">
+                        <div class="kanban-stat-label">Tasa de Conversión</div>
+                        <div class="kanban-stat-value" id="tasaConversionOportunidades">0%</div>
+                    </div>
+                    <div class="kanban-stat-card">
+                        <div class="kanban-stat-label">Oportunidades en Riesgo</div>
+                        <div class="kanban-stat-value" id="oportunidadesEnRiesgo" style="color: #e74c3c;">0</div>
                     </div>
                 </div>
 
@@ -1365,36 +1388,42 @@
                         <thead>
                             <tr>
                                 <th class="sortable" data-column="titulo">
-                                    Título <i class="fas fa-sort"></i>
+                                    Nombre del Acuerdo <i class="fas fa-sort"></i>
                                 </th>
                                 <th class="sortable" data-column="cliente">
-                                    Cliente <i class="fas fa-sort"></i>
-                                </th>
-                                <th class="sortable" data-column="valor_estimado">
-                                    Valor <i class="fas fa-sort"></i>
-                                </th>
-                                <th class="sortable" data-column="probabilidad">
-                                    Probabilidad <i class="fas fa-sort"></i>
+                                    Cliente/Empresa <i class="fas fa-sort"></i>
                                 </th>
                                 <th class="sortable" data-column="etapa">
-                                    Etapa <i class="fas fa-sort"></i>
+                                    Etapa Actual <i class="fas fa-sort"></i>
                                 </th>
-                                <th class="sortable" data-column="estado">
-                                    Estado <i class="fas fa-sort"></i>
+                                <th class="sortable" data-column="valor_estimado">
+                                    Valor del Trato <i class="fas fa-sort"></i>
                                 </th>
-                                <th class="sortable" data-column="prioridad">
-                                    Prioridad <i class="fas fa-sort"></i>
+                                <th class="sortable" data-column="lead_score">
+                                    Lead Score <i class="fas fa-sort"></i>
+                                </th>
+                                <th class="sortable" data-column="probabilidad">
+                                    Prob. Cierre <i class="fas fa-sort"></i>
                                 </th>
                                 <th class="sortable" data-column="fecha_cierre_estimada">
-                                    Cierre Estimado <i class="fas fa-sort"></i>
+                                    Pronóstico Cierre <i class="fas fa-sort"></i>
                                 </th>
+                                <th class="sortable" data-column="asignado_a">
+                                    Asignado a <i class="fas fa-sort"></i>
+                                </th>
+                                <th class="sortable" data-column="origen">
+                                    Fuente/Atribución <i class="fas fa-sort"></i>
+                                </th>
+                                <th>Estado/Alertas</th>
                                 <th style="width: 150px;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="oportunidadesTableBody">
                             <tr>
-                                <td colspan="9" style="text-align: center; padding: 40px;">
-                                    No hay oportunidades registradas. Haz clic en "Nueva Oportunidad" para agregar una.
+                                <td colspan="11" style="text-align: center; padding: 40px;">
+                                    <i class="fas fa-bullseye" style="font-size: 48px; color: var(--text-secondary); margin-bottom: 15px; display: block;"></i>
+                                    <p style="color: var(--text-secondary); font-size: 16px;">No hay oportunidades registradas.</p>
+                                    <p style="color: var(--text-secondary); font-size: 14px;">Haz clic en "Nueva Oportunidad" para crear tu primer acuerdo.</p>
                                 </td>
                             </tr>
                         </tbody>
@@ -1715,88 +1744,161 @@
 
     <!-- Modal Nueva Oportunidad -->
     <div class="modal" id="oportunidadModal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 900px;">
             <div class="modal-header">
-                <h3><i class="fas fa-bullseye"></i> Nueva Oportunidad</h3>
+                <h3><i class="fas fa-bullseye"></i> Nueva Oportunidad de Venta</h3>
                 <button class="modal-close" id="closeOportunidadModal">&times;</button>
             </div>
             <form id="oportunidadForm">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="oportunidadTitulo">Título de la Oportunidad *</label>
-                        <input type="text" id="oportunidadTitulo" required placeholder="Ej: Venta de 100 unidades">
+                <!-- SECCIÓN 1: Identificación y Estado -->
+                <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h4 style="color: var(--primary); margin-bottom: 15px; font-size: 14px;">
+                        <i class="fas fa-id-card"></i> Identificación y Estado
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="oportunidadTitulo">Nombre del Acuerdo/Oportunidad *</label>
+                            <input type="text" id="oportunidadTitulo" required placeholder="Ej: Proyecto de implementación - Empresa ABC">
+                        </div>
+                        <div class="form-group">
+                            <label for="oportunidadCliente">Cliente/Empresa *</label>
+                            <select id="oportunidadCliente" required>
+                                <option value="">Seleccionar cliente...</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="oportunidadCliente">Cliente *</label>
-                        <select id="oportunidadCliente" required>
-                            <option value="">Seleccionar cliente...</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="oportunidadValor">Valor Estimado *</label>
-                        <input type="number" id="oportunidadValor" required placeholder="0.00" step="0.01" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="oportunidadMoneda">Moneda</label>
-                        <select id="oportunidadMoneda">
-                            <option value="PEN">PEN - Soles</option>
-                            <option value="USD">USD - Dólares</option>
-                            <option value="EUR">EUR - Euros</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="oportunidadProbabilidad">Probabilidad de Cierre (%)</label>
-                        <input type="number" id="oportunidadProbabilidad" placeholder="50" min="0" max="100" value="50">
-                    </div>
-                    <div class="form-group">
-                        <label for="oportunidadEtapa">Etapa</label>
-                        <select id="oportunidadEtapa">
-                            <option value="prospecto">Prospecto</option>
-                            <option value="contactado">Contactado</option>
-                            <option value="calificado">Calificado</option>
-                            <option value="negociacion">Negociación</option>
-                            <option value="ganado">Ganado</option>
-                        </select>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="oportunidadEtapa">Etapa Actual del Embudo *</label>
+                            <select id="oportunidadEtapa">
+                                <option value="prospecto">Prospecto</option>
+                                <option value="contactado">Contactado</option>
+                                <option value="calificado">Calificado</option>
+                                <option value="negociacion">Negociación</option>
+                                <option value="ganado">Ganado</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="oportunidadAsignado">Asignado a (Representante de Ventas)</label>
+                            <input type="text" id="oportunidadAsignado" placeholder="Nombre del vendedor">
+                        </div>
                     </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="oportunidadPrioridad">Prioridad</label>
-                        <select id="oportunidadPrioridad">
-                            <option value="baja">Baja</option>
-                            <option value="media" selected>Media</option>
-                            <option value="alta">Alta</option>
-                        </select>
+
+                <!-- SECCIÓN 2: Campos Financieros y Predictivos -->
+                <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h4 style="color: var(--primary); margin-bottom: 15px; font-size: 14px;">
+                        <i class="fas fa-chart-line"></i> Información Financiera y Predictiva
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="oportunidadValor">Valor del Trato *</label>
+                            <input type="number" id="oportunidadValor" required placeholder="0.00" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="oportunidadMoneda">Moneda</label>
+                            <select id="oportunidadMoneda">
+                                <option value="PEN">PEN - Soles</option>
+                                <option value="USD">USD - Dólares</option>
+                                <option value="EUR">EUR - Euros</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="oportunidadFechaCierre">Fecha Cierre Estimada</label>
-                        <input type="date" id="oportunidadFechaCierre">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="oportunidadProbabilidad">Probabilidad de Cierre (%) *</label>
+                            <input type="number" id="oportunidadProbabilidad" placeholder="50" min="0" max="100" value="50">
+                            <small style="color: var(--text-secondary); font-size: 11px;">Predicción basada en datos históricos</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="oportunidadFechaCierre">Pronóstico de Cierre (Fecha Estimada) *</label>
+                            <input type="date" id="oportunidadFechaCierre">
+                            <small style="color: var(--text-secondary); font-size: 11px;">Fundamental para informes de previsión</small>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="oportunidadLTV">Valor de Vida del Cliente (LTV)</label>
+                            <input type="number" id="oportunidadLTV" placeholder="0.00" step="0.01" min="0">
+                            <small style="color: var(--text-secondary); font-size: 11px;">Valor total promedio que gastará el cliente</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="oportunidadLeadScore">Puntuación del Lead (Lead Score)</label>
+                            <input type="number" id="oportunidadLeadScore" placeholder="0" min="0" max="100">
+                            <small style="color: var(--text-secondary); font-size: 11px;">Generada por IA según comportamiento (0-100)</small>
+                        </div>
                     </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="oportunidadOrigen">Origen del Lead</label>
-                        <input type="text" id="oportunidadOrigen" placeholder="Ej: Sitio web, Referido, Llamada">
+
+                <!-- SECCIÓN 3: Actividad y Priorización -->
+                <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h4 style="color: var(--primary); margin-bottom: 15px; font-size: 14px;">
+                        <i class="fas fa-tasks"></i> Actividad y Priorización
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="oportunidadPrioridad">Prioridad</label>
+                            <select id="oportunidadPrioridad">
+                                <option value="baja">Baja</option>
+                                <option value="media" selected>Media</option>
+                                <option value="alta">Alta</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="oportunidadProximaTarea">Próxima Tarea/Acción</label>
+                            <input type="text" id="oportunidadProximaTarea" placeholder="Ej: Enviar propuesta Q3, Llamada de diagnóstico">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="oportunidadTags">Etiquetas (separadas por comas)</label>
-                        <input type="text" id="oportunidadTags" placeholder="Ej: Urgente, Mayorista">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="oportunidadDeadline">Plazo de la Próxima Tarea (Deadline)</label>
+                            <input type="date" id="oportunidadDeadline">
+                            <small style="color: var(--text-secondary); font-size: 11px;">Garantiza contacto oportuno y consistente</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="oportunidadOrigen">Atribución (Fuente de Origen)</label>
+                            <select id="oportunidadOrigen">
+                                <option value="">Seleccionar fuente...</option>
+                                <option value="Búsqueda Orgánica">Búsqueda Orgánica (SEO)</option>
+                                <option value="Anuncio PPC Google">Anuncio PPC - Google Ads</option>
+                                <option value="Anuncio PPC Facebook">Anuncio PPC - Facebook Ads</option>
+                                <option value="Anuncio PPC LinkedIn">Anuncio PPC - LinkedIn Ads</option>
+                                <option value="Email Marketing">Email Marketing</option>
+                                <option value="Referido">Referido</option>
+                                <option value="Llamada Entrante">Llamada Entrante</option>
+                                <option value="Evento/Feria">Evento/Feria</option>
+                                <option value="Redes Sociales">Redes Sociales</option>
+                                <option value="Sitio Web">Sitio Web (Formulario)</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                            <small style="color: var(--text-secondary); font-size: 11px;">Vital para medir ROI de campañas</small>
+                        </div>
                     </div>
                 </div>
-                <div class="form-row full">
-                    <div class="form-group">
-                        <label for="oportunidadDescripcion">Descripción</label>
-                        <textarea id="oportunidadDescripcion" rows="3" placeholder="Detalles de la oportunidad..."></textarea>
+
+                <!-- SECCIÓN 4: Información Adicional -->
+                <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h4 style="color: var(--primary); margin-bottom: 15px; font-size: 14px;">
+                        <i class="fas fa-info-circle"></i> Información Adicional
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="oportunidadTags">Etiquetas (separadas por comas)</label>
+                            <input type="text" id="oportunidadTags" placeholder="Ej: Urgente, Mayorista, VIP">
+                        </div>
+                    </div>
+                    <div class="form-row full">
+                        <div class="form-group">
+                            <label for="oportunidadDescripcion">Descripción/Notas</label>
+                            <textarea id="oportunidadDescripcion" rows="3" placeholder="Detalles adicionales de la oportunidad, necesidades del cliente, observaciones..."></textarea>
+                        </div>
                     </div>
                 </div>
+
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" id="cancelOportunidadBtn">Cancelar</button>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Guardar Oportunidad
+                        <i class="fas fa-save"></i> Crear Oportunidad
                     </button>
                 </div>
             </form>
@@ -3131,34 +3233,78 @@
                 e.preventDefault();
 
                 try {
+                    console.log('Iniciando creación de oportunidad...');
+
+                    const oportunidadData = {
+                        user_id: currentUser.id,
+                        cliente_id: document.getElementById('oportunidadCliente').value,
+                        titulo: document.getElementById('oportunidadTitulo').value,
+                        descripcion: document.getElementById('oportunidadDescripcion').value,
+                        valor_estimado: parseFloat(document.getElementById('oportunidadValor').value) || 0,
+                        moneda: document.getElementById('oportunidadMoneda').value,
+                        probabilidad: parseInt(document.getElementById('oportunidadProbabilidad').value) || 50,
+                        etapa: document.getElementById('oportunidadEtapa').value,
+                        prioridad: document.getElementById('oportunidadPrioridad').value,
+                        fecha_cierre_estimada: document.getElementById('oportunidadFechaCierre').value || null,
+                        origen: document.getElementById('oportunidadOrigen').value || null,
+                        tags: document.getElementById('oportunidadTags').value || null,
+                        estado: 'abierta'
+                    };
+
+                    // Solo agregar campos avanzados si existen en la BD
+                    const asignadoInput = document.getElementById('oportunidadAsignado');
+                    const leadScoreInput = document.getElementById('oportunidadLeadScore');
+                    const ltvInput = document.getElementById('oportunidadLTV');
+                    const proximaTareaInput = document.getElementById('oportunidadProximaTarea');
+                    const deadlineInput = document.getElementById('oportunidadDeadline');
+
+                    if (asignadoInput) oportunidadData.asignado_a = asignadoInput.value || null;
+                    if (leadScoreInput) oportunidadData.lead_score = parseInt(leadScoreInput.value) || 0;
+                    if (ltvInput) oportunidadData.ltv = parseFloat(ltvInput.value) || 0;
+                    if (proximaTareaInput) oportunidadData.proxima_tarea = proximaTareaInput.value || null;
+                    if (deadlineInput) oportunidadData.deadline_tarea = deadlineInput.value || null;
+
+                    // Campos que siempre deben existir si ejecutaste el script SQL
+                    oportunidadData.ultima_actividad = new Date().toISOString();
+                    oportunidadData.dias_sin_actividad = 0;
+                    oportunidadData.en_riesgo = false;
+
+                    console.log('Datos a insertar:', oportunidadData);
+
                     const { data, error } = await supabaseClient
                         .from('oportunidades')
-                        .insert([{
-                            user_id: currentUser.id,
-                            cliente_id: document.getElementById('oportunidadCliente').value,
-                            titulo: document.getElementById('oportunidadTitulo').value,
-                            descripcion: document.getElementById('oportunidadDescripcion').value,
-                            valor_estimado: parseFloat(document.getElementById('oportunidadValor').value) || 0,
-                            moneda: document.getElementById('oportunidadMoneda').value,
-                            probabilidad: parseInt(document.getElementById('oportunidadProbabilidad').value) || 50,
-                            etapa: document.getElementById('oportunidadEtapa').value,
-                            prioridad: document.getElementById('oportunidadPrioridad').value,
-                            fecha_cierre_estimada: document.getElementById('oportunidadFechaCierre').value || null,
-                            origen: document.getElementById('oportunidadOrigen').value,
-                            tags: document.getElementById('oportunidadTags').value,
-                            estado: 'abierta'
-                        }])
+                        .insert([oportunidadData])
                         .select();
 
-                    if (error) throw error;
+                    if (error) {
+                        console.error('Error de Supabase:', error);
+                        throw error;
+                    }
 
-                    showAlert('Oportunidad creada exitosamente', 'success');
+                    console.log('Oportunidad creada:', data);
+                    showAlert('✅ Oportunidad creada exitosamente', 'success');
+
+                    // Resetear formulario
+                    oportunidadForm.reset();
+
+                    // Cerrar modal
                     oportunidadModal.classList.remove('active');
+
+                    // Recargar datos
                     await loadOportunidadesData();
                     await loadPipelineData();
                 } catch (error) {
                     console.error('Error al crear oportunidad:', error);
-                    showAlert('Error al crear la oportunidad', 'error');
+
+                    // Mensaje de error más específico
+                    let errorMsg = 'Error al crear la oportunidad';
+                    if (error.message.includes('column') && error.message.includes('does not exist')) {
+                        errorMsg = '⚠️ Primero debes ejecutar el script SQL: ACTUALIZAR-OPORTUNIDADES-SIMPLE.sql';
+                    } else if (error.message) {
+                        errorMsg = error.message;
+                    }
+
+                    showAlert(errorMsg, 'error');
                 }
             });
         }
@@ -3200,21 +3346,81 @@
                 tbody.innerHTML = oportunidadesToShow.map(op => {
                     const clienteNombre = op.clientes?.nombre || 'Sin cliente';
                     const clienteEmpresa = op.clientes?.empresa || '';
+                    const clienteEmail = op.clientes?.email || '';
                     const valorFormateado = new Intl.NumberFormat('es-PE', {
                         style: 'currency',
                         currency: op.moneda || 'PEN'
                     }).format(op.valor_estimado || 0);
 
+                    // Calcular estado de riesgo
+                    const diasSinActividad = op.dias_sin_actividad || 0;
+                    const enRiesgo = op.en_riesgo || diasSinActividad > 14;
+                    const motivoRiesgo = op.motivo_riesgo || (diasSinActividad > 14 ? 'Sin actividad reciente' : '');
+
+                    // Lead Score con color
+                    const leadScore = op.lead_score || 0;
+                    const leadScoreColor = leadScore >= 70 ? '#27ae60' : leadScore >= 40 ? '#f39c12' : '#e74c3c';
+
+                    // Probabilidad con barra visual
+                    const probabilidad = op.probabilidad || 50;
+                    const probColor = probabilidad >= 70 ? '#27ae60' : probabilidad >= 40 ? '#f39c12' : '#e74c3c';
+
                     return `
-                        <tr>
-                            <td><strong>${op.titulo}</strong></td>
-                            <td>${clienteNombre}${clienteEmpresa ? '<br><small>' + clienteEmpresa + '</small>' : ''}</td>
-                            <td><strong style="color: var(--primary);">${valorFormateado}</strong></td>
-                            <td>${op.probabilidad || 50}%</td>
+                        <tr style="${enRiesgo ? 'background: rgba(231, 76, 60, 0.05);' : ''}">
+                            <td>
+                                <strong>${op.titulo}</strong>
+                                ${op.tags ? `<br><div class="tags-container" style="margin-top: 5px;">${op.tags.split(',').map(tag => `<span class="tag" style="font-size: 10px; padding: 2px 6px;">${tag.trim()}</span>`).join('')}</div>` : ''}
+                            </td>
+                            <td>
+                                <strong>${clienteNombre}</strong>
+                                ${clienteEmpresa ? `<br><small style="color: var(--text-secondary);">${clienteEmpresa}</small>` : ''}
+                                ${clienteEmail ? `<br><small style="color: var(--text-secondary);"><i class="fas fa-envelope" style="font-size: 9px;"></i> ${clienteEmail}</small>` : ''}
+                            </td>
                             <td><span class="status status-${op.etapa}">${op.etapa}</span></td>
-                            <td><span class="status ${op.estado === 'ganada' ? 'status-ganado' : op.estado === 'perdida' ? 'status-perdido' : 'status-prospecto'}">${op.estado}</span></td>
-                            <td><span class="status ${op.prioridad === 'alta' ? 'status-perdido' : op.prioridad === 'media' ? 'status-negociacion' : 'status-prospecto'}">${op.prioridad}</span></td>
-                            <td>${op.fecha_cierre_estimada ? new Date(op.fecha_cierre_estimada).toLocaleDateString() : '-'}</td>
+                            <td><strong style="color: var(--primary); font-size: 15px;">${valorFormateado}</strong></td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 5px;">
+                                    <div style="width: 40px; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden;">
+                                        <div style="width: ${leadScore}%; height: 100%; background: ${leadScoreColor};"></div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: bold; color: ${leadScoreColor};">${leadScore}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 5px;">
+                                    <div style="width: 50px; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden;">
+                                        <div style="width: ${probabilidad}%; height: 100%; background: ${probColor};"></div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: bold; color: ${probColor};">${probabilidad}%</span>
+                                </div>
+                            </td>
+                            <td>
+                                ${op.fecha_cierre_estimada ? new Date(op.fecha_cierre_estimada).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
+                                ${op.deadline_tarea ? `<br><small style="color: var(--text-secondary);"><i class="fas fa-tasks" style="font-size: 9px;"></i> ${new Date(op.deadline_tarea).toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })}</small>` : ''}
+                            </td>
+                            <td>
+                                ${op.asignado_a ? `<i class="fas fa-user" style="font-size: 10px; color: var(--text-secondary);"></i> ${op.asignado_a}` : '<span style="color: var(--text-secondary); font-size: 11px;">Sin asignar</span>'}
+                            </td>
+                            <td>
+                                <span style="font-size: 11px; color: var(--text-secondary);">${op.origen || '-'}</span>
+                            </td>
+                            <td>
+                                ${enRiesgo ? `
+                                    <div style="display: flex; align-items: center; gap: 5px;">
+                                        <i class="fas fa-exclamation-triangle" style="color: #e74c3c; font-size: 14px;"></i>
+                                        <div>
+                                            <div style="font-size: 11px; font-weight: bold; color: #e74c3c;">EN RIESGO</div>
+                                            <div style="font-size: 9px; color: var(--text-secondary);">${motivoRiesgo}</div>
+                                        </div>
+                                    </div>
+                                ` : `
+                                    <div style="display: flex; align-items: center; gap: 5px;">
+                                        <i class="fas fa-check-circle" style="color: #27ae60; font-size: 14px;"></i>
+                                        <span style="font-size: 11px; color: #27ae60;">Activa</span>
+                                    </div>
+                                `}
+                                ${diasSinActividad > 0 ? `<br><small style="color: var(--text-secondary); font-size: 9px;">${diasSinActividad}d sin actividad</small>` : ''}
+                            </td>
                             <td>
                                 <div class="action-buttons">
                                     <button class="btn-icon btn-view" onclick="viewOportunidad('${op.id}')" title="Ver detalles">
@@ -3234,16 +3440,19 @@
             } else {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-secondary);">
-                            No se encontraron oportunidades.
+                        <td colspan="11" style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                            <i class="fas fa-search" style="font-size: 36px; margin-bottom: 10px; display: block;"></i>
+                            No se encontraron oportunidades con los filtros aplicados.
                         </td>
                     </tr>
                 `;
             }
 
-            // Actualizar contador
+            // Actualizar contador y métricas
             document.getElementById('oportunidadesCount').textContent =
                 `Mostrando ${filteredOportunidades.length} de ${allOportunidades.length} oportunidades`;
+
+            updateOportunidadesStats();
         }
 
         // Funciones placeholder para ver, editar y eliminar
@@ -3323,6 +3532,39 @@
             filterOportunidadEstado.value = '';
             filterOportunidadPrioridad.value = '';
             applyOportunidadesFilters();
+        }
+
+        // Actualizar estadísticas de oportunidades
+        function updateOportunidadesStats() {
+            const total = allOportunidades.length;
+            const ganadas = allOportunidades.filter(o => o.estado === 'ganada').length;
+            const enRiesgo = allOportunidades.filter(o => o.en_riesgo || (o.dias_sin_actividad || 0) > 14).length;
+
+            // Calcular valor total
+            const valorTotal = allOportunidades.reduce((sum, o) => {
+                return sum + (parseFloat(o.valor_estimado) || 0);
+            }, 0);
+
+            const valorFormateado = new Intl.NumberFormat('es-PE', {
+                style: 'currency',
+                currency: 'PEN',
+                minimumFractionDigits: 0
+            }).format(valorTotal);
+
+            // Calcular tasa de conversión
+            const tasaConversion = total > 0 ? ((ganadas / total) * 100).toFixed(1) : 0;
+
+            // Actualizar DOM
+            document.getElementById('totalOportunidadesCount').textContent = total;
+            document.getElementById('valorTotalOportunidades').textContent = valorFormateado;
+            document.getElementById('tasaConversionOportunidades').textContent = `${tasaConversion}%`;
+            document.getElementById('oportunidadesEnRiesgo').textContent = enRiesgo;
+        }
+
+        // Event listener para botón de actualizar
+        const refreshOportunidadesBtn = document.getElementById('refreshOportunidadesBtn');
+        if (refreshOportunidadesBtn) {
+            refreshOportunidadesBtn.addEventListener('click', loadOportunidadesData);
         }
     </script>
 </body>
