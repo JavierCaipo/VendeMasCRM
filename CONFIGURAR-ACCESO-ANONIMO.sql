@@ -127,29 +127,30 @@ ORDER BY tablename;
 -- ============================================
 
 -- Simular acceso anónimo a un presupuesto público
--- (Reemplaza 'UUID_DEL_LINK' con un link_publico real)
+-- NOTA: Estas queries están comentadas. Descoméntalas y reemplaza 'UUID_DEL_LINK'
+-- con un link_publico real de un presupuesto que hayas creado.
 
 -- Ver presupuesto por link público
-SELECT 
-    id,
-    numero,
-    cliente_id,
-    estado,
-    total,
-    link_publico
-FROM presupuestos
-WHERE link_publico = 'UUID_DEL_LINK';  -- Reemplaza con un UUID real
+-- SELECT
+--     id,
+--     numero,
+--     cliente_id,
+--     estado,
+--     total,
+--     link_publico
+-- FROM presupuestos
+-- WHERE link_publico = 'UUID_DEL_LINK';  -- Reemplaza con un UUID real
 
 -- Ver items del presupuesto
-SELECT 
-    pi.id,
-    pi.descripcion,
-    pi.cantidad,
-    pi.precio_unitario,
-    pi.subtotal
-FROM presupuesto_items pi
-JOIN presupuestos p ON p.id = pi.presupuesto_id
-WHERE p.link_publico = 'UUID_DEL_LINK';  -- Reemplaza con un UUID real
+-- SELECT
+--     pi.id,
+--     pi.descripcion,
+--     pi.cantidad,
+--     pi.precio_unitario,
+--     pi.subtotal
+-- FROM presupuesto_items pi
+-- JOIN presupuestos p ON p.id = pi.presupuesto_id
+-- WHERE p.link_publico = 'UUID_DEL_LINK';  -- Reemplaza con un UUID real
 
 -- ============================================
 -- ✅ CONFIGURACIÓN COMPLETADA
