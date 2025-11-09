@@ -4501,11 +4501,11 @@
         const csvFileInputProductos = document.getElementById('csvFileInput');
         const importPreview = document.getElementById('importPreview');
         const executeImportBtn = document.getElementById('executeImportBtn');
-        let parsedCSVData = [];
+        let parsedCSVDataProductos = [];
 
         if (importProductosBtn) {
             importProductosBtn.addEventListener('click', () => {
-                parsedCSVData = [];
+                parsedCSVDataProductos = [];
                 csvFileInputProductos.value = '';
                 importPreview.style.display = 'none';
                 executeImportBtn.style.display = 'none';
@@ -4534,14 +4534,14 @@
                 reader.onload = (event) => {
                     try {
                         const csv = event.target.result;
-                        parsedCSVData = parseCSV(csv);
+                        parsedCSVDataProductos = parseCSV(csv);
 
-                        if (parsedCSVData.length === 0) {
+                        if (parsedCSVDataProductos.length === 0) {
                             showAlert('El archivo CSV está vacío o no tiene el formato correcto', 'error');
                             return;
                         }
 
-                        mostrarVistaPrevia(parsedCSVData);
+                        mostrarVistaPrevia(parsedCSVDataProductos);
                         executeImportBtn.style.display = 'inline-flex';
                     } catch (error) {
                         console.error('Error al leer CSV:', error);
@@ -4621,19 +4621,19 @@
 
         if (executeImportBtn) {
             executeImportBtn.addEventListener('click', async () => {
-                if (parsedCSVData.length === 0) {
+                if (parsedCSVDataProductos.length === 0) {
                     showAlert('No hay datos para importar', 'error');
                     return;
                 }
 
-                if (!confirm(`¿Estás seguro de que deseas importar ${parsedCSVData.length} productos?`)) {
+                if (!confirm(`¿Estás seguro de que deseas importar ${parsedCSVDataProductos.length} productos?`)) {
                     return;
                 }
 
                 try {
                     showLoading(true);
 
-                    const productosToInsert = parsedCSVData.map(row => ({
+                    const productosToInsert = parsedCSVDataProductos.map(row => ({
                         user_id: currentUser.id,
                         nombre: row.nombre,
                         descripcion: row.descripcion || null,
@@ -4660,7 +4660,7 @@
 
                     if (error) throw error;
 
-                    showAlert(`✅ ${parsedCSVData.length} productos importados exitosamente`, 'success');
+                    showAlert(`✅ ${parsedCSVDataProductos.length} productos importados exitosamente`, 'success');
                     importProductosModal.classList.remove('active');
                     await loadProductosData();
                 } catch (error) {
