@@ -2866,39 +2866,48 @@
         let parsedCSVData = [];
 
         // Abrir modal de carga masiva
-        bulkUploadBtn.addEventListener('click', () => {
-            bulkUploadModal.classList.add('active');
-        });
+        if (bulkUploadBtn) {
+            bulkUploadBtn.addEventListener('click', () => {
+                bulkUploadModal.classList.add('active');
+            });
+        }
 
         // Cerrar modal de carga masiva
-        closeBulkModal.addEventListener('click', () => {
-            bulkUploadModal.classList.remove('active');
-            csvFileInput.value = '';
-            uploadPreview.style.display = 'none';
-            parsedCSVData = [];
-            uploadBulkBtn.disabled = true;
-        });
-
-        cancelBulkBtn.addEventListener('click', () => {
-            bulkUploadModal.classList.remove('active');
-            csvFileInput.value = '';
-            uploadPreview.style.display = 'none';
-            parsedCSVData = [];
-            uploadBulkBtn.disabled = true;
-        });
-
-        bulkUploadModal.addEventListener('click', (e) => {
-            if (e.target === bulkUploadModal) {
+        if (closeBulkModal) {
+            closeBulkModal.addEventListener('click', () => {
                 bulkUploadModal.classList.remove('active');
-                csvFileInput.value = '';
+                if (csvFileInput) csvFileInput.value = '';
                 uploadPreview.style.display = 'none';
                 parsedCSVData = [];
                 uploadBulkBtn.disabled = true;
-            }
-        });
+            });
+        }
+
+        if (cancelBulkBtn) {
+            cancelBulkBtn.addEventListener('click', () => {
+                bulkUploadModal.classList.remove('active');
+                if (csvFileInput) csvFileInput.value = '';
+                uploadPreview.style.display = 'none';
+                parsedCSVData = [];
+                uploadBulkBtn.disabled = true;
+            });
+        }
+
+        if (bulkUploadModal) {
+            bulkUploadModal.addEventListener('click', (e) => {
+                if (e.target === bulkUploadModal) {
+                    bulkUploadModal.classList.remove('active');
+                    if (csvFileInput) csvFileInput.value = '';
+                    uploadPreview.style.display = 'none';
+                    parsedCSVData = [];
+                    uploadBulkBtn.disabled = true;
+                }
+            });
+        }
 
         // Procesar archivo CSV
-        csvFileInput.addEventListener('change', (e) => {
+        if (csvFileInput) {
+            csvFileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
@@ -2915,7 +2924,8 @@
                 }
             };
             reader.readAsText(file);
-        });
+            });
+        }
 
         // Parsear CSV
         function parseCSV(csv) {
@@ -2984,38 +2994,40 @@
         }
 
         // Cargar clientes masivamente
-        uploadBulkBtn.addEventListener('click', async () => {
-            if (parsedCSVData.length === 0) return;
+        if (uploadBulkBtn) {
+            uploadBulkBtn.addEventListener('click', async () => {
+                if (parsedCSVData.length === 0) return;
 
-            try {
-                showAlert(`Cargando ${parsedCSVData.length} clientes...`, 'info');
+                try {
+                    showAlert(`Cargando ${parsedCSVData.length} clientes...`, 'info');
 
-                const clientsWithUser = parsedCSVData.map(client => ({
-                    ...client,
-                    fecha_registro: new Date().toISOString().split('T')[0],
-                    usuario_registro: currentUser.email,
-                    ultimo_contacto: new Date().toISOString(),
-                    user_id: currentUser.id
-                }));
+                    const clientsWithUser = parsedCSVData.map(client => ({
+                        ...client,
+                        fecha_registro: new Date().toISOString().split('T')[0],
+                        usuario_registro: currentUser.email,
+                        ultimo_contacto: new Date().toISOString(),
+                        user_id: currentUser.id
+                    }));
 
-                const { data, error } = await supabaseClient
-                    .from('clientes')
-                    .insert(clientsWithUser);
+                    const { data, error } = await supabaseClient
+                        .from('clientes')
+                        .insert(clientsWithUser);
 
-                if (error) throw error;
+                    if (error) throw error;
 
-                showAlert(`${parsedCSVData.length} clientes cargados exitosamente`, 'success');
-                bulkUploadModal.classList.remove('active');
-                csvFileInput.value = '';
-                uploadPreview.style.display = 'none';
-                parsedCSVData = [];
-                uploadBulkBtn.disabled = true;
-                loadClientesData();
-            } catch (error) {
-                console.error('Error al cargar clientes:', error);
-                showAlert('Error al cargar clientes: ' + error.message, 'error');
-            }
-        });
+                    showAlert(`${parsedCSVData.length} clientes cargados exitosamente`, 'success');
+                    bulkUploadModal.classList.remove('active');
+                    if (csvFileInput) csvFileInput.value = '';
+                    uploadPreview.style.display = 'none';
+                    parsedCSVData = [];
+                    uploadBulkBtn.disabled = true;
+                    loadClientesData();
+                } catch (error) {
+                    console.error('Error al cargar clientes:', error);
+                    showAlert('Error al cargar clientes: ' + error.message, 'error');
+                }
+            });
+        }
 
         // Cargar datos de clientes (ahora usa la nueva función con filtros)
         async function loadClientesData() {
