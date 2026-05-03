@@ -62,7 +62,11 @@ Deno.serve(async (req: Request) => {
           transaction_amount: precioFinalSoles,
           currency_id: "PEN"
         },
-        back_url: "https://vendemas.app/configuracion?pago=exito",
+        back_urls: {
+          success: "https://vendemas-crm.vercel.app/configuracion?pago=exito", 
+          failure: "https://vendemas-crm.vercel.app/configuracion",
+          pending: "https://vendemas-crm.vercel.app/configuracion" 
+        },
         status: "pending"
       })
     })
