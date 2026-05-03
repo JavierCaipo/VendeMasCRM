@@ -98,13 +98,35 @@ export default function Equipo() {
     }
   }
 
-  // ── 4. Mock de Invitación ──
-  function handleInvite(e) {
+  // ── 4. Invitación Real (Edge Function) ──
+  async function handleInvite(e) {
     e.preventDefault()
-    console.log('DATOS DE INVITACIÓN (Mock):', form)
-    showToast('success', 'Invitación enviada (Simulado)')
-    setInviteModalOpen(false)
-    setForm({ nombre: '', email: '', rol: 'comercial' })
+    if (!tenant?.id) return
+    
+    setIsSaving(true)
+    try {
+      const { data, error } = await supabase.functions.invoke('invite-user', {
+        body: {
+          email: form.email,
+          nombre_completo: form.nombre,
+          rol: form.rol,
+          negocio_id: tenant.id
+        }
+      })
+
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+
+      showToast('success', 'Invitación enviada con éxito')
+      setInviteModalOpen(false)
+      setForm({ nombre: '', email: '', rol: 'comercial' })
+      fetchUsuarios() // Recargar lista
+    } catch (err) {
+      console.error('Error invitando usuario:', err)
+      showToast('error', err.message || 'Error al enviar invitación')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -292,9 +314,11 @@ export default function Equipo() {
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all shadow-lg shadow-indigo-500/20"
+                  disabled={isSaving}
+                  className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  Enviar Invitación
+                  {isSaving ? <Loader2 size={16} className="animate-spin" /> : null}
+                  {isSaving ? 'Enviando...' : 'Enviar Invitación'}
                 </button>
               </div>
             </form>
