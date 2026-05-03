@@ -112,3 +112,13 @@
         *   **Validación:** Consulta directamente a la API de Mercado Pago (`/preapproval/{id}`) para verificar el estado `authorized` o `active`.
         *   **Efecto:** Actualiza el campo `plan` a `'pro'` en la tabla `negocios` usando el `external_reference` (ID del negocio).
     *   **Flujo:** Paywall -> Invoke `mp-checkout` -> Redirect to `init_point` -> MP Webhook -> Plan Upgrade.
+
+    ## Módulo de Recursos Humanos y Seguridad (RBAC)
+- **Estructura de Base de Datos:** Se implementó la tabla pública `usuarios_negocio` como puente seguro hacia `auth.users`.
+- **Roles y Accesos:** 
+  - Restricción estricta de roles (`admin`, `comercial`) y estados (`activo`, `suspendido`).
+  - **RLS Optimizado:** Se utilizan funciones `SECURITY DEFINER` (`get_my_negocio_id()`, `am_i_admin()`) para las políticas de seguridad, evitando la recursión infinita en PostgreSQL.
+- **Frontend (`apps/negocio_admin`):** 
+  - Nueva ruta `/equipo` para la gestión de usuarios del tenant.
+  - Interfaz premium para visualización y cambio rápido de estados (Activo/Suspendido) con impacto real-time en Supabase.
+- **Flujo de Invitación:** (En desarrollo) Edge Function separada para gestionar la creación segura de usuarios a través de `auth.admin.inviteUserByEmail`.

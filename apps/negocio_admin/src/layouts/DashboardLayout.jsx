@@ -29,6 +29,12 @@ const NAV_ITEMS = [
       { path: '/almacenes',   label: 'Almacenes',     icon: Warehouse       },
     ]
   },
+  { 
+    group: 'Recursos Humanos',
+    items: [
+      { path: '/equipo',       label: 'Equipo',        icon: Users },
+    ]
+  },
   { path: '/configuracion', label: 'Configuración', icon: Settings        },
 ]
 

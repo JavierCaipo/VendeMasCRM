@@ -22,6 +22,8 @@ import NuevaCotizacion   from './pages/ventas/NuevaCotizacion'
 import PublicQuoteView   from './pages/public/PublicQuoteView'
 import PipelineView      from './pages/crm/PipelineView'
 import SuperAdminConfig from './pages/SuperAdminConfig'
+import Equipo           from './pages/Equipo'
+
 
 
 // ── Auth Guard ─────────────────────────────────────────────────
@@ -111,6 +113,8 @@ export default function App() {
           
           <Route path="pipeline" element={<PipelineView />} />
           <Route path="saas-config" element={<SuperAdminConfig />} />
+          <Route path="equipo" element={<Equipo />} />
+
 
         </Route>
 
