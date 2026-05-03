@@ -13,7 +13,8 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { email, nombre_completo, rol, negocio_id } = await req.json()
+    const { email, nombre_completo, rol, negocio_id, nombre_negocio } = await req.json()
+
 
     // 1. Validaciones básicas
     if (!email || !rol || !negocio_id) {
@@ -26,9 +27,16 @@ Deno.serve(async (req: Request) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // 3. Invitar al usuario usando el motor de Auth de Supabase
+    // 3. Invitar al usuario forzando la redirección y enviando variables personalizadas
     const { data: authData, error: authError } = await supabase.auth.admin.inviteUserByEmail(email, {
-      data: { nombre_completo, rol, negocio_id } // Guardamos un backup en la metadata del usuario
+      data: { 
+        nombre_completo: nombre_completo, 
+        rol: rol, 
+        negocio_id: negocio_id,
+        nombre_negocio: nombre_negocio // <-- Nueva variable para el correo
+      },
+      // Forzamos que el link mágico lleve a producción, sin importar la configuración global
+      redirectTo: 'https://vendemas-crm.vercel.app/actualizar-password' 
     })
 
     if (authError) throw new Error(`Error de Supabase Auth: ${authError.message}`)

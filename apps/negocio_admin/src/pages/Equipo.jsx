@@ -110,7 +110,8 @@ export default function Equipo() {
           email: form.email,
           nombre_completo: form.nombre,
           rol: form.rol,
-          negocio_id: tenant.id
+          negocio_id: tenant.id,
+          nombre_negocio: tenant.nombre
         }
       })
 
