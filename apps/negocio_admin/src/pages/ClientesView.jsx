@@ -14,10 +14,13 @@ export default function ClientesView() {
   const { tenant } = useTenant()
 
   const [clientes, setClientes] = useState([])
-  const [agentes, setAgentes]   = useState([]) // Usuarios de la tabla perfiles
+  const [comerciales, setComerciales] = useState([])
   const [filtered, setFiltered] = useState([])
   const [search, setSearch]     = useState('')
   const [loading, setLoading]   = useState(true)
+  const [user, setUser]         = useState(null)
+
+  const userRole = user?.user_metadata?.rol || 'comercial'
 
   // Modals
   const [modalOpen, setModalOpen]       = useState(false)
@@ -38,6 +41,9 @@ export default function ClientesView() {
     if (!tenant?.id) return
     setLoading(true)
 
+    const { data: authData } = await supabase.auth.getUser()
+    setUser(authData?.user)
+
     // A. Clientes
     const { data: dataC, error: errC } = await supabase
       .from('clientes')
@@ -45,18 +51,19 @@ export default function ClientesView() {
       .eq('negocio_id', tenant.id)
       .order('fecha_creacion', { ascending: false })
 
-    // B. Agentes (tabla perfiles para este negocio)
-    const { data: dataA, error: errA } = await supabase
-      .from('perfiles')
-      .select('*')
+    // B. Comerciales (tabla usuarios_negocio)
+    const { data: dataCom, error: errCom } = await supabase
+      .from('usuarios_negocio')
+      .select('id, nombre_completo, email')
       .eq('negocio_id', tenant.id)
+      .eq('rol', 'comercial')
 
     if (errC) showToast('error', `Error al cargar clientes: ${errC.message}`)
-    if (errA) console.warn('Error al cargar agentes:', errA.message)
+    if (errCom) console.warn('Error al cargar comerciales:', errCom.message)
 
     setClientes(dataC || [])
     setFiltered(dataC || [])
-    setAgentes(dataA || [])
+    setComerciales(dataCom || [])
     setLoading(false)
   }, [tenant?.id])
 
@@ -214,18 +221,24 @@ export default function ClientesView() {
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
                         <UserCircle size={14} className={c.agente_asignado_id ? 'text-indigo-400' : 'text-slate-600'} />
-                        <select
-                          value={c.agente_asignado_id || ''}
-                          onChange={(e) => handleAsignarAgente(c.id, e.target.value)}
-                          className="bg-transparent text-xs text-slate-300 border-none focus:ring-0 cursor-pointer outline-none w-full max-w-[140px] truncate"
-                        >
-                          <option value="" className="bg-slate-900 text-slate-500">-- Sin asignar --</option>
-                          {agentes.map(ag => (
-                            <option key={ag.id} value={ag.id} className="bg-slate-900">
-                              {ag.nombre || ag.id.slice(0,8)}
-                            </option>
-                          ))}
-                        </select>
+                        {userRole === 'admin' ? (
+                          <select
+                            value={c.agente_asignado_id || ''}
+                            onChange={(e) => handleAsignarAgente(c.id, e.target.value)}
+                            className="bg-transparent text-xs text-slate-300 border-none focus:ring-0 cursor-pointer outline-none w-full max-w-[140px] truncate"
+                          >
+                            <option value="" className="bg-slate-900 text-slate-500">-- Sin asignar --</option>
+                            {comerciales.map(ag => (
+                              <option key={ag.id} value={ag.id} className="bg-slate-900">
+                                {ag.nombre_completo || ag.email}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span className="text-xs text-slate-300 truncate max-w-[140px] inline-block">
+                            {user?.user_metadata?.nombre_completo || user?.email || 'Tú'}
+                          </span>
+                        )}
                       </div>
                     </td>
 

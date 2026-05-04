@@ -12,30 +12,30 @@ import { supabase } from '../lib/supabaseClient'
 import { useTenant } from '../context/TenantContext'
 
 const NAV_ITEMS = [
-  { path: '/',              label: 'Dashboard',     icon: LayoutDashboard },
-  { path: '/clientes',      label: 'Clientes',      icon: Users           },
+  { path: '/',              label: 'Dashboard',     icon: LayoutDashboard, rolesAllowed: ['admin', 'comercial'] },
+  { path: '/clientes',      label: 'Clientes',      icon: Users,           rolesAllowed: ['admin', 'comercial'] },
   { 
     group: 'Ventas',
     items: [
-      { path: '/pipeline',     label: 'Pipeline',     icon: Kanban },
-      { path: '/cotizaciones', label: 'Cotizaciones', icon: FileText },
+      { path: '/pipeline',     label: 'Pipeline',     icon: Kanban,        rolesAllowed: ['admin', 'comercial'] },
+      { path: '/cotizaciones', label: 'Cotizaciones', icon: FileText,      rolesAllowed: ['admin', 'comercial'] },
     ]
   },
   { 
     group: 'Inventario',
     items: [
-      { path: '/catalogo',    label: 'Catálogo',      icon: PackageSearch   },
-      { path: '/categorias',  label: 'Categorías',    icon: Tags            },
-      { path: '/almacenes',   label: 'Almacenes',     icon: Warehouse       },
+      { path: '/catalogo',    label: 'Catálogo',      icon: PackageSearch, rolesAllowed: ['admin', 'comercial'] },
+      { path: '/categorias',  label: 'Categorías',    icon: Tags,          rolesAllowed: ['admin', 'comercial'] },
+      { path: '/almacenes',   label: 'Almacenes',     icon: Warehouse,     rolesAllowed: ['admin', 'comercial'] },
     ]
   },
   { 
     group: 'Recursos Humanos',
     items: [
-      { path: '/equipo',       label: 'Equipo',        icon: Users },
+      { path: '/equipo',       label: 'Equipo',        icon: Users,        rolesAllowed: ['admin'] },
     ]
   },
-  { path: '/configuracion', label: 'Configuración', icon: Settings        },
+  { path: '/configuracion', label: 'Configuración', icon: Settings,        rolesAllowed: ['admin'] },
 ]
 
 export default function DashboardLayout() {
@@ -44,13 +44,27 @@ export default function DashboardLayout() {
   const [user, setUser] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+  // Extraer el rol, asumiendo comercial por defecto por seguridad
+  const userRole = user?.user_metadata?.rol || 'comercial'
+
+  // Filtrado de items de navegación basado en el rol
+  const filteredNavItems = NAV_ITEMS.map(item => {
+    if (item.group) {
+      const allowedItems = item.items.filter(sub => sub.rolesAllowed?.includes(userRole))
+      if (allowedItems.length === 0) return null
+      return { ...item, items: allowedItems }
+    }
+    if (item.rolesAllowed && !item.rolesAllowed.includes(userRole)) return null
+    return item
+  }).filter(Boolean)
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user))
   }, [])
 
   async function handleLogout() {
     await supabase.auth.signOut()
-    navigate('/registro') 
+    navigate('/login') 
   }
 
   function SidebarLink({ path, label, icon: Icon, onClick }) {
@@ -91,7 +105,7 @@ export default function DashboardLayout() {
 
         {/* Navigation */}
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
-          {NAV_ITEMS.map((item) => {
+          {filteredNavItems.map((item) => {
             if (item.group) {
               return (
                 <div key={item.group} className="pt-4 space-y-1">
@@ -177,7 +191,7 @@ export default function DashboardLayout() {
               </button>
             </div>
             <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-              {NAV_ITEMS.map((item) => {
+              {filteredNavItems.map((item) => {
                 if (item.group) {
                   return (
                     <div key={item.group} className="pt-2 space-y-1">

@@ -23,6 +23,8 @@ import PublicQuoteView   from './pages/public/PublicQuoteView'
 import PipelineView      from './pages/crm/PipelineView'
 import SuperAdminConfig from './pages/SuperAdminConfig'
 import Equipo           from './pages/Equipo'
+import ActualizarPassword from './pages/ActualizarPassword'
+
 
 
 
@@ -87,6 +89,8 @@ export default function App() {
         />
 
         <Route path="/c/:id" element={<PublicQuoteView />} />
+        <Route path="/actualizar-password" element={<ActualizarPassword />} />
+
 
         {/* Rutas privadas envueltas en TenantProvider y DashboardLayout */}
         <Route

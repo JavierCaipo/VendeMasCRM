@@ -121,4 +121,18 @@
 - **Frontend (`apps/negocio_admin`):** 
   - Nueva ruta `/equipo` para la gestión de usuarios del tenant.
   - Interfaz premium para visualización y cambio rápido de estados (Activo/Suspendido) con impacto real-time en Supabase.
-- **Flujo de Invitación:** (En desarrollo) Edge Function separada para gestionar la creación segura de usuarios a través de `auth.admin.inviteUserByEmail`.
+- **Flujo de Invitación y Onboarding de Comerciales:**
+  - **Edge Function:** Uso de `invite-user` que ignora el RLS empleando la `Service Role Key` para invitar usuarios de manera segura.
+  - **Redirección:** El enlace del correo redirige hacia `/actualizar-password` mediante las URLs de Site y Redirect configuradas (ej. la URL blanca de Vercel), inyectando variables dinámicas con `{{ .Data }}`.
+  - **Activación:** Actualización final de clave con `supabase.auth.updateUser` que establece la contraseña y activa formalmente al usuario en el sistema.
+
+### Notas de Despliegue y RLS (Módulo Equipo)
+- **El Problema del Admin Fantasma:** Debido a las estrictas políticas RLS (`get_my_negocio_id()`), el dueño del Tenant DEBE existir en la tabla `usuarios_negocio` con el rol de `admin` para poder visualizar a su equipo. Si no está, la vista de Equipo aparecerá vacía.
+- **Redirecciones de Invitación:** Para que los links mágicos apunten a producción, el dominio de Vercel debe estar registrado como **Site URL** y como wildcard (`https://dominio.vercel.app/**`) en los **Redirect URLs** de Supabase Auth.
+- **Personalización de Correos:** Las variables enviadas a través del objeto `data` en la Edge Function `invite-user` pueden usarse tanto en el cuerpo del correo como en el **Asunto (Subject)** usando la sintaxis `{{ .Data.nombre_variable }}`.
+
+### ⚠️ Diccionario de Datos y Convenciones (Atención Arquitectos)
+- **Inconsistencia de Nomenclatura (Asignaciones de Comerciales):** Para vincular un registro con el usuario vendedor, las tablas utilizan nombres de columna diferentes. **No renombrar en BD** para evitar romper código legacy, pero mapear estrictamente en el Frontend:
+  - En la tabla `clientes` -> usar `agente_asignado_id`.
+  - En la tabla `oportunidades` -> usar `agente_id`.
+  - En la tabla `cotizaciones` -> usar `agente_id`.
