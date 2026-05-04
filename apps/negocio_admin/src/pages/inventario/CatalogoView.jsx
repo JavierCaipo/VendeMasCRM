@@ -29,6 +29,13 @@ export default function CatalogoView() {
   const [productoToEdit, setProductoToEdit] = useState(null)
   const [productoToDelete, setProductoToDelete] = useState(null)
   const [toast, setToast] = useState(null)
+  const [userRole, setUserRole] = useState('comercial')
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserRole(user?.user_metadata?.rol || 'comercial')
+    })
+  }, [])
 
   const showToast = (type, msg) => {
     setToast({ type, msg })
@@ -147,22 +154,24 @@ export default function CatalogoView() {
           </h1>
           <p className="text-slate-400 mt-1">Gestión avanzada de artículos y fichas técnicas.</p>
         </div>
-        <div className="flex gap-3">
-          <button
-            onClick={() => setCsvModalOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-sm font-bold transition-all"
-          >
-            <FileSpreadsheet size={18} />
-            Importar CSV
-          </button>
-          <button
-            onClick={() => { setProductoToEdit(null); setFormOpen(true); }}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold transition-all shadow-lg shadow-indigo-500/25"
-          >
-            <Plus size={18} />
-            Nuevo Artículo
-          </button>
-        </div>
+        {userRole === 'admin' && (
+          <div className="flex gap-3">
+            <button
+              onClick={() => setCsvModalOpen(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-sm font-bold transition-all"
+            >
+              <FileSpreadsheet size={18} />
+              Importar CSV
+            </button>
+            <button
+              onClick={() => { setProductoToEdit(null); setFormOpen(true); }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold transition-all shadow-lg shadow-indigo-500/25"
+            >
+              <Plus size={18} />
+              Nuevo Artículo
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Filters Bar */}
@@ -291,20 +300,22 @@ export default function CatalogoView() {
                 </div>
 
                 {/* Actions Overlay */}
-                <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => { setProductoToEdit(prod); setFormOpen(true); }}
-                    className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-indigo-600 transition-colors"
-                  >
-                    <Edit size={14} />
-                  </button>
-                  <button
-                    onClick={() => { setProductoToDelete(prod); setDeleteModalOpen(true); }}
-                    className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-red-600 transition-colors"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
+                {userRole === 'admin' && (
+                  <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => { setProductoToEdit(prod); setFormOpen(true); }}
+                      className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-indigo-600 transition-colors"
+                    >
+                      <Edit size={14} />
+                    </button>
+                    <button
+                      onClick={() => { setProductoToDelete(prod); setDeleteModalOpen(true); }}
+                      className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-red-600 transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                )}
               </div>
             )
           })}
@@ -366,18 +377,22 @@ export default function CatalogoView() {
                             <FileText size={14} />
                           </a>
                         )}
-                        <button
-                          onClick={() => { setProductoToEdit(prod); setFormOpen(true); }}
-                          className="p-2 rounded-lg bg-white/5 hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-400 transition-all"
-                        >
-                          <Edit size={14} />
-                        </button>
-                        <button
-                          onClick={() => { setProductoToDelete(prod); setDeleteModalOpen(true); }}
-                          className="p-2 rounded-lg bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-all"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        {userRole === 'admin' && (
+                          <>
+                            <button
+                              onClick={() => { setProductoToEdit(prod); setFormOpen(true); }}
+                              className="p-2 rounded-lg bg-white/5 hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-400 transition-all"
+                            >
+                              <Edit size={14} />
+                            </button>
+                            <button
+                              onClick={() => { setProductoToDelete(prod); setDeleteModalOpen(true); }}
+                              className="p-2 rounded-lg bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-all"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>

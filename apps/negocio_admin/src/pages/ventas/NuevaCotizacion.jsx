@@ -307,7 +307,9 @@ export default function NuevaCotizacion() {
                 {selectedCliente ? (
                   <span className="truncate font-medium">{selectedCliente.nombre_razon_social}</span>
                 ) : (
-                  <span className="text-slate-500">Buscar cliente...</span>
+                  <span className="text-slate-500">
+                    {clientes.length === 0 ? 'No tienes clientes asignados' : 'Buscar cliente...'}
+                  </span>
                 )}
                 <ChevronDown size={16} className={`text-slate-500 transition-transform ${clienteDropdownOpen ? 'rotate-180' : ''}`} />
               </div>
@@ -343,7 +345,9 @@ export default function NuevaCotizacion() {
                       </div>
                     ))}
                     {filteredClientes.length === 0 && (
-                      <div className="p-8 text-center text-slate-500 text-xs italic">No hay resultados.</div>
+                      <div className="p-8 text-center text-slate-500 text-xs italic">
+                        {clientes.length === 0 ? 'No tienes clientes asignados (Contacta a un Admin)' : 'No se encontraron clientes.'}
+                      </div>
                     )}
                   </div>
                 </div>

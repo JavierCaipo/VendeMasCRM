@@ -136,3 +136,15 @@
   - En la tabla `clientes` -> usar `agente_asignado_id`.
   - En la tabla `oportunidades` -> usar `agente_id`.
   - En la tabla `cotizaciones` -> usar `agente_id`.
+
+## 10. Arquitectura del Dashboard Bifurcado y Enrutamiento por Roles
+- **Patrón DashboardWrapper:** El archivo principal `Dashboard.jsx` exporta un contenedor inteligente (`DashboardWrapper`) que evalúa el rol del usuario actual (`user.user_metadata.rol`). Si es 'admin', renderiza el componente encapsulado `<DashboardAdmin/>` (vista 360). Si es 'comercial', renderiza el nuevo componente `<DashboardComercial/>`.
+- **Confianza en Políticas RLS:** `<DashboardComercial/>` está diseñado para realizar consultas a las tablas `clientes`, `oportunidades` y `cotizaciones` sin utilizar explícitamente el filtro `.eq('agente_id', user.id)`. Se confía plenamente en las reglas de seguridad de Supabase (RLS) para filtrar la información y devolver únicamente la data que corresponde a dicho usuario.
+- **Métrica y Gamificación (Meta de Ventas):**
+  - **Nueva columna:** Se agregó la columna `meta_ventas_mensual` (numérico, default 0) en la tabla `usuarios_negocio`.
+  - **Uso:** `<DashboardComercial/>` consulta esta columna al cargar e implementa una barra de progreso calculando `(Suma de Cotizaciones Ganadas del mes actual / Meta Mensual) * 100`.
+  - **Administración:** El administrador puede editar dinámicamente este objetivo directamente desde la vista de `Equipo.jsx` a través de una edición en línea para cada comercial de su equipo### 11. Módulo de Inventario: Seguridad y RBAC (Solo Lectura para Comerciales)
+  
+- **Capa de Base de Datos (RLS):** Las tablas `productos`, `categorias`, `almacenes` e `inventario` tienen políticas divididas. La lectura (`SELECT`) es universal para todos los miembros del `negocio_id`. La escritura (`INSERT`, `UPDATE`, `DELETE`) está estrictamente bloqueada mediante la verificación de la función `public.am_i_admin()`.
+- **Capa de Interfaz (UX/UI):** Las vistas `CatalogoView.jsx`, `CategoriasView.jsx` y `AlmacenesView.jsx` reaccionan dinámicamente al rol del usuario. Si no es administrador, se ocultan automáticamente los botones de creación (+ Nuevo), importación masiva (CSV) y las columnas de acciones destructivas (Editar/Eliminar).
+- **Caso de Uso Comercial:** El agente comercial conserva acceso total de lectura para consultar stock en tiempo real y descargar fichas técnicas, garantizando fricción cero en el armado de sus cotizaciones.

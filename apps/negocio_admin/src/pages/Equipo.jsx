@@ -15,7 +15,10 @@ import {
   AlertCircle,
   Mail,
   ShieldCheck,
-  X
+  X,
+  Target,
+  Save,
+  Edit2
 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { useTenant } from '../context/TenantContext'
@@ -28,6 +31,10 @@ export default function Equipo() {
   const [search, setSearch]     = useState('')
   const [loading, setLoading]   = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  
+  // Inline edit meta
+  const [editingMetaId, setEditingMetaId] = useState(null)
+  const [editingMetaValue, setEditingMetaValue] = useState('')
 
   // Modals
   const [inviteModalOpen, setInviteModalOpen] = useState(false)
@@ -95,6 +102,25 @@ export default function Equipo() {
       fetchUsuarios() // Rollback
     } else {
       showToast('success', `Usuario ${nuevoEstado === 'activo' ? 'activado' : 'suspendido'}`)
+    }
+  }
+
+  // ── 3.5 Actualizar Meta de Ventas ──
+  async function saveMeta(usuarioId) {
+    const metaNum = parseFloat(editingMetaValue) || 0
+    setUsuarios(prev => prev.map(u => u.id === usuarioId ? { ...u, meta_ventas_mensual: metaNum } : u))
+    setEditingMetaId(null)
+
+    const { error } = await supabase
+      .from('usuarios_negocio')
+      .update({ meta_ventas_mensual: metaNum })
+      .eq('id', usuarioId)
+
+    if (error) {
+      showToast('error', `Error guardando meta: ${error.message}`)
+      fetchUsuarios()
+    } else {
+      showToast('success', 'Meta de ventas actualizada')
     }
   }
 
@@ -187,6 +213,7 @@ export default function Equipo() {
                 <tr className="border-b border-white/8 bg-white/[0.02]">
                   <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Miembro</th>
                   <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Rol</th>
+                  <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Meta Mensual</th>
                   <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Estado</th>
                   <th className="px-5 py-3.5 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">Acciones</th>
                 </tr>
@@ -219,6 +246,49 @@ export default function Equipo() {
                         <div className="flex items-center gap-1.5 text-slate-400">
                           <Users size={12} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">Comercial</span>
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Meta Mensual */}
+                    <td className="px-5 py-4">
+                      {editingMetaId === u.id ? (
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="number" 
+                            min="0"
+                            autoFocus
+                            value={editingMetaValue}
+                            onChange={(e) => setEditingMetaValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') saveMeta(u.id);
+                              if (e.key === 'Escape') setEditingMetaId(null);
+                            }}
+                            className="w-24 px-2 py-1 bg-black/40 border border-indigo-500/50 rounded-lg text-xs text-slate-100 focus:outline-none"
+                          />
+                          <button onClick={() => saveMeta(u.id)} className="text-emerald-400 hover:text-emerald-300">
+                            <Save size={14} />
+                          </button>
+                          <button onClick={() => setEditingMetaId(null)} className="text-slate-500 hover:text-slate-400">
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 group/meta">
+                          <span className="text-xs font-black text-slate-300">
+                            S/ {(u.meta_ventas_mensual || 0).toLocaleString('en-US', { minimumFractionDigits: 0 })}
+                          </span>
+                          {u.rol === 'comercial' && (
+                            <button 
+                              onClick={() => {
+                                setEditingMetaId(u.id);
+                                setEditingMetaValue(u.meta_ventas_mensual || 0);
+                              }}
+                              className="text-slate-500 hover:text-indigo-400 opacity-0 group-hover/meta:opacity-100 transition-opacity"
+                            >
+                              <Edit2 size={12} />
+                            </button>
+                          )}
                         </div>
                       )}
                     </td>

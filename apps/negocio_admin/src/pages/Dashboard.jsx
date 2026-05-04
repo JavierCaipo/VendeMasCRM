@@ -6,16 +6,46 @@ import { useState, useEffect, useMemo } from 'react'
 import { 
   TrendingUp, TrendingDown, DollarSign, Target, 
   Users, BarChart3, ArrowUpRight, Activity,
-  Calendar, Award
+  Calendar, Award, FileText
 } from 'lucide-react'
 import { 
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, 
-  Tooltip, CartesianGrid, BarChart, Bar, Cell
+  Tooltip, CartesianGrid
 } from 'recharts'
 import { supabase } from '../lib/supabaseClient'
 import { useTenant } from '../context/TenantContext'
 
-export default function Dashboard() {
+export default function DashboardWrapper() {
+  const [user, setUser] = useState(null)
+  const [loadingUser, setLoadingUser] = useState(true)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user)
+      setLoadingUser(false)
+    })
+  }, [])
+
+  if (loadingUser) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
+        </div>
+      </div>
+    )
+  }
+
+  const rol = user?.user_metadata?.rol || 'comercial'
+  
+  if (rol === 'admin') {
+    return <DashboardAdmin />
+  }
+
+  return <DashboardComercial user={user} />
+}
+
+function DashboardAdmin() {
   const { tenant, agentes } = useTenant()
   const [loading, setLoading] = useState(true)
   const [cotizaciones, setCotizaciones] = useState([])
@@ -316,6 +346,203 @@ export default function Dashboard() {
                 <div className="text-right">
                   <p className="text-xs font-black text-slate-100">S/ {agent.total.toLocaleString()}</p>
                   <p className="text-[9px] text-emerald-500 font-bold uppercase tracking-tighter">Confirmed</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DashboardComercial({ user }) {
+  const { tenant } = useTenant()
+  const [data, setData] = useState({
+    clientesCount: 0,
+    pipelineActivo: 0,
+    cotizacionesGanadas: 0,
+    metaVentas: 0,
+    ultimosClientes: [],
+    cotizacionesPendientes: []
+  })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchData() {
+      // Clientes Count
+      const { count: cCount } = await supabase.from('clientes').select('id', { count: 'exact', head: true }).eq('negocio_id', tenant.id)
+      
+      // Oportunidades (Pipeline Activo)
+      const { data: oportunidades } = await supabase.from('oportunidades').select('valor_estimado').eq('negocio_id', tenant.id)
+      const pipelineTotal = (oportunidades || []).reduce((acc, op) => acc + (parseFloat(op.valor_estimado) || 0), 0)
+
+      // Meta de Ventas y Cotizaciones ganadas del mes actual
+      const { data: userData } = await supabase.from('usuarios_negocio').select('meta_ventas_mensual').eq('id', user.id).single()
+      const meta = userData?.meta_ventas_mensual || 0
+
+      const hoy = new Date();
+      const startOfMonth = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString();
+      const endOfMonth = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 23, 59, 59).toISOString();
+
+      const { data: cotGanadas } = await supabase.from('cotizaciones')
+        .select('total, moneda, tipo_cambio')
+        .eq('negocio_id', tenant.id)
+        .eq('estado', 'aceptada')
+        .gte('fecha_creacion', startOfMonth)
+        .lte('fecha_creacion', endOfMonth)
+
+      const ganadasTotal = (cotGanadas || []).reduce((acc, c) => {
+        const tc = parseFloat(c.tipo_cambio) || 1
+        const valorPEN = c.moneda === 'USD' ? c.total * tc : c.total
+        return acc + valorPEN
+      }, 0)
+
+      // Últimos Clientes Asignados
+      const { data: uClientes } = await supabase.from('clientes')
+        .select('*')
+        .eq('negocio_id', tenant.id)
+        .order('fecha_creacion', { ascending: false })
+        .limit(5)
+
+      // Cotizaciones Pendientes
+      const { data: cPendientes } = await supabase.from('cotizaciones')
+        .select('*')
+        .eq('negocio_id', tenant.id)
+        .not('estado', 'in', '("aceptada","rechazada")')
+        .order('fecha_creacion', { ascending: false })
+        .limit(5)
+
+      setData({
+        clientesCount: cCount || 0,
+        pipelineActivo: pipelineTotal,
+        cotizacionesGanadas: ganadasTotal,
+        metaVentas: meta,
+        ultimosClientes: uClientes || [],
+        cotizacionesPendientes: cPendientes || []
+      })
+      setLoading(false)
+    }
+
+    if (tenant?.id) fetchData()
+  }, [tenant?.id])
+
+  if (loading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin" />
+          <p className="text-slate-400 font-bold text-sm animate-pulse uppercase tracking-widest">Cargando Panel Comercial...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="p-8 space-y-8 fade-up overflow-y-auto max-h-[calc(100vh-100px)] custom-scrollbar">
+      {/* Header y Meta de Ventas */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-2xl font-black text-slate-100 tracking-tight">¡Vamos {user?.user_metadata?.nombre_completo?.split(' ')[0] || 'equipo'}, tú puedes!</h1>
+          <p className="text-slate-400 text-sm font-medium mt-1">Este es tu resumen comercial asignado.</p>
+        </div>
+
+        {/* Progress Bar Meta */}
+        <div className="glass rounded-[1.5rem] border border-white/10 p-5 md:w-96">
+          <div className="flex justify-between items-end mb-3">
+            <div>
+              <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Progreso Mensual</p>
+              <h4 className="text-lg font-black text-slate-100">
+                S/ {data.cotizacionesGanadas.toLocaleString('en-US', { minimumFractionDigits: 0 })}
+                <span className="text-xs text-slate-500 font-medium ml-1">
+                  de S/ {data.metaVentas.toLocaleString('en-US', { minimumFractionDigits: 0 })}
+                </span>
+              </h4>
+            </div>
+            <div className="text-xs font-black text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded-lg">
+              {data.metaVentas > 0 ? Math.min((data.cotizacionesGanadas / data.metaVentas) * 100, 100).toFixed(1) : 0}%
+            </div>
+          </div>
+          
+          <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden relative">
+            {data.metaVentas > 0 ? (
+              <div 
+                className="absolute top-0 left-0 h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400 rounded-full transition-all duration-1000 ease-out"
+                style={{ width: `${Math.min((data.cotizacionesGanadas / data.metaVentas) * 100, 100)}%` }}
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center text-[8px] text-slate-500 font-bold uppercase tracking-widest">
+                Meta no asignada aún
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* KPIs */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <KPICard 
+          title="Clientes Asignados" 
+          value={data.clientesCount} 
+          icon={<Users className="text-indigo-400" />} 
+          subtitle="Total en cartera"
+          color="indigo"
+        />
+        <KPICard 
+          title="Pipeline Activo" 
+          value={`$ ${data.pipelineActivo.toLocaleString('en-US', { minimumFractionDigits: 2 })}`} 
+          icon={<Target className="text-amber-400" />} 
+          subtitle="Valor estimado total"
+          color="amber"
+        />
+        <KPICard 
+          title="Cotizaciones Ganadas" 
+          value={`$ ${data.cotizacionesGanadas.toLocaleString('en-US', { minimumFractionDigits: 2 })}`} 
+          icon={<TrendingUp className="text-emerald-400" />} 
+          subtitle="Valor total cerrado"
+          color="emerald"
+        />
+      </div>
+
+      {/* Foco */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="glass rounded-[2.5rem] border border-white/10 p-8 flex flex-col h-[400px]">
+          <h3 className="text-sm font-black text-slate-300 uppercase tracking-widest flex items-center gap-2 mb-8">
+            <Users size={16} className="text-indigo-500" /> Últimos Clientes Asignados
+          </h3>
+          <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4">
+            {data.ultimosClientes.length === 0 ? (
+              <p className="text-xs text-slate-500 italic text-center mt-10">No tienes clientes recientes.</p>
+            ) : data.ultimosClientes.map(c => (
+              <div key={c.id} className="p-4 rounded-3xl bg-white/5 border border-white/5 flex justify-between items-center group hover:border-white/10 transition-all">
+                <div>
+                  <p className="text-sm font-bold text-slate-200 group-hover:text-indigo-400 transition-colors">{c.nombre_razon_social}</p>
+                  <p className="text-[10px] text-slate-500 font-medium">{c.email || 'Sin correo registrado'}</p>
+                </div>
+                <span className="text-[9px] font-black uppercase text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-lg">
+                  Tarifa {c.tarifa_asignada}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="glass rounded-[2.5rem] border border-white/10 p-8 flex flex-col h-[400px]">
+          <h3 className="text-sm font-black text-slate-300 uppercase tracking-widest flex items-center gap-2 mb-8">
+            <FileText size={16} className="text-amber-500" /> Cotizaciones Pendientes
+          </h3>
+          <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4">
+            {data.cotizacionesPendientes.length === 0 ? (
+              <p className="text-xs text-slate-500 italic text-center mt-10">No tienes cotizaciones en curso.</p>
+            ) : data.cotizacionesPendientes.map(c => (
+              <div key={c.id} className="p-4 rounded-3xl bg-white/5 border border-white/5 flex justify-between items-center group hover:border-white/10 transition-all">
+                <div>
+                  <p className="text-sm font-bold text-slate-200 group-hover:text-amber-400 transition-colors">{c.correlativo || 'COT-XXX'}</p>
+                  <p className="text-[10px] text-slate-500 font-medium">{new Date(c.fecha_creacion).toLocaleDateString('es-PE')}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-black text-slate-200">{c.moneda === 'USD' ? '$' : 'S/'} {parseFloat(c.total).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                  <p className="text-[9px] font-bold uppercase text-amber-500 tracking-tighter mt-0.5">{c.estado}</p>
                 </div>
               </div>
             ))}

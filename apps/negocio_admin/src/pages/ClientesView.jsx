@@ -51,12 +51,11 @@ export default function ClientesView() {
       .eq('negocio_id', tenant.id)
       .order('fecha_creacion', { ascending: false })
 
-    // B. Comerciales (tabla usuarios_negocio)
+    // B. Todos los usuarios del negocio (para mapeo completo en el select)
     const { data: dataCom, error: errCom } = await supabase
       .from('usuarios_negocio')
-      .select('id, nombre_completo, email')
+      .select('id, nombre_completo, email, rol')
       .eq('negocio_id', tenant.id)
-      .eq('rol', 'comercial')
 
     if (errC) showToast('error', `Error al cargar clientes: ${errC.message}`)
     if (errCom) console.warn('Error al cargar comerciales:', errCom.message)

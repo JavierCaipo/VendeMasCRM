@@ -17,6 +17,13 @@ export default function CategoriasView() {
   const [form, setForm] = useState({ nombre: '', descripcion: '' })
   const [submitting, setSubmitting] = useState(false)
   const [toast, setToast] = useState(null)
+  const [userRole, setUserRole] = useState('comercial')
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserRole(user?.user_metadata?.rol || 'comercial')
+    })
+  }, [])
 
   const showToast = (type, msg) => {
     setToast({ type, msg })
@@ -98,13 +105,15 @@ export default function CategoriasView() {
           </h1>
           <p className="text-slate-400 mt-1">Organiza tu catálogo para una búsqueda eficiente.</p>
         </div>
-        <button
-          onClick={() => { setEditingCat(null); setForm({ nombre: '', descripcion: '' }); setModalOpen(true); }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all shadow-lg shadow-indigo-500/20"
-        >
-          <Plus size={18} />
-          Nueva Categoría
-        </button>
+        {userRole === 'admin' && (
+          <button
+            onClick={() => { setEditingCat(null); setForm({ nombre: '', descripcion: '' }); setModalOpen(true); }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all shadow-lg shadow-indigo-500/20"
+          >
+            <Plus size={18} />
+            Nueva Categoría
+          </button>
+        )}
       </div>
 
       <div className="relative max-w-md">
@@ -124,7 +133,7 @@ export default function CategoriasView() {
             <tr>
               <th className="px-6 py-4 text-slate-400 font-semibold">Nombre</th>
               <th className="px-6 py-4 text-slate-400 font-semibold">Descripción</th>
-              <th className="px-6 py-4 text-right text-slate-400 font-semibold">Acciones</th>
+              {userRole === 'admin' && <th className="px-6 py-4 text-right text-slate-400 font-semibold">Acciones</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
@@ -145,22 +154,24 @@ export default function CategoriasView() {
               <tr key={cat.id} className="hover:bg-white/5 transition-colors group">
                 <td className="px-6 py-4 font-medium text-slate-200">{cat.nombre}</td>
                 <td className="px-6 py-4 text-slate-400 truncate max-w-xs">{cat.descripcion || '—'}</td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => { setEditingCat(cat); setForm({ nombre: cat.nombre, descripcion: cat.descripcion || '' }); setModalOpen(true); }}
-                      className="p-1.5 text-slate-400 hover:text-indigo-400 transition-colors"
-                    >
-                      <Edit size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(cat.id)}
-                      className="p-1.5 text-slate-400 hover:text-red-400 transition-colors"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
+                {userRole === 'admin' && (
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => { setEditingCat(cat); setForm({ nombre: cat.nombre, descripcion: cat.descripcion || '' }); setModalOpen(true); }}
+                        className="p-1.5 text-slate-400 hover:text-indigo-400 transition-colors"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(cat.id)}
+                        className="p-1.5 text-slate-400 hover:text-red-400 transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
