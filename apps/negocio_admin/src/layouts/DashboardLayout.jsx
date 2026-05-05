@@ -42,11 +42,9 @@ export default function DashboardLayout() {
   const { tenant } = useTenant()
   const navigate = useNavigate()
   const [user, setUser] = useState(null)
+  const [userRole, setUserRole] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isLoadingAuth, setIsLoadingAuth] = useState(true)
-
-  // Extraer el rol, asumiendo comercial por defecto por seguridad
-  const userRole = user?.user_metadata?.rol || 'comercial'
 
   // Filtrado de items de navegación basado en el rol
   const filteredNavItems = NAV_ITEMS.map(item => {
@@ -60,10 +58,18 @@ export default function DashboardLayout() {
   }).filter(Boolean)
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user)
+    async function fetchAuth() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: dbUser } = await supabase.from('usuarios_negocio').select('rol').eq('id', user.id).single()
+        setUserRole(dbUser?.rol || 'comercial')
+        setUser(user)
+      } else {
+        setUserRole('comercial')
+      }
       setIsLoadingAuth(false)
-    })
+    }
+    fetchAuth()
   }, [])
 
   async function handleLogout() {

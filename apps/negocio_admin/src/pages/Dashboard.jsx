@@ -17,28 +17,34 @@ import { useTenant } from '../context/TenantContext'
 
 export default function DashboardWrapper() {
   const [user, setUser] = useState(null)
-  const [loadingUser, setLoadingUser] = useState(true)
+  const [role, setRole] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user)
-      setLoadingUser(false)
-    })
+    async function fetchAuth() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: dbUser } = await supabase.from('usuarios_negocio').select('rol').eq('id', user.id).single()
+        setRole(dbUser?.rol || 'comercial')
+        setUser(user)
+      }
+      setLoading(false)
+    }
+    fetchAuth()
   }, [])
 
-  if (loadingUser) {
+  if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
+          <div className="text-slate-400 font-bold text-sm animate-pulse uppercase tracking-widest">Cargando panel...</div>
         </div>
       </div>
     )
   }
 
-  const rol = user?.user_metadata?.rol || 'comercial'
-  
-  if (rol === 'admin') {
+  if (role === 'admin') {
     return <DashboardAdmin />
   }
 
