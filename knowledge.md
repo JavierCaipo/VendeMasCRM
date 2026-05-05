@@ -148,3 +148,20 @@
 - **Capa de Base de Datos (RLS):** Las tablas `productos`, `categorias`, `almacenes` e `inventario` tienen políticas divididas. La lectura (`SELECT`) es universal para todos los miembros del `negocio_id`. La escritura (`INSERT`, `UPDATE`, `DELETE`) está estrictamente bloqueada mediante la verificación de la función `public.am_i_admin()`.
 - **Capa de Interfaz (UX/UI):** Las vistas `CatalogoView.jsx`, `CategoriasView.jsx` y `AlmacenesView.jsx` reaccionan dinámicamente al rol del usuario. Si no es administrador, se ocultan automáticamente los botones de creación (+ Nuevo), importación masiva (CSV) y las columnas de acciones destructivas (Editar/Eliminar).
 - **Caso de Uso Comercial:** El agente comercial conserva acceso total de lectura para consultar stock en tiempo real y descargar fichas técnicas, garantizando fricción cero en el armado de sus cotizaciones.
+
+### 12. Timeline del Cliente (Visión 2030) y Agentic AI
+
+- **Capa de Base de Datos (cliente_interacciones):**
+  - **Estructura:** Tabla que consolida las interacciones (`nota`, `llamada`, `whatsapp`, `email`, `reunion`, `ia_insight`). Vincula `negocio_id`, `cliente_id` y `agente_id` (hacia `auth.users`).
+  - **RLS:** La política de seguridad `FOR ALL` bloquea la escritura/lectura exigiendo coincidencia en `negocio_id`, y restringe acceso a `am_i_admin() = true` o `agente_id = auth.uid()` para los roles comerciales.
+  - **Extensibilidad JSONB:** La columna `metadata` está diseñada para guardar análisis profundos de IA (sentimiento, `next_steps`, dictado original).
+  
+- **Capa de Interfaz (Fricción Cero):**
+  - **Slide-out Drawer:** En lugar de recargar la página o redirigir a un perfil denso, el `ClienteTimeline.jsx` se renderiza dentro de un panel lateral que emerge en `ClientesView.jsx` sin perder el contexto visual de la cartera comercial.
+  - **Web Speech API:** Integración de "Voice-to-Text" nativa en HTML5 (`isListening` state, `webkitSpeechRecognition`). Permite concatenar texto fluidamente con resultados intermedios.
+
+- **Estructuración con Inteligencia Artificial (Gemini API):**
+  - **Supabase Edge Function (`process-dictation`):**
+    - Se seleccionó el modelo **`gemini-1.5-flash`** debido a su bajísima latencia y costo eficiente para tareas transaccionales rápidas (parseo a JSON). Su velocidad es ideal para la interacción sincrónica de UI.
+    - **Prompt Engineering:** Se instruye al LLM mediante `responseMimeType: "application/json"` a devolver una estructura predecible: `{"resumen": "...", "sentimiento": "...", "next_steps": []}`.
+  - **Flujo UI/UX:** Cuando el comercial termina de dictar, el botón "✨ Estructurar con IA" limpia y reestructura la nota antes del `INSERT`. Los pasos a seguir se integran al texto visual, mientras que el sentimiento y el texto crudo se persisten en la columna `metadata`.

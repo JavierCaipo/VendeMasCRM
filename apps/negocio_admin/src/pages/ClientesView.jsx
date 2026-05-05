@@ -3,12 +3,13 @@
 // src/pages/ClientesView.jsx
 // ============================================
 import { useState, useEffect, useCallback } from 'react'
-import { Users, Plus, UploadCloud, Search, Loader2, Edit, Trash2, CheckCircle2, AlertCircle, UserCircle } from 'lucide-react'
+import { Users, Plus, UploadCloud, Search, Loader2, Edit, Trash2, CheckCircle2, AlertCircle, UserCircle, MessageSquare, X } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { useTenant } from '../context/TenantContext'
 import ClienteModal from '../components/clientes/ClienteModal'
 import CsvImportModal from '../components/clientes/CsvImportModal'
 import ContactosModal from '../components/clientes/ContactosModal'
+import ClienteTimeline from '../components/crm/ClienteTimeline'
 
 export default function ClientesView() {
   const { tenant } = useTenant()
@@ -28,6 +29,10 @@ export default function ClientesView() {
   const [contactosModalOpen, setContactosModalOpen] = useState(false)
   const [clienteToEdit, setClienteToEdit] = useState(null)
   const [clienteForContactos, setClienteForContactos] = useState(null)
+
+  // Drawer Timeline
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [clienteSeleccionado, setClienteSeleccionado] = useState(null)
 
   const [toast, setToast] = useState(null)
 
@@ -245,6 +250,13 @@ export default function ClientesView() {
                     <td className="px-5 py-4 text-right">
                       <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
+                          onClick={() => { setClienteSeleccionado(c); setDrawerOpen(true); }}
+                          title="Timeline del Cliente"
+                          className="p-1.5 text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-colors"
+                        >
+                          <MessageSquare size={14} />
+                        </button>
+                        <button
                           onClick={() => { setClienteForContactos(c); setContactosModalOpen(true); }}
                           title="Contactos B2B"
                           className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
@@ -305,6 +317,36 @@ export default function ClientesView() {
         }`}>
           {toast.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
           {toast.msg}
+        </div>
+      )}
+
+      {/* ── Drawer: Timeline ── */}
+      {drawerOpen && clienteSeleccionado && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md h-full bg-[#0B0F19] border-l border-white/10 flex flex-col animate-in slide-in-from-right duration-300 shadow-2xl">
+            {/* Cabecera del Drawer */}
+            <div className="p-5 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0">
+              <div>
+                <h3 className="text-lg font-black text-slate-100 truncate pr-4">
+                  {clienteSeleccionado.nombre_razon_social}
+                </h3>
+                <p className="text-xs text-slate-400 font-medium mt-1">
+                  Timeline de Interacciones
+                </p>
+              </div>
+              <button
+                onClick={() => setDrawerOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-slate-200 transition-colors shrink-0"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Cuerpo del Drawer */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
+              <ClienteTimeline cliente_id={clienteSeleccionado.id} />
+            </div>
+          </div>
         </div>
       )}
 

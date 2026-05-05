@@ -43,6 +43,7 @@ export default function DashboardLayout() {
   const navigate = useNavigate()
   const [user, setUser] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true)
 
   // Extraer el rol, asumiendo comercial por defecto por seguridad
   const userRole = user?.user_metadata?.rol || 'comercial'
@@ -59,7 +60,10 @@ export default function DashboardLayout() {
   }).filter(Boolean)
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user))
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user)
+      setIsLoadingAuth(false)
+    })
   }, [])
 
   async function handleLogout() {
@@ -105,21 +109,27 @@ export default function DashboardLayout() {
 
         {/* Navigation */}
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
-          {filteredNavItems.map((item) => {
-            if (item.group) {
-              return (
-                <div key={item.group} className="pt-4 space-y-1">
-                  <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-2 px-2">
-                    {item.group}
+          {isLoadingAuth ? (
+            <div className="px-3 py-2 text-sm text-slate-500 italic animate-pulse">
+              Cargando menú...
+            </div>
+          ) : (
+            filteredNavItems.map((item) => {
+              if (item.group) {
+                return (
+                  <div key={item.group} className="pt-4 space-y-1">
+                    <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-2 px-2">
+                      {item.group}
+                    </div>
+                    {item.items.map((subItem) => (
+                      <SidebarLink key={subItem.path} {...subItem} />
+                    ))}
                   </div>
-                  {item.items.map((subItem) => (
-                    <SidebarLink key={subItem.path} {...subItem} />
-                  ))}
-                </div>
-              )
-            }
-            return <SidebarLink key={item.path} {...item} />
-          })}
+                )
+              }
+              return <SidebarLink key={item.path} {...item} />
+            })
+          )}
         </nav>
       </aside>
 
@@ -191,21 +201,27 @@ export default function DashboardLayout() {
               </button>
             </div>
             <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-              {filteredNavItems.map((item) => {
-                if (item.group) {
-                  return (
-                    <div key={item.group} className="pt-2 space-y-1">
-                      <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-2 px-2">
-                        {item.group}
+              {isLoadingAuth ? (
+                <div className="px-3 py-2 text-sm text-slate-500 italic animate-pulse">
+                  Cargando menú...
+                </div>
+              ) : (
+                filteredNavItems.map((item) => {
+                  if (item.group) {
+                    return (
+                      <div key={item.group} className="pt-2 space-y-1">
+                        <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-2 px-2">
+                          {item.group}
+                        </div>
+                        {item.items.map((subItem) => (
+                          <SidebarLink key={subItem.path} {...subItem} onClick={() => setMobileMenuOpen(false)} />
+                        ))}
                       </div>
-                      {item.items.map((subItem) => (
-                        <SidebarLink key={subItem.path} {...subItem} onClick={() => setMobileMenuOpen(false)} />
-                      ))}
-                    </div>
-                  )
-                }
-                return <SidebarLink key={item.path} {...item} onClick={() => setMobileMenuOpen(false)} />
-              })}
+                    )
+                  }
+                  return <SidebarLink key={item.path} {...item} onClick={() => setMobileMenuOpen(false)} />
+                })
+              )}
             </nav>
           </aside>
         </div>
