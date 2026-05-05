@@ -15,12 +15,31 @@ const INITIAL_FORM = {
   telefono: '',
   direccion: '',
   tarifa_asignada: 'C',
+  agente_asignado_id: '',
 }
 
 export default function ClienteModal({ isOpen, onClose, onSuccess, onError, clienteToEdit }) {
   const { tenant } = useTenant()
   const [form, setForm] = useState(INITIAL_FORM)
   const [loading, setLoading] = useState(false)
+  const [comerciales, setComerciales] = useState([])
+  const [userRole, setUserRole] = useState('comercial')
+
+  useEffect(() => {
+    async function loadAuthAndTeam() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: dbUser } = await supabase.from('usuarios_negocio').select('rol').eq('id', user.id).single()
+        setUserRole(dbUser?.rol || 'comercial')
+        
+        if (tenant?.id) {
+          const { data: team } = await supabase.from('usuarios_negocio').select('id, nombre_completo, email').eq('negocio_id', tenant.id)
+          if (team) setComerciales(team)
+        }
+      }
+    }
+    if (isOpen) loadAuthAndTeam()
+  }, [isOpen, tenant?.id])
 
   useEffect(() => {
     if (isOpen) {
@@ -33,6 +52,7 @@ export default function ClienteModal({ isOpen, onClose, onSuccess, onError, clie
           telefono: clienteToEdit.telefono || '',
           direccion: clienteToEdit.direccion || '',
           tarifa_asignada: clienteToEdit.tarifa_asignada || 'C',
+          agente_asignado_id: clienteToEdit.agente_asignado_id || '',
         })
       } else {
         setForm(INITIAL_FORM)
@@ -56,6 +76,10 @@ export default function ClienteModal({ isOpen, onClose, onSuccess, onError, clie
       const payload = {
         ...form,
         negocio_id: tenant.id,
+      }
+
+      if (!payload.agente_asignado_id) {
+        delete payload.agente_asignado_id
       }
 
       let error
@@ -209,6 +233,25 @@ export default function ClienteModal({ isOpen, onClose, onSuccess, onError, clie
               </select>
             </div>
           </div>
+
+          {userRole === 'admin' && (
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1.5">Agente Asignado</label>
+              <select
+                name="agente_asignado_id"
+                value={form.agente_asignado_id}
+                onChange={handleChange}
+                className="w-full px-3 py-2.5 rounded-xl text-sm text-slate-100 bg-white/5 border border-white/10 focus:outline-none focus:border-indigo-500/60"
+              >
+                <option value="" className="bg-slate-900 text-slate-500">-- Sin asignar --</option>
+                {comerciales.map(ag => (
+                  <option key={ag.id} value={ag.id} className="bg-slate-900">
+                    {ag.nombre_completo || ag.email}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Acciones */}
           <div className="flex gap-3 pt-4">
