@@ -172,3 +172,10 @@
 - **Selector de Agente Asignado en Clientes:** Se inyectó dinámicamente un campo de selección para la variable `agente_asignado_id` dentro del `ClienteModal.jsx`.
   - **Protección UI por Rol:** El campo está sujeto a renderizado condicional. Únicamente los usuarios con rol `admin` tienen la facultad visual de asignar o reasignar clientes a diferentes ejecutivos (`comerciales`). Los comerciales heredan su propia asignación por backend.
   - **Limpieza de Payload:** Para prever errores transaccionales en PostgreSQL (donde un tipo UUID no admite strings vacíos `''`), se implementó una estricta sanitización del estado del formulario previa a la ejecución de inserciones o actualizaciones (`if (!payload.agente_asignado_id) { delete payload.agente_asignado_id }`).
+
+### 14. Timeline Inteligente y Agentic AI
+
+- **Flujo de Estructuración con IA:**
+  - **Dictado Crudo:** El comercial dicta sus notas utilizando la Web Speech API nativa.
+  - **Edge Function (Gemini 1.5 Flash):** Se invoca la función `process-dictation` para procesar el dictado. Se seleccionó `gemini-1.5-flash` debido a su balance perfecto entre velocidad, costo y capacidad para realizar extracción de datos sencilla.
+  - **Estructuración de Notas y Análisis de Sentimiento:** La función devuelve un objeto JSON estructurado. El frontend formatea el `resumen` y las viñetas de `next_steps` para actualizar el textarea limpiamente, mientras que el objeto original y el `sentimiento` se guardan en el campo `metadataIA`, el cual se inserta en la columna JSONB `metadata` de la tabla `cliente_interacciones`.

@@ -13,6 +13,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../context/TenantContext'
 import { PDFDownloadLink } from '@react-pdf/renderer'
 import CotizacionPDF from '../../components/ventas/CotizacionPDF'
+import { toast } from 'sonner'
 
 const MENSAJES_ESTRATEGICOS = [
   "Hola {cliente}, espero que estés muy bien. 👋 Te comparto la propuesta {correlativo} enfocada en potenciar la eficiencia de tu operación. Puedes ver los detalles aquí: {url}",
@@ -90,7 +91,28 @@ export default function CotizacionesView() {
     return matchesSearch && matchesEstado
   })
 
-  const getStatusBadge = (estado) => {
+  const updateStatus = async (id, newStatus) => {
+    // Optimistic UI Update
+    setCotizaciones(prev => prev.map(cot => 
+      cot.id === id ? { ...cot, estado: newStatus } : cot
+    ))
+
+    try {
+      const { error } = await supabase
+        .from('cotizaciones')
+        .update({ estado: newStatus })
+        .eq('id', id)
+        
+      if (error) throw error
+      toast.success('Estado de cotización actualizado')
+    } catch (err) {
+      toast.error('Error al actualizar: ' + err.message)
+      fetchCotizaciones() // Rollback
+    }
+  }
+
+  const getStatusBadge = (cotizacion) => {
+    const estado = cotizacion.estado || 'borrador'
     const styles = {
       borrador: 'bg-slate-500/15 text-slate-400 border-slate-500/30',
       enviada:  'bg-indigo-500/15 text-indigo-400 border-indigo-500/30',
@@ -98,9 +120,17 @@ export default function CotizacionesView() {
       rechazada: 'bg-red-500/15 text-red-400 border-red-500/30'
     }
     return (
-      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${styles[estado] || styles.borrador}`}>
-        {estado}
-      </span>
+      <select
+        value={estado}
+        onChange={(e) => updateStatus(cotizacion.id, e.target.value)}
+        className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase border cursor-pointer outline-none transition-colors appearance-none text-center ${styles[estado] || styles.borrador}`}
+        style={{ textAlignLast: 'center' }}
+      >
+        <option value="borrador" className="bg-slate-900 text-slate-300">Borrador</option>
+        <option value="enviada" className="bg-slate-900 text-indigo-300">Enviada</option>
+        <option value="aceptada" className="bg-slate-900 text-emerald-300">Aceptada</option>
+        <option value="rechazada" className="bg-slate-900 text-red-300">Rechazada</option>
+      </select>
     )
   }
 
@@ -194,7 +224,7 @@ export default function CotizacionesView() {
                   {q.moneda === 'USD' ? '$' : 'S/'} {formatNumber(q.total)}
                 </td>
                 <td className="px-6 py-4 text-center">
-                  {getStatusBadge(q.estado)}
+                  {getStatusBadge(q)}
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex justify-end items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
