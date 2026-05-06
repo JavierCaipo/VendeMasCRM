@@ -169,7 +169,7 @@ export default function DashboardLayout() {
             <button
               onClick={() => navigate('/perfil')}
               title="Mi Perfil"
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/5 hover:bg-white/10 transition-colors"
+              className="hidden sm:flex relative z-50 items-center gap-2 px-3 py-1.5 rounded-xl border border-white/5 hover:bg-white/10 transition-colors"
             >
               <User size={15} className="text-indigo-400" />
               <span className="text-xs font-medium text-slate-300">
@@ -195,7 +195,7 @@ export default function DashboardLayout() {
       {/* ── Mobile Sidebar Overlay ── */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
+          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-xl" onClick={() => setMobileMenuOpen(false)} />
           <aside className="w-64 max-w-[80%] h-full glass border-r border-white/10 relative flex flex-col animate-in slide-in-from-left-full">
             <div className="h-16 flex items-center justify-between px-6 border-b border-white/5">
               <div className="flex items-center gap-2">

@@ -309,7 +309,7 @@ function ChatModal({ quote, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl animate-in fade-in duration-200">
       <div className="w-full max-w-lg glass rounded-3xl border border-white/10 flex flex-col h-[600px] shadow-2xl overflow-hidden">
         <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-white/5">
           <div>

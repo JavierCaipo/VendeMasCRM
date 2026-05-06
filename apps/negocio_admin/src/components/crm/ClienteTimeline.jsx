@@ -195,7 +195,7 @@ export default function ClienteTimeline({ cliente_id }) {
       </div>
 
       {/* ── FEED DE INTERACCIONES ── */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar relative">
+      <div className="h-[500px] overflow-y-auto p-6 space-y-6 custom-scrollbar relative">
         {/* Línea vertical de conexión */}
         <div className="absolute left-[39px] top-6 bottom-6 w-px bg-white/10 pointer-events-none" />
 

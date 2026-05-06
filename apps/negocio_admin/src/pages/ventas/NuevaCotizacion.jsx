@@ -287,6 +287,30 @@ export default function NuevaCotizacion() {
 
       if (qErr) throw qErr
 
+      // Sync Pipeline: Insertar o actualizar Oportunidad
+      if (!quotePayload.oportunidad_id) {
+        const opPayload = {
+          negocio_id: tenant.id,
+          cliente_id: selectedCliente.id,
+          agente_id: quotePayload.agente_id,
+          titulo: `Cot. ${correlativoSeguro} - ${selectedCliente.nombre_razon_social || selectedCliente.nombre_completo}`,
+          valor_estimado: quotePayload.total,
+          moneda: quotePayload.moneda
+        }
+        // Insertamos la oportunidad y opcionalmente podríamos enlazar su ID a la cotización,
+        // pero por ahora solo la creamos para que aparezca en el Pipeline.
+        const { data: newOp } = await supabase.from('oportunidades').insert([opPayload]).select().single()
+        if (newOp) {
+           await supabase.from('cotizaciones').update({ oportunidad_id: newOp.id }).eq('id', quote.id)
+        }
+      } else {
+        // Actualizamos la oportunidad existente con el nuevo monto
+        await supabase
+          .from('oportunidades')
+          .update({ valor_estimado: quotePayload.total, moneda: quotePayload.moneda })
+          .eq('id', quotePayload.oportunidad_id)
+      }
+
       // 4. Insert Detalles (Sanitización Numérica estricta)
       const detailPayload = items.map(i => ({
         cotizacion_id: quote.id,

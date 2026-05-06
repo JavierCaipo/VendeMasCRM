@@ -10,7 +10,8 @@ import {
 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { useTenant } from '../context/TenantContext'
-
+import SentimentChart from '../components/dashboard/SentimentChart'
+import { useNavigate } from 'react-router-dom'
 // Estructura de Datos Simulados (Mock Data)
 const MOCK_KPIs = [
   { 
@@ -61,13 +62,15 @@ const MOCK_RECENT = [
 
 export default function DashboardView() {
   const { tenant } = useTenant()
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState([])
   const [recent, setRecent] = useState([])
+  const [quotaData, setQuotaData] = useState({ meta: 10, alcanzada: 0 })
 
-  useEffect(() => {
-    async function fetchDashboardData() {
-      if (!tenant?.id) return
+  const fetchDashboardData = async () => {
+    if (!tenant?.id) return
+
       setLoading(true)
 
       try {
@@ -170,14 +173,50 @@ export default function DashboardView() {
           estado: op.etapa?.nombre || 'S/E'
         })))
 
+        // ── CÁLCULO DE CUOTAS (MVP) ──
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data: userData } = await supabase.from('usuarios_negocio').select('meta_mensual').eq('id', user.id).single()
+          const metaMensual = userData?.meta_mensual || 10
+
+          const hoy = new Date()
+          const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString()
+          
+          const { count } = await supabase.from('cotizaciones')
+            .select('*', { count: 'exact', head: true })
+            .eq('negocio_id', tenant.id)
+            .eq('agente_id', user.id)
+            .eq('estado', 'aceptada')
+            .gte('created_at', primerDiaMes)
+
+          setQuotaData({ meta: metaMensual, alcanzada: count || 0 })
+        }
+
       } catch (err) {
         console.error('Error al cargar Dashboard:', err)
       } finally {
         setLoading(false)
       }
-    }
+  }
 
+  useEffect(() => {
     fetchDashboardData()
+
+    // ── TIEMPO REAL ──────────────────────────────────────────────
+    if (!tenant?.id) return
+
+    const channel = supabase
+      .channel('dashboard_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'oportunidades', filter: `negocio_id=eq.${tenant.id}` },
+        () => fetchDashboardData()
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [tenant?.id])
 
   if (loading) {
@@ -208,7 +247,7 @@ export default function DashboardView() {
       </div>
 
       {/* ── KPI GRID ────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {stats.map((kpi, idx) => (
           <div key={idx} className="group glass bg-slate-900/50 border border-white/5 p-6 rounded-[2rem] hover:scale-[1.02] hover:bg-slate-900/80 transition-all duration-300">
             <div className="flex justify-between items-start mb-5">
@@ -227,10 +266,14 @@ export default function DashboardView() {
             </div>
           </div>
         ))}
+        <SentimentChart />
       </div>
 
-      {/* ── SECCIÓN CENTRAL: NEGOCIOS RECIENTES ─────────────────── */}
-      <div className="glass bg-slate-900/50 border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
+      {/* ── SECCIÓN CENTRAL: NEGOCIOS RECIENTES & CUOTAS ─────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* NEGOCIOS RECIENTES */}
+        <div className="lg:col-span-2 glass bg-slate-900/50 border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
         <div className="p-8 border-b border-white/5 flex justify-between items-center bg-white/5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
@@ -241,7 +284,10 @@ export default function DashboardView() {
               <p className="text-[10px] text-slate-500 font-medium">Últimas oportunidades detectadas</p>
             </div>
           </div>
-          <button className="px-5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-indigo-400 transition-all border border-white/5">
+          <button 
+            onClick={() => navigate('/pipeline')}
+            className="px-5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-indigo-400 transition-all border border-white/5"
+          >
             Ver Pipeline Completo
           </button>
         </div>
@@ -311,7 +357,39 @@ export default function DashboardView() {
            </p>
         </div>
       </div>
+
+      {/* WIDGET DE CUOTAS */}
+      <div className="glass bg-slate-900/50 border border-white/5 p-8 rounded-[2.5rem] shadow-2xl flex flex-col justify-between">
+        <div className="flex items-center gap-3 mb-6">
+           <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+             <Target size={20} />
+           </div>
+           <div>
+             <h3 className="text-sm font-black text-slate-200 uppercase tracking-widest">Meta de Ventas</h3>
+             <p className="text-[10px] text-slate-500 font-medium">Cotizaciones Aceptadas / Mes</p>
+           </div>
+        </div>
+        
+        <div className="flex-1 flex flex-col items-center justify-center py-6">
+           <div className="text-5xl font-black text-slate-100 mb-2">
+             {quotaData.alcanzada} <span className="text-2xl text-slate-500">/ {quotaData.meta}</span>
+           </div>
+           <p className="text-xs text-slate-400 font-medium">Cierres logrados este mes</p>
+           
+           {/* Barra de progreso */}
+           <div className="w-full mt-8 bg-white/5 rounded-full h-4 overflow-hidden border border-white/5 relative">
+              <div 
+                className="h-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-1000 ease-out"
+                style={{ width: `${Math.min((quotaData.alcanzada / quotaData.meta) * 100, 100)}%` }}
+              />
+           </div>
+           <p className="w-full text-right text-[10px] text-amber-400 font-bold mt-2 uppercase tracking-wider">
+             {Math.round((quotaData.alcanzada / quotaData.meta) * 100)}% Completado
+           </p>
+        </div>
+      </div>
+
+      </div>
     </div>
   )
 }
-
