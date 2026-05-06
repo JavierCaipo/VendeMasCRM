@@ -228,14 +228,31 @@ export default function NuevaCotizacion() {
 
       if (rpcError) throw rpcError;
 
-      // 2. Formato Premium del Correlativo
-      const empresaCode = (tenant?.nombre || 'EMP').substring(0, 4).toUpperCase().replace(/[^A-Z]/g, '') || 'EMP';
-      const nameParts = (userName || user?.email || 'XX').split(' ').filter(Boolean);
+      // 2. Formato Premium del Correlativo (Con extracción de nombre real)
+      let nombreVendedor = user?.email || 'Vendedor';
+      
+      // Consultamos a la fuente de la verdad para obtener el nombre real ("Santiago Caipo")
+      if (user?.id) {
+        const { data: dbUser } = await supabase
+          .from('usuarios_negocio')
+          .select('nombre_completo')
+          .eq('id', user.id)
+          .single();
+          
+        if (dbUser?.nombre_completo) {
+          nombreVendedor = dbUser.nombre_completo;
+        }
+      }
+
+      // Extraemos iniciales de la empresa y del vendedor
+      const empresaCode = (tenant?.nombre_comercial || tenant?.nombre || 'EMP').substring(0, 4).toUpperCase().replace(/[^A-Z]/g, '') || 'EMP';
+      const nameParts = nombreVendedor.split(' ').filter(Boolean);
+      
       let iniciales = 'XX';
       if (nameParts.length >= 2) {
-        iniciales = (nameParts[0][0] + nameParts[1][0]).toUpperCase();
+        iniciales = (nameParts[0][0] + nameParts[1][0]).toUpperCase(); // "Santiago Caipo" -> "SC"
       } else if (nameParts.length === 1) {
-        iniciales = nameParts[0].substring(0, 2).toUpperCase();
+        iniciales = nameParts[0].substring(0, 2).toUpperCase(); // "Santiago" -> "SA"
       }
       
       const correlativoSeguro = `${empresaCode}-${iniciales}-${String(seqNum).padStart(5, '0')}`;
