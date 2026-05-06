@@ -165,3 +165,10 @@
     - Se seleccionó el modelo **`gemini-1.5-flash`** debido a su bajísima latencia y costo eficiente para tareas transaccionales rápidas (parseo a JSON). Su velocidad es ideal para la interacción sincrónica de UI.
     - **Prompt Engineering:** Se instruye al LLM mediante `responseMimeType: "application/json"` a devolver una estructura predecible: `{"resumen": "...", "sentimiento": "...", "next_steps": []}`.
   - **Flujo UI/UX:** Cuando el comercial termina de dictar, el botón "✨ Estructurar con IA" limpia y reestructura la nota antes del `INSERT`. Los pasos a seguir se integran al texto visual, mientras que el sentimiento y el texto crudo se persisten en la columna `metadata`.
+
+### 13. Estabilización Multi-Tenant y Asignación de Comerciales
+
+- **Corrección Error PGRST116 (.single() Crash):** Tras la flexibilización de las políticas RLS (para evitar el problema del "comercial ciego" al leer contextos de las tablas maestras), las consultas genéricas comenzaron a fallar al recibir múltiples filas. La solución sistémica consistió en reemplazar los métodos débiles por una cadena reforzada con filtros explícitos al usuario actual y límite de un resultado: `.eq('id', identificador_objetivo).limit(1).maybeSingle()`. Esto estabilizó la hidratación global en componentes críticos como el `TenantContext`.
+- **Selector de Agente Asignado en Clientes:** Se inyectó dinámicamente un campo de selección para la variable `agente_asignado_id` dentro del `ClienteModal.jsx`.
+  - **Protección UI por Rol:** El campo está sujeto a renderizado condicional. Únicamente los usuarios con rol `admin` tienen la facultad visual de asignar o reasignar clientes a diferentes ejecutivos (`comerciales`). Los comerciales heredan su propia asignación por backend.
+  - **Limpieza de Payload:** Para prever errores transaccionales en PostgreSQL (donde un tipo UUID no admite strings vacíos `''`), se implementó una estricta sanitización del estado del formulario previa a la ejecución de inserciones o actualizaciones (`if (!payload.agente_asignado_id) { delete payload.agente_asignado_id }`).

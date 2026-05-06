@@ -240,7 +240,11 @@ export default function ClientesView() {
                           </select>
                         ) : (
                           <span className="text-xs text-slate-300 truncate max-w-[140px] inline-block">
-                            {user?.user_metadata?.nombre_completo || user?.email || 'Tú'}
+                            {(() => {
+                              if (!c.agente_asignado_id) return 'Sin asignar';
+                              const ag = comerciales.find(a => a.id === c.agente_asignado_id);
+                              return ag ? (ag.nombre_completo || ag.email) : 'Desconocido';
+                            })()}
                           </span>
                         )}
                       </div>

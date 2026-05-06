@@ -19,11 +19,33 @@ export function TenantProvider({ children }) {
 
   const fetchTenant = useCallback(async () => {
     setLoading(true)
-    // El RLS asegura que solo traerá EL negocio al que pertenece el usuario
+    
+    const { data: authData } = await supabase.auth.getUser()
+    if (!authData?.user) {
+      setError('No hay sesión activa')
+      setLoading(false)
+      return
+    }
+
+    const { data: dbUser, error: userErr } = await supabase
+      .from('usuarios_negocio')
+      .select('negocio_id')
+      .eq('id', authData.user.id)
+      .limit(1)
+      .maybeSingle()
+
+    if (userErr || !dbUser?.negocio_id) {
+      setError('Usuario sin negocio asignado o error de lectura')
+      setLoading(false)
+      return
+    }
+
     const { data: tenantData, error: tenantErr } = await supabase
       .from('negocios')
       .select('*')
-      .single()
+      .eq('id', dbUser.negocio_id)
+      .limit(1)
+      .maybeSingle()
 
     if (tenantErr) {
       console.error('Error fetching tenant:', tenantErr)
