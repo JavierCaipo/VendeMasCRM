@@ -307,7 +307,7 @@ export default function DashboardView() {
         {/* Footer de Tabla */}
         <div className="p-6 bg-white/[0.01] border-t border-white/5 text-center">
            <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">
-             Mostrando los 5 negocios más recientes — Sincronizado con Supabase Cloud
+             Mostrando los 5 negocios más recientes — Sincronizado en Cloud
            </p>
         </div>
       </div>

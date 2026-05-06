@@ -92,6 +92,31 @@ export default function ClienteModal({ isOpen, onClose, onSuccess, onError, clie
           .eq('id', clienteToEdit.id)
         error = updErr
       } else {
+        // VERIFICACIÓN DE DUPLICADOS EN INSERT
+        if (form.numero_documento) {
+          const { data: existente } = await supabase
+            .from('clientes')
+            .select('id')
+            .eq('numero_documento', form.numero_documento)
+            .eq('negocio_id', tenant.id)
+            .limit(1)
+            .maybeSingle()
+            
+          if (existente) {
+            onError?.('Este cliente ya está registrado')
+            setLoading(false)
+            return
+          }
+        }
+
+        // INYECCIÓN DE COMERCIAL EN INSERT
+        if (userRole === 'comercial') {
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user) {
+            payload.agente_asignado_id = user.id
+          }
+        }
+
         // INSERT
         const { error: insErr } = await supabase
           .from('clientes')

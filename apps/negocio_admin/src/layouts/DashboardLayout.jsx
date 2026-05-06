@@ -42,6 +42,7 @@ export default function DashboardLayout() {
   const { tenant } = useTenant()
   const navigate = useNavigate()
   const [user, setUser] = useState(null)
+  const [userName, setUserName] = useState(null)
   const [userRole, setUserRole] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isLoadingAuth, setIsLoadingAuth] = useState(true)
@@ -61,8 +62,9 @@ export default function DashboardLayout() {
     async function fetchAuth() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        const { data: dbUser } = await supabase.from('usuarios_negocio').select('rol').eq('id', user.id).single()
+        const { data: dbUser } = await supabase.from('usuarios_negocio').select('rol, nombre_completo').eq('id', user.id).single()
         setUserRole(dbUser?.rol || 'comercial')
+        setUserName(dbUser?.nombre_completo)
         setUser(user)
       } else {
         setUserRole('comercial')
@@ -156,19 +158,16 @@ export default function DashboardLayout() {
             
             {/* Tenant Info */}
             <div className="flex flex-col">
-              <h2 className="text-sm font-bold text-slate-100 leading-tight">
+              <h2 className="text-sm font-bold text-slate-100 leading-tight tracking-tight">
                 {tenant.nombre}
               </h2>
-              <span className="text-[10px] text-indigo-400 font-mono">
-                {tenant.subdominio}.vendemas.app
-              </span>
             </div>
           </div>
 
           {/* User Profile & Logout */}
           <div className="flex items-center gap-4">
-            <span className="hidden sm:inline-block text-xs text-slate-400">
-              {user?.email}
+            <span className="hidden sm:inline-block text-xs font-medium text-slate-300">
+              {userName || user?.email}
             </span>
             <button
               onClick={handleLogout}
