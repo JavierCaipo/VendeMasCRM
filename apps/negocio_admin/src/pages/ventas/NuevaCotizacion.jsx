@@ -220,14 +220,26 @@ export default function NuevaCotizacion() {
     
     setLoading(true)
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+
       // 1. Obtención de Correlativo Atómico
-      const { data: correlativoSeguro, error: rpcError } = await supabase
+      const { data: seqNum, error: rpcError } = await supabase
         .rpc('get_next_cotizacion_seq', { p_negocio_id: tenant.id });
 
       if (rpcError) throw rpcError;
 
-      const { data: { user } } = await supabase.auth.getUser()
+      // 2. Formato Premium del Correlativo
+      const empresaCode = (tenant?.nombre || 'EMP').substring(0, 4).toUpperCase().replace(/[^A-Z]/g, '') || 'EMP';
+      const nameParts = (userName || user?.email || 'XX').split(' ').filter(Boolean);
+      let iniciales = 'XX';
+      if (nameParts.length >= 2) {
+        iniciales = (nameParts[0][0] + nameParts[1][0]).toUpperCase();
+      } else if (nameParts.length === 1) {
+        iniciales = nameParts[0].substring(0, 2).toUpperCase();
+      }
       
+      const correlativoSeguro = `${empresaCode}-${iniciales}-${String(seqNum).padStart(5, '0')}`;
+
       const quotePayload = {
         negocio_id: tenant.id,
         cliente_id: selectedCliente.id,
@@ -236,9 +248,13 @@ export default function NuevaCotizacion() {
         correlativo: correlativoSeguro,
         moneda: moneda,
         tipo_cambio: parseFloat(tipoCambioReferencial) || null,
-        total: totals.total,
+        total: Number(totals.total),
         estado: 'borrador'
       }
+
+      // 3. Sanitización UUID (evitar error de empty string)
+      if (!quotePayload.contacto_id || quotePayload.contacto_id === '') delete quotePayload.contacto_id;
+      if (!quotePayload.oportunidad_id || quotePayload.oportunidad_id === '') delete quotePayload.oportunidad_id;
 
       if (userRole === 'comercial' && user) {
         quotePayload.agente_id = user.id
@@ -254,14 +270,14 @@ export default function NuevaCotizacion() {
 
       if (qErr) throw qErr
 
-      // 2. Insert Detalles (Corregido: descuento_porcentaje)
+      // 4. Insert Detalles (Sanitización Numérica estricta)
       const detailPayload = items.map(i => ({
         cotizacion_id: quote.id,
         producto_id: i.producto_id,
-        cantidad: i.cantidad,
-        precio_unitario: i.precio_unitario,
-        descuento_porcentaje: i.descuento || 0,
-        subtotal: i.total
+        cantidad: Number(i.cantidad),
+        precio_unitario: Number(i.precio_unitario),
+        descuento_porcentaje: Number(i.descuento || 0),
+        subtotal: Number(i.total)
       }))
 
       const { error: dErr } = await supabase
@@ -273,7 +289,8 @@ export default function NuevaCotizacion() {
       showToast('success', 'Cotización generada exitosamente')
       setTimeout(() => navigate('/cotizaciones'), 1500)
     } catch (err) {
-      showToast('error', err.message)
+      console.error('Error al guardar cotización:', err)
+      showToast('error', err.message || JSON.stringify(err))
     } finally {
       setLoading(false)
     }
