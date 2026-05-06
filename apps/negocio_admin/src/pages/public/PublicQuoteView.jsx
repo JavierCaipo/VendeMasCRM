@@ -48,6 +48,19 @@ export default function PublicQuoteView() {
     fetchData()
   }, [id])
 
+  useEffect(() => {
+    if (quote) {
+      const originalTitle = document.title;
+      const clientName = quote.oportunidad?.titulo || quote.cliente?.nombre_razon_social || 'Cliente';
+      const correlativo = quote.correlativo || quote.id.toString().slice(0, 8).toUpperCase();
+      document.title = `Cotización ${correlativo} - ${clientName}`;
+      
+      return () => {
+        document.title = originalTitle;
+      };
+    }
+  }, [quote])
+
   const handleAprobar = async () => {
     setLoading(true)
     try {
@@ -120,7 +133,18 @@ export default function PublicQuoteView() {
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] text-slate-900 selection:bg-indigo-100 pb-32">
-      
+      <style>
+        {`
+          @media print {
+            @page {
+              margin: 0;
+            }
+            body {
+              margin: 1.5cm;
+            }
+          }
+        `}
+      </style>
       {/* ── CUSTOM HEADER (WHITE LABEL) ── */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
