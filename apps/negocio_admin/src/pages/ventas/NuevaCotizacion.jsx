@@ -23,6 +23,11 @@ export default function NuevaCotizacion() {
   const [loading, setLoading] = useState(false)
   const [clientes, setClientes] = useState([])
   const [productos, setProductos] = useState([])
+  const [userRole, setUserRole] = useState('comercial')
+
+  const formatNumber = (num) => {
+    return (parseFloat(num) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  }
   
   // Header State
   const [selectedCliente, setSelectedCliente] = useState(null)
@@ -57,6 +62,12 @@ export default function NuevaCotizacion() {
   }, [])
 
   async function fetchInitialData() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data: dbUser } = await supabase.from('usuarios_negocio').select('rol').eq('id', user.id).single()
+      setUserRole(dbUser?.rol || 'comercial')
+    }
+
     const [clis, prods] = await Promise.all([
       supabase.from('clientes').select('*').eq('negocio_id', tenant.id).order('nombre_razon_social'),
       supabase.from('productos').select('*, categorias(nombre), inventario(stock_actual, almacen_id, almacen:almacenes(nombre))').eq('negocio_id', tenant.id).order('nombre')
@@ -215,20 +226,29 @@ export default function NuevaCotizacion() {
 
       if (rpcError) throw rpcError;
 
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      const quotePayload = {
+        negocio_id: tenant.id,
+        cliente_id: selectedCliente.id,
+        contacto_id: selectedContacto ? selectedContacto.id : null,
+        oportunidad_id: oportunidadIdUrl || null,
+        correlativo: correlativoSeguro,
+        moneda: moneda,
+        tipo_cambio: parseFloat(tipoCambioReferencial) || null,
+        total: totals.total,
+        estado: 'borrador'
+      }
+
+      if (userRole === 'comercial' && user) {
+        quotePayload.agente_id = user.id
+      } else {
+        quotePayload.agente_id = user.id // Default para admin si no se añade un selector de agentes a futuro
+      }
+
       const { data: quote, error: qErr } = await supabase
         .from('cotizaciones')
-        .insert([{
-          negocio_id: tenant.id,
-          cliente_id: selectedCliente.id,
-          contacto_id: selectedContacto ? selectedContacto.id : null,
-          agente_id: (await supabase.auth.getUser()).data.user.id,
-          oportunidad_id: oportunidadIdUrl || null,
-          correlativo: correlativoSeguro,
-          moneda: moneda,
-          tipo_cambio: parseFloat(tipoCambioReferencial) || null,
-          total: totals.total,
-          estado: 'borrador'
-        }])
+        .insert([quotePayload])
         .select()
         .single()
 
@@ -423,15 +443,15 @@ export default function NuevaCotizacion() {
             </div>
             <div className="flex justify-between text-sm">
                 <span className="text-slate-400">Subtotal</span>
-                <span className="text-slate-100 font-medium">{moneda === 'USD' ? '$' : 'S/'} {totals.subtotal.toFixed(2)}</span>
+                <span className="text-slate-100 font-medium">{moneda === 'USD' ? '$' : 'S/'} {formatNumber(totals.subtotal)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-slate-400">IGV (18%)</span>
-                <span className="text-slate-100 font-medium">{moneda === 'USD' ? '$' : 'S/'} {totals.igv?.toFixed(2)}</span>
+                <span className="text-slate-100 font-medium">{moneda === 'USD' ? '$' : 'S/'} {formatNumber(totals.igv)}</span>
               </div>
               <div className="pt-3 border-t border-white/10 flex justify-between items-end">
                 <span className="text-slate-200 font-bold">Total Final</span>
-                <span className="text-2xl font-black text-indigo-400 leading-none">{moneda === 'USD' ? '$' : 'S/'} {totals.total.toFixed(2)}</span>
+                <span className="text-2xl font-black text-indigo-400 leading-none">{moneda === 'USD' ? '$' : 'S/'} {formatNumber(totals.total)}</span>
               </div>
             </div>
           </div>
@@ -523,7 +543,7 @@ export default function NuevaCotizacion() {
                   <div className="w-32 space-y-1.5">
                     <label className="text-[10px] font-bold text-slate-500 uppercase px-1">Subtotal</label>
                     <div className="w-full px-3 py-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-300 font-black flex items-center justify-center">
-                      {moneda === 'USD' ? '$' : 'S/'} {item.total.toFixed(2)}
+                      {moneda === 'USD' ? '$' : 'S/'} {formatNumber(item.total)}
                     </div>
                   </div>
 

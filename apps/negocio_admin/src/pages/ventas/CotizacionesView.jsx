@@ -52,6 +52,10 @@ export default function CotizacionesView() {
   const [estadoFilter, setEstadoFilter] = useState('all')
   const [chatQuote, setChatQuote] = useState(null)
 
+  const formatNumber = (num) => {
+    return (parseFloat(num) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  }
+
   const handleWhatsApp = (q) => {
     const urlPublica = `${window.location.origin}/c/${q.id}`;
     const mensajeBase = MENSAJES_ESTRATEGICOS[Math.floor(Math.random() * MENSAJES_ESTRATEGICOS.length)];
@@ -187,7 +191,7 @@ export default function CotizacionesView() {
                   {new Date(q.fecha_creacion).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 text-right text-slate-100 font-bold">
-                  ${parseFloat(q.total).toFixed(2)}
+                  {q.moneda === 'USD' ? '$' : 'S/'} {formatNumber(q.total)}
                 </td>
                 <td className="px-6 py-4 text-center">
                   {getStatusBadge(q.estado)}
