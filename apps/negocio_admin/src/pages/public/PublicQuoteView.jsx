@@ -316,7 +316,7 @@ export default function PublicQuoteView() {
 
         {/* Branding */}
         <div className="text-center opacity-40 mt-16 pb-10">
-          <p className="text-[8px] font-bold uppercase tracking-[0.4em] text-slate-400">Powered by VendeMas Enterprise</p>
+          <p className="text-[8px] font-bold uppercase tracking-[0.4em] text-slate-400">Powered by {quote.negocio?.nombre || 'Nuestra Plataforma'}</p>
         </div>
       </main>
 

@@ -24,6 +24,7 @@ import PipelineView      from './pages/crm/PipelineView'
 import SuperAdminConfig from './pages/SuperAdminConfig'
 import Equipo           from './pages/Equipo'
 import ActualizarPassword from './pages/ActualizarPassword'
+import MiPerfilView     from './pages/MiPerfilView'
 
 
 
@@ -118,6 +119,7 @@ export default function App() {
           <Route path="pipeline" element={<PipelineView />} />
           <Route path="saas-config" element={<SuperAdminConfig />} />
           <Route path="equipo" element={<Equipo />} />
+          <Route path="perfil" element={<MiPerfilView />} />
 
 
         </Route>

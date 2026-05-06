@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, PackageSearch, Users, Settings, LogOut,
-  Building2, Menu, X, Tags, Warehouse, FileText, Kanban
+  Building2, Menu, X, Tags, Warehouse, FileText, Kanban, User
 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { useTenant } from '../context/TenantContext'
@@ -166,9 +166,16 @@ export default function DashboardLayout() {
 
           {/* User Profile & Logout */}
           <div className="flex items-center gap-4">
-            <span className="hidden sm:inline-block text-xs font-medium text-slate-300">
-              {userName || user?.email}
-            </span>
+            <button
+              onClick={() => navigate('/perfil')}
+              title="Mi Perfil"
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/5 hover:bg-white/10 transition-colors"
+            >
+              <User size={15} className="text-indigo-400" />
+              <span className="text-xs font-medium text-slate-300">
+                {userName || user?.email}
+              </span>
+            </button>
             <button
               onClick={handleLogout}
               title="Cerrar sesión"
