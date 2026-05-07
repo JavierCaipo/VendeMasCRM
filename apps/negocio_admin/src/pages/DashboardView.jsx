@@ -80,7 +80,7 @@ export default function DashboardView() {
           .select(`
             *,
             etapa:pipeline_etapas(nombre, orden),
-            cliente:clientes(nombre_razon_social)
+            cliente:clientes(nombre_razon_social) // [FORCED_SCHEMA_FIX_v3]
           `)
           .eq('negocio_id', tenant.id)
           .order('created_at', { ascending: false })
