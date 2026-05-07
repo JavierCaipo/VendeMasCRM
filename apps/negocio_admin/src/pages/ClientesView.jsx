@@ -52,7 +52,7 @@ export default function ClientesView() {
     // A. Clientes
     const { data: dataC, error: errC } = await supabase
       .from('clientes')
-      .select('*')
+      .select('id, nombre_razon_social, tipo_documento, numero_documento, email, telefono, direccion, sector, agente_asignado_id, negocio_id, fecha_creacion')
       .eq('negocio_id', tenant.id)
       .order('fecha_creacion', { ascending: false })
 
