@@ -289,13 +289,22 @@ export default function NuevaCotizacion() {
 
       // Sync Pipeline: Insertar o actualizar Oportunidad
       if (!quotePayload.oportunidad_id) {
+        // Buscar la etapa "Propuesta" o asignar la primera por defecto
+        let targetEtapaId = null
+        const { data: etapas } = await supabase.from('pipeline_etapas').select('id, nombre').eq('negocio_id', tenant.id).order('orden')
+        if (etapas && etapas.length > 0) {
+           const propuesta = etapas.find(e => e.nombre.toLowerCase().includes('propuesta') || e.nombre.toLowerCase().includes('cotización'))
+           targetEtapaId = propuesta ? propuesta.id : etapas[0].id
+        }
+
         const opPayload = {
           negocio_id: tenant.id,
           cliente_id: selectedCliente.id,
           agente_id: quotePayload.agente_id,
           titulo: `Cot. ${correlativoSeguro} - ${selectedCliente.nombre_razon_social || selectedCliente.nombre_completo}`,
           valor_estimado: quotePayload.total,
-          moneda: quotePayload.moneda
+          moneda: quotePayload.moneda,
+          etapa_id: targetEtapaId
         }
         // Insertamos la oportunidad y opcionalmente podríamos enlazar su ID a la cotización,
         // pero por ahora solo la creamos para que aparezca en el Pipeline.

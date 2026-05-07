@@ -116,7 +116,7 @@ export default function ClienteTimeline({ cliente_id }) {
     } else {
       setInteracciones([data, ...interacciones])
       setContenido('')
-      setMetadataIA({})
+      setMetadataIA(null)
       toast.success('Interacción registrada exitosamente')
     }
     setSubmitting(false)
@@ -195,7 +195,7 @@ export default function ClienteTimeline({ cliente_id }) {
       </div>
 
       {/* ── FEED DE INTERACCIONES ── */}
-      <div className="h-[500px] overflow-y-auto p-6 space-y-6 custom-scrollbar relative">
+      <div className="flex-1 min-h-[400px] max-h-[60vh] overflow-y-auto p-6 space-y-6 custom-scrollbar relative">
         {/* Línea vertical de conexión */}
         <div className="absolute left-[39px] top-6 bottom-6 w-px bg-white/10 pointer-events-none" />
 
@@ -311,13 +311,24 @@ export default function ClienteTimeline({ cliente_id }) {
                 {!isListening && <Sparkles size={10} className="absolute top-1.5 right-1.5 opacity-70" />}
               </button>
               
-              <button
-                type="submit"
-                disabled={submitting || !contenido.trim()}
-                className="w-8 h-8 rounded-full flex items-center justify-center bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} className="ml-0.5" />}
-              </button>
+              {contenido.trim() ? (
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50 transition-colors"
+                >
+                  {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                  Guardar
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={true}
+                  className="w-8 h-8 rounded-full flex items-center justify-center bg-indigo-600 text-white opacity-50 cursor-not-allowed transition-colors"
+                >
+                  <Send size={14} className="ml-0.5" />
+                </button>
+              )}
             </div>
           </div>
         </form>

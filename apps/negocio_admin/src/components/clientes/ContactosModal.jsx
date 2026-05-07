@@ -56,7 +56,7 @@ export default function ContactosModal({ isOpen, onClose, cliente }) {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-xl" onClick={onClose} />
+      <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-2xl" onClick={onClose} />
       
       <div className="relative glass border border-white/15 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden fade-up">
         {/* Header */}
