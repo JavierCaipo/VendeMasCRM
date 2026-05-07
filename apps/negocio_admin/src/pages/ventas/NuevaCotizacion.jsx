@@ -69,7 +69,7 @@ export default function NuevaCotizacion() {
     }
 
     const [clis, prods] = await Promise.all([
-      supabase.from('clientes').select('*').eq('negocio_id', tenant.id).order('nombre_razon_social'),
+      supabase.from('clientes').select('id, nombre_razon_social, numero_documento, sector, agente_id, telefono, email, ciudad, pais, fecha_creacion').eq('negocio_id', tenant.id).order('nombre_razon_social'),
       supabase.from('productos').select('*, categorias(nombre), inventario(stock_actual, almacen_id, almacen:almacenes(nombre))').eq('negocio_id', tenant.id).order('nombre')
     ])
     const loadedClientes = clis.data || []

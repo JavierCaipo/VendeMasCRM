@@ -406,7 +406,7 @@ function DashboardComercial({ user }) {
 
       // Últimos Clientes Asignados
       const { data: uClientes } = await supabase.from('clientes')
-        .select('*')
+        .select('id, nombre_razon_social, numero_documento, sector, agente_id, fecha_creacion')
         .eq('negocio_id', tenant.id)
         .order('fecha_creacion', { ascending: false })
         .limit(5)
