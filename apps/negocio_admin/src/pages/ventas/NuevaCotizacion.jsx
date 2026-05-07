@@ -301,14 +301,15 @@ export default function NuevaCotizacion() {
           negocio_id: tenant.id,
           cliente_id: selectedCliente.id,
           agente_id: quotePayload.agente_id,
-          titulo: `Cot. ${correlativoSeguro} - ${selectedCliente.nombre_razon_social || selectedCliente.nombre_completo}`,
+          titulo: `Cot. ${correlativoSeguro} - ${selectedCliente.nombre_razon_social || 'Cliente'}`,
           valor_estimado: quotePayload.total,
           moneda: quotePayload.moneda,
           etapa_id: targetEtapaId
         }
         // Insertamos la oportunidad y opcionalmente podríamos enlazar su ID a la cotización,
         // pero por ahora solo la creamos para que aparezca en el Pipeline.
-        const { data: newOp } = await supabase.from('oportunidades').insert([opPayload]).select().single()
+        const { data: newOp, error: opErr } = await supabase.from('oportunidades').insert([opPayload]).select().single()
+        if (opErr) throw new Error(`Fallo de sincronización con Pipeline: ${opErr.message}`)
         if (newOp) {
            await supabase.from('cotizaciones').update({ oportunidad_id: newOp.id }).eq('id', quote.id)
         }

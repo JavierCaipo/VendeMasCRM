@@ -347,7 +347,7 @@ export default function ClientesView() {
             </div>
 
             {/* Cuerpo del Drawer */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar">
+            <div className="flex-1 flex flex-col overflow-hidden">
               <ClienteTimeline cliente_id={clienteSeleccionado.id} />
             </div>
           </div>

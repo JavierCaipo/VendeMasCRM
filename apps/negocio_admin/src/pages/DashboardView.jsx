@@ -80,7 +80,7 @@ export default function DashboardView() {
           .select(`
             *,
             etapa:pipeline_etapas(nombre, orden),
-            cliente:clientes(nombre_completo)
+            cliente:clientes(nombre_razon_social)
           `)
           .eq('negocio_id', tenant.id)
           .order('created_at', { ascending: false })
@@ -167,7 +167,7 @@ export default function DashboardView() {
         setRecent(ops.slice(0, 5).map(op => ({
           id: op.id,
           titulo: op.titulo,
-          cliente: op.cliente?.nombre_completo || 'Cliente s/n',
+          cliente: op.cliente?.nombre_razon_social || 'Cliente s/n',
           monto: formatter.format(op.valor_estimado),
           fecha: new Date(op.created_at).toLocaleDateString(),
           estado: op.etapa?.nombre || 'S/E'

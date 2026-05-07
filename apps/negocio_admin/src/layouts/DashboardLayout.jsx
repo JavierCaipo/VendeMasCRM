@@ -169,7 +169,7 @@ export default function DashboardLayout() {
             <button
               onClick={() => navigate('/perfil')}
               title="Mi Perfil"
-              className="hidden sm:flex relative z-[100] cursor-pointer items-center gap-2 px-3 py-1.5 rounded-xl border border-white/5 hover:bg-white/10 transition-colors"
+              className="flex relative z-[100] cursor-pointer items-center gap-2 px-3 py-1.5 rounded-xl border border-white/5 hover:bg-white/10 transition-colors"
             >
               <User size={14} className="text-indigo-400" />
               <span className="text-xs font-medium text-slate-300">
