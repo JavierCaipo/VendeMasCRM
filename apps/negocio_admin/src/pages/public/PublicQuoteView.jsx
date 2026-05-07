@@ -27,7 +27,7 @@ export default function PublicQuoteView() {
       .select(`
         *,
         negocio:negocios(*),
-        cliente:clientes(*),
+        cliente:clientes(nombre_razon_social),
         contacto:cliente_contactos(*),
         detalles:cotizacion_detalles(*, producto:productos(*)),
         comentarios:cotizacion_comentarios(*)

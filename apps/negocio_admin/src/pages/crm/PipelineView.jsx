@@ -53,10 +53,18 @@ function SortableLead({ lead, onClick }) {
       <div className="flex justify-between items-start mb-2">
         <h4 className="text-sm font-bold text-slate-200 line-clamp-2 leading-snug">{lead.titulo}</h4>
       </div>
-      <div className="flex items-center gap-1.5 mt-3">
+      <div className="flex items-center justify-between mt-3">
         <span className="text-xs font-black text-slate-300">
           ${parseFloat(lead.valor_estimado || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
         </span>
+        {lead.cliente && (
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/5 border border-white/5">
+            <User size={10} className="text-indigo-400" />
+            <span className="text-[9px] font-bold text-slate-400 truncate max-w-[80px]">
+              {lead.cliente.nombre_razon_social}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -126,7 +134,7 @@ export default function PipelineView() {
           .order('orden', { ascending: true }),
         supabase
           .from('oportunidades')
-          .select('*')
+          .select('*, cliente:clientes(nombre_razon_social)')
           .eq('negocio_id', tenant.id)
           .order('fecha_creacion', { ascending: false })
       ])
@@ -339,7 +347,7 @@ export default function PipelineView() {
 
       {/* MODAL CONFIGURACION */}
       {configOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-2xl flex items-center justify-center z-50 p-4">
           <div className="glass rounded-[2rem] border border-white/10 w-full max-w-md p-6">
             <h2 className="text-xl font-bold text-slate-100 mb-6 flex items-center gap-2">
               <Settings className="text-indigo-400" />

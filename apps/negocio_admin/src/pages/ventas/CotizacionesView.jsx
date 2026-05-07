@@ -361,7 +361,7 @@ function PDFAction({ cotizacionId, tenant }) {
     setLoading(true)
     const { data: quote, error } = await supabase
       .from('cotizaciones')
-      .select('*, cliente:clientes(*), detalles:cotizacion_detalles(*, producto:productos(*)), agente:perfiles(nombre_completo), contacto:cliente_contactos(*)')
+      .select('*, cliente:clientes(nombre_razon_social), detalles:cotizacion_detalles(*, producto:productos(*)), agente:perfiles(nombre_completo), contacto:cliente_contactos(*)')
       .eq('id', cotizacionId)
       .single()
 
