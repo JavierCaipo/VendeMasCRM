@@ -347,7 +347,7 @@ export default function PipelineView() {
 
       {/* MODAL CONFIGURACION */}
       {configOpen && (
-        <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-2xl flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-slate-950/98 backdrop-blur-3xl flex items-center justify-center z-50 p-4">
           <div className="glass rounded-[2rem] border border-white/10 w-full max-w-md p-6">
             <h2 className="text-xl font-bold text-slate-100 mb-6 flex items-center gap-2">
               <Settings className="text-indigo-400" />
