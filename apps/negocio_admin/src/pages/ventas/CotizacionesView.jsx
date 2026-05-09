@@ -72,7 +72,7 @@ export default function CotizacionesView() {
     setLoading(true)
     const { data, error } = await supabase
       .from('cotizaciones')
-      .select('*, clientes(nombre_razon_social, numero_documento), agente:perfiles(nombre_completo), contacto:cliente_contactos(*)')
+      .select('id, negocio_id, cliente_id, contacto_id, oportunidad_id, agente_id, correlativo, moneda, tipo_cambio, total, estado, fecha_creacion, clientes(nombre_razon_social, numero_documento), agente:perfiles(nombre_completo), contacto:cliente_contactos(id, nombre_completo, cargo, email, telefono)')
       .eq('negocio_id', tenant.id)
       .order('fecha_creacion', { ascending: false })
 

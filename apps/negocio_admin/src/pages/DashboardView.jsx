@@ -187,7 +187,7 @@ export default function DashboardView() {
             .eq('negocio_id', tenant.id)
             .eq('agente_id', user.id)
             .eq('estado', 'aceptada')
-            .gte('created_at', primerDiaMes)
+            .gte('fecha_creacion', primerDiaMes)
 
           setQuotaData({ meta: metaMensual, alcanzada: count || 0 })
         }
