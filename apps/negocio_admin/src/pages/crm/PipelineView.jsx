@@ -129,12 +129,12 @@ export default function PipelineView() {
       const [resEtapas, resOportunidades] = await Promise.all([
         supabase
           .from('pipeline_etapas')
-          .select('*')
+          .select('id, nombre, orden, color, negocio_id')
           .eq('negocio_id', tenant.id)
           .order('orden', { ascending: true }),
         supabase
           .from('oportunidades')
-          .select('*, cliente:clientes(nombre_razon_social)')
+          .select('id, titulo, valor_estimado, etapa_id, negocio_id, cliente_id, fecha_creacion, cliente:clientes(nombre_razon_social)')
           .eq('negocio_id', tenant.id)
           .order('fecha_creacion', { ascending: false })
       ])
@@ -259,9 +259,16 @@ export default function PipelineView() {
       >
         <div className="flex overflow-x-auto gap-6 p-6 h-[calc(100vh-100px)] custom-scrollbar">
           {etapas.map(etapa => {
-            const leads = oportunidades.filter(o => o.etapa_id === etapa.id)
+            // Comparación robusta: toString() evita UUID string vs number mismatch
+            const etapaIds = new Set(etapas.map(e => String(e.id)))
+            const leads = oportunidades.filter(o => String(o.etapa_id) === String(etapa.id))
+            // Fallback: oportunidades sin etapa válida van a la primera columna
+            const orphans = etapa.id === etapas[0]?.id
+              ? oportunidades.filter(o => !etapaIds.has(String(o.etapa_id)))
+              : []
+            const allLeads = [...leads, ...orphans]
             const color = etapa.color || 'indigo' 
-            const totalValor = leads.reduce((acc, lead) => acc + (parseFloat(lead.valor_estimado) || 0), 0)
+            const totalValor = allLeads.reduce((acc, lead) => acc + (parseFloat(lead.valor_estimado) || 0), 0)
 
             return (
               <div 
@@ -274,7 +281,7 @@ export default function PipelineView() {
                     <div className="flex items-center gap-2">
                       <h3 className={`font-black uppercase tracking-wider text-sm text-${color}-400`}>{etapa.nombre}</h3>
                       <span className="bg-white/10 text-slate-400 text-[10px] font-black px-2 py-0.5 rounded-full">
-                        {leads.length}
+                        {allLeads.length}
                       </span>
                     </div>
                     <button 
@@ -299,7 +306,7 @@ export default function PipelineView() {
                 {/* Zona de Carga Dinámica */}
                 <DroppableColumn 
                   etapa={etapa} 
-                  leads={leads} 
+                  leads={allLeads} 
                   onLeadClick={(lead) => {
                     setOportunidadToEdit(lead)
                     setIsModalOpen(true)
