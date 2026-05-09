@@ -113,7 +113,7 @@ export default function CsvImportModal({ isOpen, onClose, onSuccess, onError }) 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={uploading ? undefined : handleClose} />
+      <div className="absolute inset-0 bg-slate-950 backdrop-blur-3xl" onClick={uploading ? undefined : handleClose} />
       
       <div className="relative glass border border-white/15 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden fade-up">
         

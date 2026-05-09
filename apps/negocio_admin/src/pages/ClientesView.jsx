@@ -327,7 +327,7 @@ export default function ClientesView() {
       {/* ── Drawer: Timeline ── */}
       {drawerOpen && clienteSeleccionado && (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/98 backdrop-blur-3xl animate-in fade-in duration-200">
-          <div className="w-full max-w-md h-full bg-[#0B0F19] border-l border-white/10 flex flex-col animate-in slide-in-from-right duration-300 shadow-2xl">
+          <div className="w-full max-w-md h-[95vh] mt-auto bg-[#0B0F19] border-l border-white/10 flex flex-col animate-in slide-in-from-right duration-300 shadow-2xl">
             {/* Cabecera del Drawer */}
             <div className="p-5 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0">
               <div>

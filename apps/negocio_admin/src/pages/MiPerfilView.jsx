@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '../../lib/supabaseClient'
+import { supabase } from '../lib/supabaseClient'
 import { User, Lock, Loader2, Save } from 'lucide-react'
 import { toast } from 'sonner'
 

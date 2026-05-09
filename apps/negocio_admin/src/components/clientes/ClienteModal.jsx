@@ -144,7 +144,7 @@ export default function ClienteModal({ isOpen, onClose, onSuccess, onError, clie
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-2xl" onClick={onClose} />
+      <div className="absolute inset-0 bg-slate-950 backdrop-blur-3xl" onClick={onClose} />
       
       <div className="relative glass border border-white/15 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden fade-up">
         
