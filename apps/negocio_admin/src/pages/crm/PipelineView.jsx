@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../context/TenantContext'
-import { Settings, Plus, DollarSign, GripVertical } from 'lucide-react'
+import { Settings, Plus, DollarSign, GripVertical, User } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   DndContext,
