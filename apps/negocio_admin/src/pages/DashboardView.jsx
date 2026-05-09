@@ -80,10 +80,10 @@ export default function DashboardView() {
           .select(`
             *,
             etapa:pipeline_etapas(nombre, orden),
-            cliente:clientes(nombre_razon_social) // [FORCED_SCHEMA_FIX_v3]
+            cliente:clientes(nombre_razon_social)
           `)
           .eq('negocio_id', tenant.id)
-          .order('created_at', { ascending: false })
+          .order('fecha_creacion', { ascending: false })
 
         if (error) throw error
 
@@ -147,7 +147,7 @@ export default function DashboardView() {
             bgColor: 'bg-sky-500/15', 
             borderColor: 'border-sky-500/25',
             trend: `+${ops.filter(o => {
-              const d = new Date(o.created_at)
+              const d = new Date(o.fecha_creacion)
               const hoy = new Date()
               return d.toDateString() === hoy.toDateString()
             }).length} hoy` 
@@ -169,7 +169,7 @@ export default function DashboardView() {
           titulo: op.titulo,
           cliente: op.cliente?.nombre_razon_social || 'Cliente s/n',
           monto: formatter.format(op.valor_estimado),
-          fecha: new Date(op.created_at).toLocaleDateString(),
+          fecha: new Date(op.fecha_creacion).toLocaleDateString('es-PE'),
           estado: op.etapa?.nombre || 'S/E'
         })))
 
