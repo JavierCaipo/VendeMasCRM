@@ -70,133 +70,140 @@ export default function DashboardView() {
 
   const fetchDashboardData = async () => {
     if (!tenant?.id) return
+    setLoading(true)
 
-      setLoading(true)
+    try {
+      const hoy = new Date()
+      const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString()
+      const tcRef = tenant.tipo_cambio_usd_pen || 3.8
 
-      try {
-        // Consulta unificada a Oportunidades con JOINS
-        const { data: ops, error } = await supabase
-          .from('oportunidades')
-          .select(`
-            *,
-            etapa:pipeline_etapas(nombre, orden),
-            cliente:clientes(nombre_razon_social)
-          `)
-          .eq('negocio_id', tenant.id)
-          .order('fecha_creacion', { ascending: false })
+      // ── 1. COTIZACIONES DEL MES ACTUAL (Fuente de Verdad Financiera) ──
+      const { data: cots, error: cotError } = await supabase
+        .from('cotizaciones')
+        .select('id, estado, total, moneda, tipo_cambio, fecha_creacion, agente_id, correlativo, cliente_id, clientes(nombre_razon_social)')
+        .eq('negocio_id', tenant.id)
+        .gte('fecha_creacion', primerDiaMes)
+        .order('fecha_creacion', { ascending: false })
 
-        if (error) throw error
+      if (cotError) throw cotError
 
-        // ── MOTOR DE CÁLCULO ──────────────────────────────────────
-        
-        // Identificar la etapa de cierre (último orden)
-        const maxOrden = ops.length > 0 ? Math.max(...ops.map(o => o.etapa?.orden || 0)) : 0
-
-        let totalGanado = 0
-        let totalEmbudo = 0
-        let activasCount = 0
-
-        ops.forEach(op => {
-          const valor = parseFloat(op.valor_estimado) || 0
-          const esGanada = op.etapa?.orden === maxOrden
-          
-          if (esGanada) {
-            totalGanado += valor
-          } else {
-            // Asumimos que si no es la última etapa y no es "Perdida" (opcional), está en el embudo
-            // Si tuviéramos un campo 'estado', filtraríamos por 'abierta'
-            totalEmbudo += valor
-            activasCount++
-          }
-        })
-
-        const totalProyectado = totalGanado + totalEmbudo
-        const ticketPromedio = ops.length > 0 ? totalProyectado / ops.length : 0
-
-        // Formateador de Moneda
-        const formatter = new Intl.NumberFormat('en-US', {
-          style: 'currency',
-          currency: 'USD',
-        })
-
-        // Inyectar en estructura de KPIs
-        setStats([
-          { 
-            title: 'Total en Embudo', 
-            value: formatter.format(totalEmbudo), 
-            icon: Wallet, 
-            color: 'text-indigo-400', 
-            bgColor: 'bg-indigo-500/15', 
-            borderColor: 'border-indigo-500/25',
-            trend: 'Live' 
-          },
-          { 
-            title: 'Cierres Ganados', 
-            value: formatter.format(totalGanado), 
-            icon: Trophy, 
-            color: 'text-emerald-400', 
-            bgColor: 'bg-emerald-500/15', 
-            borderColor: 'border-emerald-500/25',
-            trend: 'Sincronizado' 
-          },
-          { 
-            title: 'Oportunidades Activas', 
-            value: activasCount.toString(), 
-            icon: Target, 
-            color: 'text-sky-400', 
-            bgColor: 'bg-sky-500/15', 
-            borderColor: 'border-sky-500/25',
-            trend: `+${ops.filter(o => {
-              const d = new Date(o.fecha_creacion)
-              const hoy = new Date()
-              return d.toDateString() === hoy.toDateString()
-            }).length} hoy` 
-          },
-          { 
-            title: 'Ticket Promedio', 
-            value: formatter.format(ticketPromedio), 
-            icon: TrendingUp, 
-            color: 'text-amber-400', 
-            bgColor: 'bg-amber-500/15', 
-            borderColor: 'border-amber-500/25',
-            trend: 'Global' 
-          },
-        ])
-
-        // Negocios Recientes (Top 5)
-        setRecent(ops.slice(0, 5).map(op => ({
-          id: op.id,
-          titulo: op.titulo,
-          cliente: op.cliente?.nombre_razon_social || 'Cliente s/n',
-          monto: formatter.format(op.valor_estimado),
-          fecha: new Date(op.fecha_creacion).toLocaleDateString('es-PE'),
-          estado: op.etapa?.nombre || 'S/E'
-        })))
-
-        // ── CÁLCULO DE CUOTAS (MVP) ──
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-          const { data: userData } = await supabase.from('usuarios_negocio').select('meta_mensual').eq('id', user.id).single()
-          const metaMensual = userData?.meta_mensual || 10
-
-          const hoy = new Date()
-          const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString()
-          
-          const { count } = await supabase.from('cotizaciones')
-            .select('*', { count: 'exact', head: true })
-            .eq('negocio_id', tenant.id)
-            .eq('agente_id', user.id)
-            .eq('estado', 'aceptada')
-            .gte('fecha_creacion', primerDiaMes)
-
-          setQuotaData({ meta: metaMensual, alcanzada: count || 0 })
-        }
-
-      } catch (err) {
-        console.error('Error al cargar Dashboard:', err)
-      } finally {
-        setLoading(false)
+      // ── 2. MOTOR MULTIMONEDA ──────────────────────────────────────
+      // Convierte cualquier monto a USD usando el tipo_cambio de la cotización
+      // o el tipo_cambio de referencia del negocio si no hay uno específico
+      const toUSD = (cot) => {
+        const monto = parseFloat(cot.total) || 0
+        const tc = parseFloat(cot.tipo_cambio) || tcRef
+        return cot.moneda === 'USD' ? monto : monto / tc
       }
+
+      let totalGanado = 0
+      let totalEmbudo = 0
+      let activasCount = 0
+
+      cots.forEach(cot => {
+        const estadoNorm = (cot.estado || '').toLowerCase()
+        if (estadoNorm === 'aceptada') {
+          totalGanado += toUSD(cot)
+        } else if (estadoNorm === 'borrador' || estadoNorm === 'enviada') {
+          totalEmbudo += toUSD(cot)
+          activasCount++
+        }
+      })
+
+      const ticketPromedio = cots.length > 0 ? (totalGanado + totalEmbudo) / cots.length : 0
+
+      // ── 3. CUOTA DEL USUARIO ACTIVO ────────────────────────────────
+      const { data: { user } } = await supabase.auth.getUser()
+      let metaMensual = 10
+      let alcanzada = 0
+      if (user) {
+        const { data: userData } = await supabase
+          .from('usuarios_negocio')
+          .select('meta_mensual')
+          .eq('id', user.id)
+          .single()
+        metaMensual = userData?.meta_mensual || 10
+        alcanzada = cots.filter(c => 
+          c.agente_id === user.id && 
+          (c.estado || '').toLowerCase() === 'aceptada'
+        ).length
+      }
+      setQuotaData({ meta: metaMensual, alcanzada })
+
+      // ── 4. OPORTUNIDADES — solo para "Recientes" ───────────────────
+      const { data: ops } = await supabase
+        .from('oportunidades')
+        .select('id, titulo, valor_estimado, fecha_creacion, cliente:clientes(nombre_razon_social), etapa:pipeline_etapas(nombre)')
+        .eq('negocio_id', tenant.id)
+        .order('fecha_creacion', { ascending: false })
+        .limit(5)
+
+      // ── 5. FORMATEADOR ─────────────────────────────────────────────
+      const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
+
+      // ── 6. KPI GRID ────────────────────────────────────────────────
+      setStats([
+        {
+          title: 'Total en Embudo',
+          value: formatter.format(totalEmbudo),
+          icon: Wallet,
+          color: 'text-indigo-400',
+          bgColor: 'bg-indigo-500/15',
+          borderColor: 'border-indigo-500/25',
+          trend: `${activasCount} cots. activas`
+        },
+        {
+          title: 'Cierres Ganados',
+          value: formatter.format(totalGanado),
+          icon: Trophy,
+          color: 'text-emerald-400',
+          bgColor: 'bg-emerald-500/15',
+          borderColor: 'border-emerald-500/25',
+          trend: `${cots.filter(c => (c.estado||'').toLowerCase() === 'aceptada').length} este mes`
+        },
+        {
+          title: 'Oportunidades Activas',
+          value: activasCount.toString(),
+          icon: Target,
+          color: 'text-sky-400',
+          bgColor: 'bg-sky-500/15',
+          borderColor: 'border-sky-500/25',
+          trend: `+${cots.filter(c => new Date(c.fecha_creacion).toDateString() === hoy.toDateString()).length} hoy`
+        },
+        {
+          title: 'Ticket Promedio',
+          value: formatter.format(ticketPromedio),
+          icon: TrendingUp,
+          color: 'text-amber-400',
+          bgColor: 'bg-amber-500/15',
+          borderColor: 'border-amber-500/25',
+          trend: 'Mes en curso'
+        },
+      ])
+
+      // ── 7. ACTIVIDAD RECIENTE (mezcla cots + ops) ──────────────────
+      const recentCots = cots.slice(0, 5).map(c => ({
+        id: c.id,
+        titulo: `Cotización #${c.correlativo || c.id.toString().slice(0,6)}`,
+        cliente: c.clientes?.nombre_razon_social || 'Cliente s/n',
+        monto: `${c.moneda === 'USD' ? '$' : 'S/'} ${(parseFloat(c.total)||0).toLocaleString('es-PE', { minimumFractionDigits: 2 })}`,
+        fecha: new Date(c.fecha_creacion).toLocaleDateString('es-PE'),
+        estado: (c.estado || 'borrador').charAt(0).toUpperCase() + (c.estado || 'borrador').slice(1)
+      }))
+      setRecent(recentCots.length > 0 ? recentCots : (ops || []).slice(0, 5).map(op => ({
+        id: op.id,
+        titulo: op.titulo,
+        cliente: op.cliente?.nombre_razon_social || 'Cliente s/n',
+        monto: formatter.format(op.valor_estimado),
+        fecha: new Date(op.fecha_creacion).toLocaleDateString('es-PE'),
+        estado: op.etapa?.nombre || 'Pipeline'
+      })))
+
+    } catch (err) {
+      console.error('Error al cargar Dashboard:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
