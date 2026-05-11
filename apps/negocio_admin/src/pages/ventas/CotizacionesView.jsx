@@ -52,6 +52,7 @@ export default function CotizacionesView() {
   const [search, setSearch] = useState('')
   const [estadoFilter, setEstadoFilter] = useState('all')
   const [chatQuote, setChatQuote] = useState(null)
+  const [blinkId, setBlinkId] = useState(null) // ID que recibe animación de aprobación
 
   const formatNumber = (num) => {
     return (parseFloat(num) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -83,6 +84,31 @@ export default function CotizacionesView() {
 
   useEffect(() => { fetchCotizaciones() }, [fetchCotizaciones])
 
+  // ── REALTIME: escucha cambios de estado desde el portal del cliente ─────────────────
+  useEffect(() => {
+    if (!tenant?.id) return
+    const channel = supabase
+      .channel('cotizaciones_cambios')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'cotizaciones', filter: `negocio_id=eq.${tenant.id}` },
+        (payload) => {
+          const updated = payload.new
+          // Actualizar estado local sin re-fetch
+          setCotizaciones(prev =>
+            prev.map(c => c.id === updated.id ? { ...c, estado: updated.estado } : c)
+          )
+          // Activar blink si fue ACEPTADA (desde el portal público)
+          if ((updated.estado || '').toLowerCase() === 'aceptada') {
+            setBlinkId(updated.id)
+            setTimeout(() => setBlinkId(null), 5000)
+          }
+        }
+      )
+      .subscribe()
+    return () => supabase.removeChannel(channel)
+  }, [tenant?.id])
+
   const filtered = cotizaciones.filter(c => {
     const matchesSearch = c.clientes?.nombre_razon_social.toLowerCase().includes(search.toLowerCase()) || 
                          c.correlativo?.toLowerCase().includes(search.toLowerCase()) ||
@@ -113,17 +139,22 @@ export default function CotizacionesView() {
 
   const getStatusBadge = (cotizacion) => {
     const estado = cotizacion.estado || 'borrador'
+    const isBlink = cotizacion.id === blinkId
     const styles = {
-      borrador: 'bg-slate-500/15 text-slate-400 border-slate-500/30',
-      enviada:  'bg-indigo-500/15 text-indigo-400 border-indigo-500/30',
-      aceptada: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+      borrador:  'bg-slate-500/15 text-slate-400 border-slate-500/30',
+      enviada:   'bg-indigo-500/15 text-indigo-400 border-indigo-500/30',
+      aceptada:  'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
       rechazada: 'bg-red-500/15 text-red-400 border-red-500/30'
     }
+    // Efecto visual de aprobación recibida en tiempo real
+    const blinkClass = isBlink
+      ? 'animate-pulse !border-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.6)] !bg-emerald-500/25'
+      : ''
     return (
       <select
         value={estado}
         onChange={(e) => updateStatus(cotizacion.id, e.target.value)}
-        className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase border cursor-pointer outline-none transition-colors appearance-none text-center ${styles[estado] || styles.borrador}`}
+        className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase border cursor-pointer outline-none transition-all appearance-none text-center ${styles[estado] || styles.borrador} ${blinkClass}`}
         style={{ textAlignLast: 'center' }}
       >
         <option value="borrador" className="bg-slate-900 text-slate-300">Borrador</option>

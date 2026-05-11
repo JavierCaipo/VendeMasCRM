@@ -151,7 +151,7 @@ export default function PipelineView() {
           .order('orden', { ascending: true }),
         supabase
           .from('oportunidades')
-          .select('id, titulo, valor_estimado, etapa_id, negocio_id, cliente_id, moneda, tipo_cambio, fecha_creacion, fecha_cierre, cliente:clientes(nombre_razon_social)')
+          .select('id, titulo, valor_estimado, etapa_id, negocio_id, cliente_id, fecha_creacion, fecha_cierre, cliente:clientes(nombre_razon_social)')
           .eq('negocio_id', tenant.id)
           .order('fecha_creacion', { ascending: false })
       ])
@@ -285,13 +285,10 @@ export default function PipelineView() {
               : []
             const allLeads = [...leads, ...orphans]
             const color = etapa.color || 'indigo' 
-            // Multimoneda: convertir PEN→USD para totales coherentes en el header
+            // Multimoneda: valor_estimado se asume en USD (columna no tiene moneda propia)
+            // Para futura paridad, usar el tipo de cambio del negocio como referencia
             const tcRef = tenant?.tipo_cambio_usd_pen || 3.8
-            const toUSD = (lead) => {
-              const v = parseFloat(lead.valor_estimado) || 0
-              const tc = parseFloat(lead.tipo_cambio) || tcRef
-              return (lead.moneda || 'USD') === 'USD' ? v : v / tc
-            }
+            const toUSD = (lead) => parseFloat(lead.valor_estimado) || 0
             const totalValor = allLeads.reduce((acc, lead) => acc + toUSD(lead), 0)
 
             return (

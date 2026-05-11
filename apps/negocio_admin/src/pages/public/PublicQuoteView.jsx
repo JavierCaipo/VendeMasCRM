@@ -314,10 +314,12 @@ export default function PublicQuoteView() {
           </form>
         </div>
 
-        {/* Branding */}
-        <div className="text-center opacity-40 mt-16 pb-10">
-          <p className="text-[8px] font-bold uppercase tracking-[0.4em] text-slate-400">Powered by {quote.negocio?.nombre || 'Nuestra Plataforma'}</p>
-        </div>
+        {/* Branding — solo visible en plan free (White-Label en Pro/Premium) */}
+        {quote.negocio?.plan !== 'pro' && quote.negocio?.plan !== 'premium' && (
+          <div className="text-center opacity-40 mt-16 pb-10">
+            <p className="text-[8px] font-bold uppercase tracking-[0.4em] text-slate-400">Powered by VendeMas Business</p>
+          </div>
+        )}
       </main>
 
       {/* ── STICKY ACTION BAR ── */}

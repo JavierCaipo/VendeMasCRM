@@ -154,14 +154,14 @@ export default function DashboardView() {
         .order('fecha_creacion', { ascending: false })
         .limit(5)
 
-      // ── 5. FORMATEADOR ─────────────────────────────────────────────
-      const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
-
       // ── 6. KPI GRID ────────────────────────────────────────────────
+      // Guardamos el valor base en USD como número crudo (rawUSD).
+      // El renderizado aplica formatMonto() que respeta displayCurrency.
       setStats([
         {
           title: 'Total en Embudo',
-          value: formatter.format(totalEmbudo),
+          rawUSD: totalEmbudo,          // número puro en USD
+          value: null,                  // se calcula en render
           icon: Wallet,
           color: 'text-indigo-400',
           bgColor: 'bg-indigo-500/15',
@@ -170,7 +170,8 @@ export default function DashboardView() {
         },
         {
           title: 'Cierres Ganados',
-          value: formatter.format(totalGanado),
+          rawUSD: totalGanado,
+          value: null,
           icon: Trophy,
           color: 'text-emerald-400',
           bgColor: 'bg-emerald-500/15',
@@ -179,6 +180,7 @@ export default function DashboardView() {
         },
         {
           title: 'Oportunidades Activas',
+          rawUSD: null,                 // no monetario
           value: activasCount.toString(),
           icon: Target,
           color: 'text-sky-400',
@@ -188,7 +190,8 @@ export default function DashboardView() {
         },
         {
           title: 'Ticket Promedio',
-          value: formatter.format(ticketPromedio),
+          rawUSD: ticketPromedio,
+          value: null,
           icon: TrendingUp,
           color: 'text-amber-400',
           bgColor: 'bg-amber-500/15',
@@ -382,7 +385,11 @@ export default function DashboardView() {
             </div>
             <div>
               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">{kpi.title}</p>
-              <h2 className="text-2xl font-black text-slate-100 mt-1 tracking-tight">{kpi.value}</h2>
+              <h2 className="text-2xl font-black text-slate-100 mt-1 tracking-tight">
+                {kpi.rawUSD !== null && kpi.rawUSD !== undefined
+                  ? formatMonto(kpi.rawUSD, 'USD')   // convierte según displayCurrency
+                  : kpi.value}
+              </h2>
             </div>
           </div>
         ))}
