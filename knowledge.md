@@ -179,3 +179,93 @@
   - **Dictado Crudo:** El comercial dicta sus notas utilizando la Web Speech API nativa.
   - **Edge Function (Gemini 1.5 Flash):** Se invoca la función `process-dictation` para procesar el dictado. Se seleccionó `gemini-1.5-flash` debido a su balance perfecto entre velocidad, costo y capacidad para realizar extracción de datos sencilla.
   - **Estructuración de Notas y Análisis de Sentimiento:** La función devuelve un objeto JSON estructurado. El frontend formatea el `resumen` y las viñetas de `next_steps` para actualizar el textarea limpiamente, mientras que el objeto original y el `sentimiento` se guardan en el campo `metadataIA`, el cual se inserta en la columna JSONB `metadata` de la tabla `cliente_interacciones`.
+
+---
+
+## 15. Auditoría de Estabilidad — Reglas Críticas de Esquema y Consultas
+
+> **Fecha de registro:** Mayo 2026. Derivado de la erradicación del error `42703 column does not exist` y de la auditoría de integridad posterior al lanzamiento.
+
+### 15.1 Schema Mapping Obligatorio — Columnas de Verdad
+
+Las siguientes columnas son **OBLIGATORIAS** en sus tablas. Usar sinónimos causa errores 400/42703 en Supabase PostgREST.
+
+| Tabla | Columna CORRECTA | Columna PROHIBIDA | Impacto del Error |
+|---|---|---|---|
+| `clientes` | `nombre_razon_social` | `nombre_completo`, `nombre` | Error 42703 en todo JOIN |
+| `oportunidades` | `fecha_creacion` | `created_at` | Error 400 en `.order()` |
+| `cotizaciones` | `fecha_creacion` | `created_at` | Error 400 en `.order()` y `.gte()` |
+| `pipeline_etapas` | `fecha_creacion` | `created_at` | Error 400 en `.order()` |
+| `usuarios_negocio` | `nombre_completo` | — | ✅ Esta SÍ tiene `nombre_completo` |
+| `perfiles` | `nombre_completo` | — | ✅ Esta SÍ tiene `nombre_completo` |
+| `cliente_contactos` | `nombre_completo` | — | ✅ Esta SÍ tiene `nombre_completo` |
+
+**Regla de Oro:** El string `nombre_completo` es VÁLIDO en `usuarios_negocio`, `perfiles` y `cliente_contactos`. Es INVÁLIDO y PROHIBIDO en cualquier contexto que referencie la tabla `clientes`.
+
+### 15.2 Política de Consultas — Prohibición de `select('*')` en Tablas Core
+
+**El uso de `select('*')` está prohibido en las tablas críticas del negocio.** Supabase PostgREST expande el comodín al schema real de la BD. Si el código espera una columna que no existe, lanza un error 400 silencioso en la UI.
+
+**Tablas prohibidas para `select('*')`:**
+- `clientes` → Usar siempre lista explícita: `'id, nombre_razon_social, tipo_documento, numero_documento, email, telefono, ...'`
+- `oportunidades` → Usar: `'id, titulo, valor_estimado, etapa_id, negocio_id, cliente_id, moneda, tipo_cambio, fecha_creacion'`
+- `cotizaciones` → Usar: `'id, negocio_id, cliente_id, contacto_id, oportunidad_id, agente_id, correlativo, moneda, tipo_cambio, total, estado, fecha_creacion'`
+- `pipeline_etapas` → Usar: `'id, nombre, orden, color, negocio_id'`
+
+**Excepción permitida:** `select('*')` sólo es aceptable en tablas de detalle sin riesgo de columnas fantasma, como `cotizacion_comentarios` o con `{ count: 'exact', head: true }` (solo cuenta, no devuelve columnas).
+
+**Patrón correcto para JOINs:**
+```js
+// ✅ CORRECTO — columnas explícitas en tabla core + JOIN con alias
+.select('id, total, moneda, cliente:clientes(nombre_razon_social), agente:perfiles(nombre_completo)')
+
+// ❌ PROHIBIDO — el comodín en clientes puede pedir nombre_completo inexistente
+.select('*, clientes(*)')
+```
+
+### 15.3 Motor Multimoneda — Función `toUSD()`
+
+El sistema maneja cotizaciones y oportunidades en PEN y USD. Para calcular KPIs coherentes (Dashboard y Pipeline totals), se utiliza la función canónica `toUSD()`:
+
+```js
+// Función canónica de conversión — usar esta implementación en TODO el frontend
+const toUSD = (item) => {
+  const monto = parseFloat(item.total || item.valor_estimado) || 0
+  // Prioridad: tipo_cambio del registro → tipo_cambio del negocio → fallback 3.8
+  const tc = parseFloat(item.tipo_cambio) || tenant?.tipo_cambio_usd_pen || 3.8
+  return (item.moneda || 'USD') === 'USD' ? monto : monto / tc
+}
+```
+
+**Reglas de aplicación:**
+- **Dashboard KPIs (`DashboardView.jsx`):** Todos los totales de "Cierres Ganados" y "Total en Embudo" se expresan en USD usando `toUSD()`.
+- **Pipeline totals (`PipelineView.jsx`):** El valor acumulado en el header de cada columna Kanban también usa `toUSD()` para coherencia entre vistas.
+- **Renderizado de tarjetas:** Las tarjetas individuales muestran el monto en su moneda ORIGINAL (`S/` o `$`) para no perder información. Solo los agregados se normalizan a USD.
+- **Tipo de cambio fuente:** Usar `tipo_cambio` del registro individual primero (fue el TC al momento de crear la cotización). El `tipo_cambio_usd_pen` del negocio solo se usa como fallback.
+
+### 15.4 Sistema de Sync de Huérfanos — `syncHuerfanos()`
+
+**Problema:** Las cotizaciones creadas antes de que existiera la lógica "Quote-to-Deal" (pre Mayo 2026) no tienen `oportunidad_id`. Esto las hace invisibles en el Pipeline Kanban.
+
+**Solución:** La función `syncHuerfanos()` en `DashboardView.jsx` se ejecuta automáticamente al montar el componente, ANTES del `fetchDashboardData()`.
+
+**Flujo de la función:**
+```
+1. SELECT cotizaciones WHERE oportunidad_id IS NULL AND negocio_id = tenant.id
+2. SELECT pipeline_etapas ORDER BY orden ASC LIMIT 5
+3. Seleccionar etapa destino: busca "propuesta" o "cotizaci" en nombre, fallback a etapas[0]
+4. Por cada cotización huérfana:
+   a. INSERT oportunidades { titulo, valor_estimado, moneda, tipo_cambio, cliente_id, agente_id, etapa_id }
+   b. UPDATE cotizaciones SET oportunidad_id = newOp.id WHERE id = cot.id
+   c. console.log('[Sync] Oportunidad creada para cot. ...'
+5. Termina silenciosamente — no bloquea la UI ni muestra toasts
+```
+
+**Características de diseño:**
+- **Idempotente:** Si no hay huérfanas, termina en <50ms sin efectos secundarios.
+- **No crítica:** Usa `try/catch` con `console.warn` — nunca crashea el Dashboard si falla.
+- **Ejecución única efectiva:** Después del primer sync, todas las cotizaciones tienen `oportunidad_id` y la función no vuelve a crear duplicados.
+- **Ubicación:** `DashboardView.jsx` → función `syncHuerfanos()` → llamada en `useEffect` antes de `fetchDashboardData()`.
+
+**Prevención futura:** `NuevaCotizacion.jsx` ya implementa la creación automática de oportunidad en el momento del guardado si `oportunidad_id === null`. Las cotizaciones nuevas **nunca** serán huérfanas.
+
