@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react'
 import { 
   Wallet, Trophy, Target, TrendingUp, 
   ArrowUpRight, Clock, User, Briefcase,
-  LineChart, CheckCircle, Calculator
+  LineChart, CheckCircle, Calculator, DollarSign, RefreshCcw
 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { useTenant } from '../context/TenantContext'
@@ -67,6 +67,22 @@ export default function DashboardView() {
   const [stats, setStats] = useState([])
   const [recent, setRecent] = useState([])
   const [quotaData, setQuotaData] = useState({ meta: 10, alcanzada: 0 })
+  const [displayCurrency, setDisplayCurrency] = useState('USD')
+
+  // ── CONVERSOR UNIVERSAL DE MONEDA ──────────────────────────────────
+  // Convierte cualquier monto a la moneda de display actual
+  const tcRef = tenant?.tipo_cambio_usd_pen || 3.8
+  const convertCurrency = (monto, monedaOrigen = 'USD') => {
+    const n = parseFloat(monto) || 0
+    if (monedaOrigen === displayCurrency) return n
+    if (displayCurrency === 'USD') return n / tcRef  // PEN → USD
+    return n * tcRef                                  // USD → PEN
+  }
+  const formatMonto = (monto, monedaOrigen = 'USD') => {
+    const valor = convertCurrency(monto, monedaOrigen)
+    const simbolo = displayCurrency === 'USD' ? '$' : 'S/'
+    return `${simbolo} ${valor.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
 
   const fetchDashboardData = async () => {
     if (!tenant?.id) return
@@ -186,6 +202,8 @@ export default function DashboardView() {
         id: c.id,
         titulo: `Cotización #${c.correlativo || c.id.toString().slice(0,6)}`,
         cliente: c.clientes?.nombre_razon_social || 'Cliente s/n',
+        montoRaw: parseFloat(c.total) || 0,
+        monedaOrigen: c.moneda || 'USD',
         monto: `${c.moneda === 'USD' ? '$' : 'S/'} ${(parseFloat(c.total)||0).toLocaleString('es-PE', { minimumFractionDigits: 2 })}`,
         fecha: new Date(c.fecha_creacion).toLocaleDateString('es-PE'),
         estado: (c.estado || 'borrador').charAt(0).toUpperCase() + (c.estado || 'borrador').slice(1)
@@ -221,28 +239,32 @@ export default function DashboardView() {
 
       if (!huerfanas || huerfanas.length === 0) return
 
-      // 2. Primera etapa disponible como destino por defecto
+      // 2. Etapas: primera (prospecto) y última (cerrado)
       const { data: etapas } = await supabase
         .from('pipeline_etapas')
-        .select('id, nombre')
+        .select('id, nombre, orden')
         .eq('negocio_id', tenant.id)
         .order('orden', { ascending: true })
-        .limit(5)
+        .limit(10)
 
-      const etapaPropuesta = etapas?.find(e =>
+      if (!etapas || etapas.length === 0) return
+      const etapaInicio = etapas[0]           // Prospecto / primera
+      const etapaFin   = etapas[etapas.length - 1]  // Cerrado / última
+      const etapaPropuesta = etapas.find(e =>
         e.nombre.toLowerCase().includes('propuesta') ||
         e.nombre.toLowerCase().includes('cotizaci')
-      ) || etapas?.[0]
+      ) || etapaInicio
 
-      if (!etapaPropuesta) return
-
-      // 3. Crear oportunidad por cada huérfana y enlazarla
+      // 3. Crear oportunidad por cada huérfana con etapa según estado de cotización
       for (const cot of huerfanas) {
+        const estadoNorm = (cot.estado || '').toLowerCase()
+        // Aceptada → etapa de cierre; Borrador/Enviada → etapa propuesta
+        const etapaAsignada = estadoNorm === 'aceptada' ? etapaFin : etapaPropuesta
         const opPayload = {
           negocio_id: tenant.id,
           cliente_id: cot.cliente_id,
           agente_id: cot.agente_id,
-          etapa_id: etapaPropuesta.id,
+          etapa_id: etapaAsignada.id,
           titulo: `Cot. ${cot.correlativo || cot.id.slice(0, 6)} — ${cot.clientes?.nombre_razon_social || 'Cliente'}`,
           valor_estimado: parseFloat(cot.total) || 0,
           moneda: cot.moneda || 'USD',
@@ -313,8 +335,34 @@ export default function DashboardView() {
             Bienvenido al centro de mando de <span className="text-indigo-400">{tenant?.nombre || 'VendeMas Business'}</span>.
           </p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500">
-          <Clock size={12} className="text-indigo-500" /> Sincronizado: {new Date().toLocaleTimeString()}
+        <div className="flex items-center gap-3">
+          {/* Switch de Moneda */}
+          <div className="flex items-center gap-1 p-1 bg-white/5 border border-white/10 rounded-xl">
+            <button
+              onClick={() => setDisplayCurrency('USD')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                displayCurrency === 'USD'
+                  ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/25'
+                  : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              <DollarSign size={10} /> USD
+            </button>
+            <button
+              onClick={() => setDisplayCurrency('PEN')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                displayCurrency === 'PEN'
+                  ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25'
+                  : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              <RefreshCcw size={10} /> S/
+            </button>
+          </div>
+          {/* Badge de Sincronización */}
+          <div className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500">
+            <Clock size={12} className="text-indigo-500" /> Sincronizado: {new Date().toLocaleTimeString()}
+          </div>
         </div>
       </div>
 
@@ -400,7 +448,15 @@ export default function DashboardView() {
                     </div>
                   </td>
                   <td className="px-8 py-6">
-                    <span className="text-sm font-black text-slate-200">{item.monto}</span>
+                    <span className="text-sm font-black text-slate-200">
+                      {/* Monto convertido a la moneda de display activa */}
+                      {(() => {
+                        // item.monedaOrigen viene del map en fetchDashboardData
+                        const raw = parseFloat(item.montoRaw) || parseFloat(item.monto?.replace(/[^0-9.-]/g, '')) || 0
+                        const origen = item.monedaOrigen || 'USD'
+                        return formatMonto(raw, origen)
+                      })()}
+                    </span>
                   </td>
                   <td className="px-8 py-6">
                     <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border ${
