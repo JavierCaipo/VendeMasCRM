@@ -297,6 +297,11 @@ export default function NuevaCotizacion() {
            targetEtapaId = propuesta ? propuesta.id : etapas[0].id
         }
 
+        const fechaCierreDefault = (() => {
+          const d = new Date(); d.setDate(d.getDate() + 30)
+          return d.toISOString().split('T')[0]
+        })()
+
         const opPayload = {
           negocio_id: tenant.id,
           cliente_id: selectedCliente.id,
@@ -304,7 +309,8 @@ export default function NuevaCotizacion() {
           titulo: `Cot. ${correlativoSeguro} - ${selectedCliente.nombre_razon_social || 'Cliente'}`,
           valor_estimado: quotePayload.total,
           moneda: quotePayload.moneda,
-          etapa_id: targetEtapaId
+          etapa_id: targetEtapaId,
+          fecha_cierre: fechaCierreDefault
         }
         // Insertamos la oportunidad y opcionalmente podríamos enlazar su ID a la cotización,
         // pero por ahora solo la creamos para que aparezca en el Pipeline.

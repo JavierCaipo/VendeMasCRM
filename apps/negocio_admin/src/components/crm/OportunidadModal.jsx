@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, DollarSign, Briefcase, User, Loader2, FileText } from 'lucide-react'
+import { X, DollarSign, Briefcase, User, Loader2, FileText, Calendar } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../context/TenantContext'
@@ -19,11 +19,18 @@ export default function OportunidadModal({
   const [clientes, setClientes] = useState([])
   const [loadingClientes, setLoadingClientes] = useState(false)
 
+  const defaultFechaCierre = () => {
+    const d = new Date()
+    d.setDate(d.getDate() + 15)
+    return d.toISOString().split('T')[0]  // YYYY-MM-DD
+  }
+
   const [formData, setFormData] = useState({
     titulo: '',
     valor_estimado: 0,
     cliente_id: '',
-    etapa_id: ''
+    etapa_id: '',
+    fecha_cierre: defaultFechaCierre()
   })
 
   // Cargar Clientes para el Dropdown
@@ -57,14 +64,16 @@ export default function OportunidadModal({
           titulo: oportunidad.titulo || '',
           valor_estimado: oportunidad.valor_estimado || 0,
           cliente_id: oportunidad.cliente_id || '',
-          etapa_id: oportunidad.etapa_id || ''
+          etapa_id: oportunidad.etapa_id || '',
+          fecha_cierre: oportunidad.fecha_cierre || defaultFechaCierre()
         })
       } else {
         setFormData({
           titulo: '',
           valor_estimado: 0,
           cliente_id: '',
-          etapa_id: etapaPreseleccionada || (etapas.length > 0 ? etapas[0].id : '')
+          etapa_id: etapaPreseleccionada || (etapas.length > 0 ? etapas[0].id : ''),
+          fecha_cierre: defaultFechaCierre()
         })
       }
     }
@@ -90,7 +99,8 @@ export default function OportunidadModal({
         valor_estimado: parseFloat(formData.valor_estimado) || 0,
         cliente_id: formData.cliente_id || null,
         etapa_id: formData.etapa_id,
-        agente_id: user.id
+        agente_id: user.id,
+        fecha_cierre: formData.fecha_cierre || null
       }
 
       if (oportunidad?.id) {
@@ -164,22 +174,36 @@ export default function OportunidadModal({
             />
           </div>
 
-          {/* Valor Estimado */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-              Valor Estimado
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <DollarSign size={18} className="text-indigo-400" />
+          {/* Valor Estimado + Cierre Estimado — grid 2 columnas */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+                Valor Estimado
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <DollarSign size={18} className="text-indigo-400" />
+                </div>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.valor_estimado}
+                  onChange={(e) => setFormData({ ...formData, valor_estimado: e.target.value })}
+                  className="w-full pl-11 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-emerald-400 focus:outline-none focus:border-indigo-500 transition-all text-lg font-black"
+                />
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1 flex items-center gap-1.5">
+                <Calendar size={11} className="text-amber-400" /> Cierre Estimado
+              </label>
               <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.valor_estimado}
-                onChange={(e) => setFormData({ ...formData, valor_estimado: e.target.value })}
-                className="w-full pl-11 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-emerald-400 focus:outline-none focus:border-indigo-500 transition-all text-lg font-black"
+                type="date"
+                value={formData.fecha_cierre || ''}
+                onChange={(e) => setFormData({ ...formData, fecha_cierre: e.target.value || null })}
+                className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-amber-300 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 transition-all font-bold text-sm"
               />
             </div>
           </div>

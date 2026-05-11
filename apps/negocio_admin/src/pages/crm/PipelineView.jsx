@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../context/TenantContext'
-import { Settings, Plus, DollarSign, GripVertical, User } from 'lucide-react'
+import { Settings, Plus, DollarSign, GripVertical, User, Calendar } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   DndContext,
@@ -66,6 +66,23 @@ function SortableLead({ lead, onClick }) {
           </div>
         )}
       </div>
+      {/* Badge: Cierre Estimado */}
+      {lead.fecha_cierre && (() => {
+        const cierre = new Date(lead.fecha_cierre + 'T00:00:00')
+        const hoy = new Date(); hoy.setHours(0,0,0,0)
+        const vencida = cierre < hoy
+        const label = cierre.toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })
+        return (
+          <div className={`flex items-center gap-1 mt-2 px-2 py-0.5 rounded-lg w-fit text-[9px] font-bold border ${
+            vencida
+              ? 'bg-red-500/10 border-red-500/25 text-red-400'
+              : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+          }`}>
+            <Calendar size={9} />
+            Cierre: {label}{vencida ? ' ⚠️' : ''}
+          </div>
+        )
+      })()}
     </div>
   )
 }
@@ -134,7 +151,7 @@ export default function PipelineView() {
           .order('orden', { ascending: true }),
         supabase
           .from('oportunidades')
-          .select('id, titulo, valor_estimado, etapa_id, negocio_id, cliente_id, moneda, tipo_cambio, fecha_creacion, cliente:clientes(nombre_razon_social)')
+          .select('id, titulo, valor_estimado, etapa_id, negocio_id, cliente_id, moneda, tipo_cambio, fecha_creacion, fecha_cierre, cliente:clientes(nombre_razon_social)')
           .eq('negocio_id', tenant.id)
           .order('fecha_creacion', { ascending: false })
       ])
