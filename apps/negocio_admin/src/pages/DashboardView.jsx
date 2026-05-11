@@ -206,8 +206,73 @@ export default function DashboardView() {
     }
   }
 
+  // ── SYNC DE HUÉRFANOS ──────────────────────────────────────────
+  // Detecta cotizaciones sin oportunidad_id y crea su fila en oportunidades
+  // para que sean visibles en el Pipeline. Se ejecuta silenciosamente al montar.
+  const syncHuerfanos = async () => {
+    if (!tenant?.id) return
+    try {
+      // 1. Cotizaciones sin oportunidad vinculada
+      const { data: huerfanas } = await supabase
+        .from('cotizaciones')
+        .select('id, total, moneda, tipo_cambio, cliente_id, agente_id, correlativo, clientes(nombre_razon_social)')
+        .eq('negocio_id', tenant.id)
+        .is('oportunidad_id', null)
+
+      if (!huerfanas || huerfanas.length === 0) return
+
+      // 2. Primera etapa disponible como destino por defecto
+      const { data: etapas } = await supabase
+        .from('pipeline_etapas')
+        .select('id, nombre')
+        .eq('negocio_id', tenant.id)
+        .order('orden', { ascending: true })
+        .limit(5)
+
+      const etapaPropuesta = etapas?.find(e =>
+        e.nombre.toLowerCase().includes('propuesta') ||
+        e.nombre.toLowerCase().includes('cotizaci')
+      ) || etapas?.[0]
+
+      if (!etapaPropuesta) return
+
+      // 3. Crear oportunidad por cada huérfana y enlazarla
+      for (const cot of huerfanas) {
+        const opPayload = {
+          negocio_id: tenant.id,
+          cliente_id: cot.cliente_id,
+          agente_id: cot.agente_id,
+          etapa_id: etapaPropuesta.id,
+          titulo: `Cot. ${cot.correlativo || cot.id.slice(0, 6)} — ${cot.clientes?.nombre_razon_social || 'Cliente'}`,
+          valor_estimado: parseFloat(cot.total) || 0,
+          moneda: cot.moneda || 'USD',
+          tipo_cambio: parseFloat(cot.tipo_cambio) || null,
+        }
+        const { data: newOp, error: opErr } = await supabase
+          .from('oportunidades')
+          .insert([opPayload])
+          .select('id')
+          .single()
+
+        if (!opErr && newOp) {
+          await supabase
+            .from('cotizaciones')
+            .update({ oportunidad_id: newOp.id })
+            .eq('id', cot.id)
+          console.log(`[Sync] Oportunidad creada para cot. ${cot.correlativo}: ${newOp.id}`)
+        }
+      }
+    } catch (err) {
+      console.warn('[Sync Huérfanos] Error no crítico:', err.message)
+    }
+  }
+
   useEffect(() => {
-    fetchDashboardData()
+    const init = async () => {
+      await syncHuerfanos()   // primero crear oportunidades faltantes
+      fetchDashboardData()    // luego cargar KPIs con datos completos
+    }
+    init()
 
     // ── TIEMPO REAL ──────────────────────────────────────────────
     if (!tenant?.id) return
