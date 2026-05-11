@@ -101,7 +101,7 @@ export default function CotizacionesView() {
           // Activar blink si fue ACEPTADA (desde el portal público)
           if ((updated.estado || '').toLowerCase() === 'aceptada') {
             setBlinkId(updated.id)
-            setTimeout(() => setBlinkId(null), 5000)
+            setTimeout(() => setBlinkId(null), 15000)
           }
         }
       )
@@ -146,9 +146,9 @@ export default function CotizacionesView() {
       aceptada:  'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
       rechazada: 'bg-red-500/15 text-red-400 border-red-500/30'
     }
-    // Efecto visual de aprobación recibida en tiempo real
+    // Efecto High-Impact de aprobación recibida en tiempo real
     const blinkClass = isBlink
-      ? 'animate-pulse !border-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.6)] !bg-emerald-500/25'
+      ? 'animate-pulse !border-2 !border-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.7)] !bg-emerald-500/30 scale-105'
       : ''
     return (
       <select

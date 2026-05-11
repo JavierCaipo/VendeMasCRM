@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../context/TenantContext'
-import { Settings, Plus, DollarSign, GripVertical, User, Calendar } from 'lucide-react'
+import { Settings, Plus, DollarSign, GripVertical, User, Calendar, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   DndContext,
@@ -123,12 +123,12 @@ export default function PipelineView() {
   const [configOpen, setConfigOpen] = useState(false)
   const [newEtapaNombre, setNewEtapaNombre] = useState('')
 
-  // Estado para Modal de Oportunidad
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [oportunidadToEdit, setOportunidadToEdit] = useState(null)
   const [etapaPreseleccionada, setEtapaPreseleccionada] = useState(null)
+  const [isSyncing, setIsSyncing] = useState(false)
 
-  // Estado para Drag Overlay
+  // Drag Overlay
   const [activeId, setActiveId] = useState(null)
   
   const sensors = useSensors(
@@ -250,6 +250,55 @@ export default function PipelineView() {
     )
   }
 
+  // ── SYNC FORZADO ──────────────────────────────────────────────────────────
+  const syncCotizaciones = async () => {
+    if (!tenant?.id || isSyncing) return
+    setIsSyncing(true)
+    try {
+      const { data: huerfanas } = await supabase
+        .from('cotizaciones')
+        .select('id, total, cliente_id, agente_id, correlativo, estado, clientes(nombre_razon_social)')
+        .eq('negocio_id', tenant.id)
+        .is('oportunidad_id', null)
+
+      if (!huerfanas || huerfanas.length === 0) {
+        toast.success('Todo sincronizado — no hay registros pendientes')
+        return
+      }
+
+      const primeraEtapa = etapas[0]
+      const ultimaEtapa  = etapas[etapas.length - 1]
+      if (!primeraEtapa) { toast.error('Configura al menos una etapa primero'); return }
+
+      let creadas = 0
+      for (const cot of huerfanas) {
+        const estadoNorm = (cot.estado || '').toLowerCase()
+        const etapaTarget = estadoNorm === 'aceptada' ? ultimaEtapa : primeraEtapa
+        const { data: newOp, error: opErr } = await supabase
+          .from('oportunidades')
+          .insert([{
+            negocio_id: tenant.id,
+            cliente_id: cot.cliente_id,
+            agente_id: cot.agente_id,
+            etapa_id: etapaTarget.id,
+            titulo: `Cot. ${cot.correlativo || cot.id.slice(0,6)} — ${cot.clientes?.nombre_razon_social || 'Cliente'}`,
+            valor_estimado: parseFloat(cot.total) || 0,
+          }])
+          .select('id').single()
+        if (!opErr && newOp) {
+          await supabase.from('cotizaciones').update({ oportunidad_id: newOp.id }).eq('id', cot.id)
+          creadas++
+        }
+      }
+      toast.success(`✅ ${creadas} oportunidad(es) sincronizada(s)`)
+      fetchPipelineData()
+    } catch (err) {
+      toast.error('Error: ' + err.message)
+    } finally {
+      setIsSyncing(false)
+    }
+  }
+
   return (
     <div className="h-full flex flex-col fade-up">
       {/* HEADER */}
@@ -258,13 +307,23 @@ export default function PipelineView() {
           <h1 className="text-2xl font-bold text-slate-100">CRM Pipeline</h1>
           <p className="text-sm text-slate-400 mt-1">Tablero comercial Data-Driven</p>
         </div>
-        <button
-          onClick={() => setConfigOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-slate-300 rounded-xl transition-colors border border-white/10"
-        >
-          <Settings size={16} />
-          <span className="text-sm font-bold">Configurar Pipeline</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={syncCotizaciones}
+            disabled={isSyncing}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-xl transition-colors border border-emerald-500/20 disabled:opacity-50"
+          >
+            <RefreshCw size={15} className={isSyncing ? 'animate-spin' : ''} />
+            <span className="text-sm font-bold">{isSyncing ? 'Sincronizando...' : 'Sincronizar Datos'}</span>
+          </button>
+          <button
+            onClick={() => setConfigOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-slate-300 rounded-xl transition-colors border border-white/10"
+          >
+            <Settings size={16} />
+            <span className="text-sm font-bold">Configurar Pipeline</span>
+          </button>
+        </div>
       </div>
 
       {/* TABLERO KANBAN CON DND-CONTEXT */}
@@ -276,12 +335,14 @@ export default function PipelineView() {
       >
         <div className="flex overflow-x-auto gap-6 p-6 h-[calc(100vh-100px)] custom-scrollbar">
           {etapas.map(etapa => {
-            // Comparación robusta: toString() evita UUID string vs number mismatch
+            // ── ANTI-INVISIBILIDAD: calcular etapaIds UNA SOLA VEZ fuera del máp ──
+            // Se hace dentro del map pero usa el array etapas capturado en el closure.
+            // Null-safe: String(null)==="null" no está en el Set de UUIDs reales.
             const etapaIds = new Set(etapas.map(e => String(e.id)))
             const leads = oportunidades.filter(o => String(o.etapa_id) === String(etapa.id))
-            // Fallback: oportunidades sin etapa válida van a la primera columna
+            // Huérfanos: etapa_id es null O apunta a una etapa que ya no existe
             const orphans = etapa.id === etapas[0]?.id
-              ? oportunidades.filter(o => !etapaIds.has(String(o.etapa_id)))
+              ? oportunidades.filter(o => o.etapa_id === null || !etapaIds.has(String(o.etapa_id)))
               : []
             const allLeads = [...leads, ...orphans]
             const color = etapa.color || 'indigo' 
