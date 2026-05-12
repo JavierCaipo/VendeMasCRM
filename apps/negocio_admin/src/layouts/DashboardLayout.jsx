@@ -188,7 +188,7 @@ export default function DashboardLayout() {
         </header>
 
         {/* Scrollable Canvas for Pages */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-8">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-8 pb-24 md:pb-8">
           <Outlet />
         </main>
       </div>
@@ -240,6 +240,25 @@ export default function DashboardLayout() {
         </div>
       )}
 
+      {/* ── Barra de Navegación Inferior (Móvil) ── */}
+      <div className="fixed bottom-0 left-0 w-full flex justify-around items-center md:hidden bg-slate-950 border-t border-slate-800 z-50 px-2 py-3 pb-safe shadow-2xl">
+        <NavLink to="/" className={({ isActive }) => `flex flex-col items-center gap-1 ${isActive ? 'text-indigo-400' : 'text-slate-500 hover:text-slate-400 transition-colors'}`}>
+          <LayoutDashboard size={20} />
+          <span className="text-[10px] font-bold">Resumen</span>
+        </NavLink>
+        <NavLink to="/pipeline" className={({ isActive }) => `flex flex-col items-center gap-1 ${isActive ? 'text-indigo-400' : 'text-slate-500 hover:text-slate-400 transition-colors'}`}>
+          <Kanban size={20} />
+          <span className="text-[10px] font-bold">Pipeline</span>
+        </NavLink>
+        <NavLink to="/clientes" className={({ isActive }) => `flex flex-col items-center gap-1 ${isActive ? 'text-indigo-400' : 'text-slate-500 hover:text-slate-400 transition-colors'}`}>
+          <Users size={20} />
+          <span className="text-[10px] font-bold">Clientes</span>
+        </NavLink>
+        <NavLink to="/cotizaciones" className={({ isActive }) => `flex flex-col items-center gap-1 ${isActive ? 'text-indigo-400' : 'text-slate-500 hover:text-slate-400 transition-colors'}`}>
+          <FileText size={20} />
+          <span className="text-[10px] font-bold">Cotizaciones</span>
+        </NavLink>
+      </div>
     </div>
   )
 }

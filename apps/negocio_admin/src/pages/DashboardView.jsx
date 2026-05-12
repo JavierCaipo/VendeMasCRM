@@ -3,6 +3,7 @@
 // src/pages/DashboardView.jsx
 // ============================================
 import React, { useState, useEffect } from 'react'
+import useSWR from 'swr'
 import { 
   Wallet, Trophy, Target, TrendingUp, 
   ArrowUpRight, Clock, User, Briefcase,
@@ -63,10 +64,6 @@ const MOCK_RECENT = [
 export default function DashboardView() {
   const { tenant } = useTenant()
   const navigate = useNavigate()
-  const [loading, setLoading] = useState(true)
-  const [stats, setStats] = useState([])
-  const [recent, setRecent] = useState([])
-  const [quotaData, setQuotaData] = useState({ meta: 10, alcanzada: 0, cierres: 0 })
   const [displayCurrency, setDisplayCurrency] = useState('USD')
 
   // ── CONVERSOR UNIVERSAL DE MONEDA ──────────────────────────────────
@@ -85,8 +82,7 @@ export default function DashboardView() {
   }
 
   const fetchDashboardData = async () => {
-    if (!tenant?.id) return
-    setLoading(true)
+    if (!tenant?.id) return null
 
     try {
       const hoy = new Date()
@@ -172,53 +168,7 @@ export default function DashboardView() {
         .order('fecha_creacion', { ascending: false })
         .limit(5)
 
-      // ── 6. KPI GRID ────────────────────────────────────────────────
-      // Guardamos el valor base en USD como número crudo (rawUSD).
-      // El renderizado aplica formatMonto() que respeta displayCurrency.
-      setStats([
-        {
-          title: 'Total en Embudo',
-          rawUSD: totalEmbudo,          // número puro en USD
-          value: null,                  // se calcula en render
-          icon: Wallet,
-          color: 'text-indigo-400',
-          bgColor: 'bg-indigo-500/15',
-          borderColor: 'border-indigo-500/25',
-          trend: `${activasCount} cots. activas`
-        },
-        {
-          title: 'Cierres Ganados',
-          rawUSD: totalGanado,
-          value: null,
-          icon: Trophy,
-          color: 'text-emerald-400',
-          bgColor: 'bg-emerald-500/15',
-          borderColor: 'border-emerald-500/25',
-          trend: `${cots.filter(c => (c.estado||'').toLowerCase() === 'aceptada').length} este mes`
-        },
-        {
-          title: 'Oportunidades Activas',
-          rawUSD: null,                 // no monetario
-          value: activasCount.toString(),
-          icon: Target,
-          color: 'text-sky-400',
-          bgColor: 'bg-sky-500/15',
-          borderColor: 'border-sky-500/25',
-          trend: `+${cots.filter(c => new Date(c.fecha_creacion).toDateString() === hoy.toDateString()).length} hoy`
-        },
-        {
-          title: 'Ticket Promedio',
-          rawUSD: ticketPromedio,
-          value: null,
-          icon: TrendingUp,
-          color: 'text-amber-400',
-          bgColor: 'bg-amber-500/15',
-          borderColor: 'border-amber-500/25',
-          trend: 'Mes en curso'
-        },
-      ])
-
-      // ── 7. ACTIVIDAD RECIENTE (mezcla cots + ops) ──────────────────
+      // ── 6. KPI GRID & 7. ACTIVIDAD RECIENTE ────────────────────────
       const fmtUSD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
       const recentCots = cots.slice(0, 5).map(c => ({
         id: c.id,
@@ -231,22 +181,73 @@ export default function DashboardView() {
         fecha: new Date(c.fecha_creacion).toLocaleDateString('es-PE'),
         estado: (c.estado || 'borrador').charAt(0).toUpperCase() + (c.estado || 'borrador').slice(1)
       }))
-      setRecent(recentCots.length > 0 ? recentCots : (ops || []).slice(0, 5).map(op => ({
-        id: op.id,
-        tipo: 'oportunidad',
-        titulo: op.titulo,
-        cliente: op.cliente?.nombre_razon_social || 'Cliente s/n',
-        monto: fmtUSD.format(op.valor_estimado),
-        fecha: new Date(op.fecha_creacion).toLocaleDateString('es-PE'),
-        estado: op.etapa?.nombre || 'Pipeline'
-      })))
+
+      return {
+        stats: [
+          {
+            title: 'Total en Embudo',
+            rawUSD: totalEmbudo,
+            value: null,
+            icon: Wallet,
+            color: 'text-indigo-400',
+            bgColor: 'bg-indigo-500/15',
+            borderColor: 'border-indigo-500/25',
+            trend: `${activasCount} cots. activas`
+          },
+          {
+            title: 'Cierres Ganados',
+            rawUSD: totalGanado,
+            value: null,
+            icon: Trophy,
+            color: 'text-emerald-400',
+            bgColor: 'bg-emerald-500/15',
+            borderColor: 'border-emerald-500/25',
+            trend: `${cots.filter(c => (c.estado||'').toLowerCase() === 'aceptada').length} este mes`
+          },
+          {
+            title: 'Oportunidades Activas',
+            rawUSD: null,
+            value: activasCount.toString(),
+            icon: Target,
+            color: 'text-sky-400',
+            bgColor: 'bg-sky-500/15',
+            borderColor: 'border-sky-500/25',
+            trend: `+${cots.filter(c => new Date(c.fecha_creacion).toDateString() === hoy.toDateString()).length} hoy`
+          },
+          {
+            title: 'Ticket Promedio',
+            rawUSD: ticketPromedio,
+            value: null,
+            icon: TrendingUp,
+            color: 'text-amber-400',
+            bgColor: 'bg-amber-500/15',
+            borderColor: 'border-amber-500/25',
+            trend: 'Mes en curso'
+          },
+        ],
+        recent: recentCots.length > 0 ? recentCots : (ops || []).slice(0, 5).map(op => ({
+          id: op.id,
+          tipo: 'oportunidad',
+          titulo: op.titulo,
+          cliente: op.cliente?.nombre_razon_social || 'Cliente s/n',
+          monto: fmtUSD.format(op.valor_estimado),
+          fecha: new Date(op.fecha_creacion).toLocaleDateString('es-PE'),
+          estado: op.etapa?.nombre || 'Pipeline'
+        })),
+        quotaData: { meta: metaMensual, alcanzada: totalGanadoUsuario, cierres: cantidadCierresUsuario }
+      }
 
     } catch (err) {
       console.error('Error al cargar Dashboard:', err)
-    } finally {
-      setLoading(false)
+      return null
     }
   }
+
+  const { data, isLoading: loading, mutate } = useSWR(tenant?.id ? ['dashboard', tenant.id] : null, fetchDashboardData)
+  const stats = data?.stats || []
+  const recent = data?.recent || []
+  const quotaData = data?.quotaData || { meta: 10, alcanzada: 0, cierres: 0 }
+
 
   // ── SYNC DE HUÉRFANOS ──────────────────────────────────────────
   // Detecta cotizaciones sin oportunidad_id y crea su fila en oportunidades
@@ -315,8 +316,10 @@ export default function DashboardView() {
 
   useEffect(() => {
     const init = async () => {
-      await syncHuerfanos()   // primero crear oportunidades faltantes
-      fetchDashboardData()    // luego cargar KPIs con datos completos
+      if (tenant?.id) {
+        await syncHuerfanos()   // primero crear oportunidades faltantes
+        mutate() // Revalidar la cache de SWR
+      }
     }
     init()
 
@@ -328,14 +331,14 @@ export default function DashboardView() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'oportunidades', filter: `negocio_id=eq.${tenant.id}` },
-        () => fetchDashboardData()
+        () => mutate()
       )
       .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [tenant?.id])
+  }, [tenant?.id, mutate])
 
   // ── CÁLCULO DE PROYECCIÓN DE METAS ──────────────────────────────
   const ticketPromedioComercial = (quotaData.cierres || 0) > 0 

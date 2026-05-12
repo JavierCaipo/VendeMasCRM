@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import useSWR from 'swr'
 import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../context/TenantContext'
 import { Settings, Plus, DollarSign, GripVertical, User, Calendar, RefreshCw, Clock, Wand2, Flame } from 'lucide-react'
@@ -158,9 +159,6 @@ function DroppableColumn({ etapa, leads, onLeadClick, onAddClick }) {
 
 export default function PipelineView() {
   const { tenant } = useTenant()
-  const [loading, setLoading] = useState(true)
-  const [etapas, setEtapas] = useState([])
-  const [oportunidades, setOportunidades] = useState([])
   const [configOpen, setConfigOpen] = useState(false)
   const [newEtapaNombre, setNewEtapaNombre] = useState('')
 
@@ -181,9 +179,8 @@ export default function PipelineView() {
   )
 
   const fetchPipelineData = async () => {
+    if (!tenant?.id) return null
     try {
-      setLoading(true)
-      
       const [resEtapas, resOportunidades] = await Promise.all([
         supabase
           .from('pipeline_etapas')
@@ -200,19 +197,17 @@ export default function PipelineView() {
       if (resEtapas.error) throw resEtapas.error
       if (resOportunidades.error) throw resOportunidades.error
 
-      setEtapas(resEtapas.data || [])
-      setOportunidades(resOportunidades.data || [])
+      return { etapas: resEtapas.data || [], oportunidades: resOportunidades.data || [] }
     } catch (error) {
       console.error('Error fetching pipeline:', error)
       toast.error('Error al cargar pipeline: ' + error.message)
-    } finally {
-      setLoading(false)
+      return null
     }
   }
 
-  useEffect(() => {
-    if (tenant?.id) fetchPipelineData()
-  }, [tenant?.id])
+  const { data, isLoading: loading, mutate } = useSWR(tenant?.id ? ['pipeline', tenant.id] : null, fetchPipelineData)
+  const etapas = data?.etapas || []
+  const oportunidades = data?.oportunidades || []
 
   const handleAddEtapa = async () => {
     if (!newEtapaNombre.trim()) return
@@ -231,7 +226,7 @@ export default function PipelineView() {
       
       toast.success('Etapa creada')
       setNewEtapaNombre('')
-      fetchPipelineData()
+      mutate()
     } catch (err) {
       toast.error('Error al crear etapa: ' + err.message)
     }
@@ -263,7 +258,8 @@ export default function PipelineView() {
     if (etapaOriginal === destinoId) return // Retorna sin hacer nada si no cambió de columna
 
     // Optimistic UI Update
-    setOportunidades(prev => prev.map(o => o.id === activeCardId ? { ...o, etapa_id: destinoId } : o))
+    const newOportunidades = oportunidades.map(o => o.id === activeCardId ? { ...o, etapa_id: destinoId } : o)
+    mutate({ etapas, oportunidades: newOportunidades }, false)
 
     // 2. Persistencia en Supabase
     try {
@@ -273,9 +269,10 @@ export default function PipelineView() {
         .eq('id', activeCardId)
       
       if (error) throw error
+      mutate() // Revalidar desde BD
     } catch (err) {
       toast.error('Error al mover oportunidad: ' + err.message)
-      fetchPipelineData() // Rollback en caso de error
+      mutate() // Rollback en caso de error
     }
   }
 
@@ -332,7 +329,7 @@ export default function PipelineView() {
         }
       }
       toast.success(`✅ ${creadas} oportunidad(es) sincronizada(s)`)
-      fetchPipelineData()
+      mutate()
     } catch (err) {
       toast.error('Error: ' + err.message)
     } finally {
@@ -374,7 +371,7 @@ export default function PipelineView() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex overflow-x-auto gap-6 p-6 h-[calc(100vh-100px)] custom-scrollbar">
+        <div className="flex flex-row overflow-x-auto gap-6 p-6 h-[calc(100vh-100px)] custom-scrollbar snap-x snap-mandatory pb-4 hide-scrollbar">
           {etapas.map(etapa => {
             // ── ANTI-INVISIBILIDAD: calcular etapaIds UNA SOLA VEZ fuera del máp ──
             // Se hace dentro del map pero usa el array etapas capturado en el closure.
@@ -415,7 +412,7 @@ export default function PipelineView() {
             return (
               <div 
                 key={etapa.id}
-                className="min-w-[300px] max-w-[300px] flex flex-col snap-start shrink-0 h-full"
+                className="min-w-[85vw] md:min-w-[300px] w-[85vw] md:w-[300px] flex flex-col snap-center shrink-0 h-full"
               >
                 {/* Etapa Header (Cristal) */}
                 <div className="p-4 mb-4 glass rounded-2xl border border-white/10 flex flex-col" style={{ borderBottomColor: `var(--color-${color}-500, #6366f1)` }}>
@@ -547,7 +544,7 @@ export default function PipelineView() {
       <OportunidadModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSave={fetchPipelineData}
+        onSave={() => mutate()}
         oportunidad={oportunidadToEdit}
         etapas={etapas}
         etapaPreseleccionada={etapaPreseleccionada}
