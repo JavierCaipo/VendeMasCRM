@@ -128,19 +128,22 @@ export default function DashboardView() {
 
       const ticketPromedio = cots.length > 0 ? (totalGanado + totalEmbudo) / cots.length : 0
 
-      // ── 3. CUOTA DEL USUARIO ACTIVO ────────────────────────────────
+      // ── 3. CUOTA DEL USUARIO ACTIVO (sin bloqueo por rol) ──────────────────
       const { data: { user } } = await supabase.auth.getUser()
       let metaMensual = 10
       let alcanzada = 0
       if (user) {
-        const { data: userData } = await supabase
+        // maybeSingle() no lanza error si no hay fila → fallback seguro a 10
+        const { data: userData, error: uErr } = await supabase
           .from('usuarios_negocio')
           .select('meta_mensual')
           .eq('id', user.id)
-          .single()
+          .maybeSingle()
+        if (uErr) console.error('[Dashboard] Error al leer meta_mensual:', uErr)
         metaMensual = userData?.meta_mensual || 10
-        alcanzada = cots.filter(c => 
-          c.agente_id === user.id && 
+        // Cualquier rol ve sus propios cierres ganados este mes
+        alcanzada = cots.filter(c =>
+          c.agente_id === user.id &&
           (c.estado || '').toLowerCase() === 'aceptada'
         ).length
       }

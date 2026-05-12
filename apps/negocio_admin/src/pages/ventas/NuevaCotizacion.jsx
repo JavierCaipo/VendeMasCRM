@@ -69,18 +69,34 @@ export default function NuevaCotizacion() {
     }
 
     const [clis, prods] = await Promise.all([
-      supabase.from('clientes').select('id, nombre_razon_social, numero_documento, sector, agente_id, telefono, email, ciudad, pais, fecha_creacion').eq('negocio_id', tenant.id).order('nombre_razon_social'),
-      supabase.from('productos').select('*, categorias(nombre), inventario(stock_actual, almacen_id, almacen:almacenes(nombre))').eq('negocio_id', tenant.id).order('nombre')
+      // ── MISIÓN 1: select explícito sin sector (no existe en la tabla) ──
+      supabase
+        .from('clientes')
+        .select('id, nombre_razon_social, numero_documento')
+        .eq('negocio_id', tenant.id)
+        .order('nombre_razon_social'),
+      supabase
+        .from('productos')
+        .select('*, categorias(nombre), inventario(stock_actual, almacen_id, almacen:almacenes(nombre))')
+        .eq('negocio_id', tenant.id)
+        .order('nombre')
     ])
+
+    // Error explícito — sin fallos silenciosos
+    if (clis.error) {
+      console.error('[fetchInitialData] Error al cargar clientes:', clis.error)
+    }
+    if (prods.error) {
+      console.error('[fetchInitialData] Error al cargar productos:', prods.error)
+    }
+
     const loadedClientes = clis.data || []
     setClientes(loadedClientes)
     setProductos(prods.data || [])
 
     if (clienteIdUrl) {
       const preselected = loadedClientes.find(c => c.id === clienteIdUrl)
-      if (preselected) {
-        setSelectedCliente(preselected)
-      }
+      if (preselected) setSelectedCliente(preselected)
     }
   }
 
@@ -279,22 +295,24 @@ export default function NuevaCotizacion() {
         quotePayload.agente_id = user.id // Default para admin si no se añade un selector de agentes a futuro
       }
 
-      const { data: quote, error: qErr } = await supabase
-        .from('cotizaciones')
-        .insert([quotePayload])
-        .select()
-        .single()
+      // ── MISIÓN 3: ACOPLAMIENTO ESTRICTO ─────────────────────────────────────
+      // Paso 1: Resolver oportunidad ANTES de insertar la cotización
+      let oportunidadIdFinal = oportunidadIdUrl || null
 
-      if (qErr) throw qErr
-
-      // Sync Pipeline: Insertar o actualizar Oportunidad
-      if (!quotePayload.oportunidad_id) {
-        // Buscar la etapa "Propuesta" o asignar la primera por defecto
+      if (!oportunidadIdFinal) {
+        // Buscar etapa objetivo: prefer 'Propuesta'/'Cotización', fallback a primera
         let targetEtapaId = null
-        const { data: etapas } = await supabase.from('pipeline_etapas').select('id, nombre').eq('negocio_id', tenant.id).order('orden')
+        const { data: etapas } = await supabase
+          .from('pipeline_etapas')
+          .select('id, nombre')
+          .eq('negocio_id', tenant.id)
+          .order('orden')
         if (etapas && etapas.length > 0) {
-           const propuesta = etapas.find(e => e.nombre.toLowerCase().includes('propuesta') || e.nombre.toLowerCase().includes('cotización'))
-           targetEtapaId = propuesta ? propuesta.id : etapas[0].id
+          const propuesta = etapas.find(e =>
+            e.nombre.toLowerCase().includes('propuesta') ||
+            e.nombre.toLowerCase().includes('cotización')
+          )
+          targetEtapaId = propuesta ? propuesta.id : etapas[0].id
         }
 
         const fechaCierreDefault = (() => {
@@ -308,24 +326,35 @@ export default function NuevaCotizacion() {
           agente_id: quotePayload.agente_id,
           titulo: `Cot. ${correlativoSeguro} - ${selectedCliente.nombre_razon_social || 'Cliente'}`,
           valor_estimado: quotePayload.total,
-          moneda: quotePayload.moneda,
           etapa_id: targetEtapaId,
           fecha_cierre: fechaCierreDefault
         }
-        // Insertamos la oportunidad y opcionalmente podríamos enlazar su ID a la cotización,
-        // pero por ahora solo la creamos para que aparezca en el Pipeline.
-        const { data: newOp, error: opErr } = await supabase.from('oportunidades').insert([opPayload]).select().single()
-        if (opErr) throw new Error(`Fallo de sincronización con Pipeline: ${opErr.message}`)
-        if (newOp) {
-           await supabase.from('cotizaciones').update({ oportunidad_id: newOp.id }).eq('id', quote.id)
-        }
+
+        const { data: newOp, error: opErr } = await supabase
+          .from('oportunidades')
+          .insert([opPayload])
+          .select('id')
+          .single()
+        if (opErr) throw new Error(`❌ Error al crear oportunidad: ${opErr.message}`)
+        oportunidadIdFinal = newOp.id
       } else {
-        // Actualizamos la oportunidad existente con el nuevo monto
+        // Oportunidad preexistente: actualizar su monto al guardar
         await supabase
           .from('oportunidades')
-          .update({ valor_estimado: quotePayload.total, moneda: quotePayload.moneda })
-          .eq('id', quotePayload.oportunidad_id)
+          .update({ valor_estimado: quotePayload.total })
+          .eq('id', oportunidadIdFinal)
       }
+
+      // Paso 2: Insertar cotización con oportunidad_id ya embebido desde el origen
+      quotePayload.oportunidad_id = oportunidadIdFinal
+
+      const { data: quote, error: qErr } = await supabase
+        .from('cotizaciones')
+        .insert([quotePayload])
+        .select()
+        .single()
+
+      if (qErr) throw qErr
 
       // 4. Insert Detalles (Sanitización Numérica estricta)
       const detailPayload = items.map(i => ({
