@@ -116,7 +116,8 @@ export default function ClienteTimeline({ cliente_id }) {
         if (response.ok) {
           const data = await response.json();
           const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-          const jsonText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+          // Limpieza estricta de JSON por si Gemini devuelve bloques markdown
+          const jsonText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
           const parsed = JSON.parse(jsonText);
           if (parsed.sentimiento) sentimiento = parsed.sentimiento.toUpperCase();
           if (parsed.resumen_ia) resumen_ia = parsed.resumen_ia;

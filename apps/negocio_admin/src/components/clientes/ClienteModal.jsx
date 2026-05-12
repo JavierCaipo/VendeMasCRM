@@ -148,7 +148,10 @@ export default function ClienteModal({ isOpen, onClose, onSuccess, onError, clie
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-sm">
       <div className="absolute inset-0" onClick={onClose} />
       
-      <div className="bg-slate-900 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl flex flex-col">
+      <div 
+        className="bg-slate-900 w-full max-w-2xl max-h-[85vh] mt-10 sm:mt-0 overflow-y-auto rounded-xl shadow-2xl flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
