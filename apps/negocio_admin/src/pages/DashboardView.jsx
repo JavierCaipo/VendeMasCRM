@@ -81,8 +81,12 @@ export default function DashboardView() {
     return `${simbolo} ${valor.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
-  const fetchDashboardData = async () => {
-    if (!tenant?.id) return null
+  const fetchDashboardData = async ([key, tenantId]) => {
+    console.log('[SWR] Fetching dashboard for tenant:', tenantId)
+    if (!tenantId) {
+      console.warn('[SWR] No tenantId provided')
+      return null
+    }
 
     try {
       const hoy = new Date()
@@ -93,19 +97,21 @@ export default function DashboardView() {
       const { data: cotsDelMes, error: cotError } = await supabase
         .from('cotizaciones')
         .select('id, estado, total, moneda, tipo_cambio, fecha_creacion, agente_id, correlativo, cliente_id, clientes(nombre_razon_social)')
-        .eq('negocio_id', tenant.id)
+        .eq('negocio_id', tenantId)
         .gte('fecha_creacion', primerDiaMes)
         .order('fecha_creacion', { ascending: false })
 
       if (cotError) throw cotError
+      console.log('[SWR] cotsDelMes count:', cotsDelMes?.length)
 
       // ── 1b. EMBUDO ACTIVO — borrador + enviada SIN filtro de fecha ──────────
       // El embudo son deals vivos HOY, independientemente de cuándo se crearon.
       const { data: cotsEmbudo } = await supabase
         .from('cotizaciones')
         .select('id, estado, total, moneda, tipo_cambio')
-        .eq('negocio_id', tenant.id)
+        .eq('negocio_id', tenantId)
         .in('estado', ['borrador', 'BORRADOR', 'enviada', 'ENVIADA'])
+      console.log('[SWR] cotsEmbudo count:', cotsEmbudo?.length)
 
       // ── 2. MOTOR MULTIMONEDA ──────────────────────────────────────
       const toUSD = (cot) => {
@@ -164,9 +170,10 @@ export default function DashboardView() {
       const { data: ops } = await supabase
         .from('oportunidades')
         .select('id, titulo, valor_estimado, fecha_creacion, cliente:clientes(nombre_razon_social), etapa:pipeline_etapas(nombre)')
-        .eq('negocio_id', tenant.id)
+        .eq('negocio_id', tenantId)
         .order('fecha_creacion', { ascending: false })
         .limit(5)
+      console.log('[SWR] oportunidades recientes count:', ops?.length)
 
       // ── 6. DATA MAPPING FINAL ────────────────────────
       const fmtUSD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
@@ -375,7 +382,7 @@ export default function DashboardView() {
   }
 
   return (
-    <div className="p-4 md:p-8 pb-20 md:pb-6 space-y-6 md:space-y-10 fade-up overflow-y-auto max-h-[calc(100vh-100px)] custom-scrollbar">
+    <div className="w-full p-4 md:p-8 pb-20 md:pb-6 space-y-6 md:space-y-10 fade-up overflow-y-auto overflow-x-hidden max-h-[calc(100vh-100px)] custom-scrollbar">
       
       {/* ── HEADER DE BIENVENIDA ────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -466,8 +473,8 @@ export default function DashboardView() {
           </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
+        <div className="overflow-x-auto w-full pb-2">
+          <table className="w-full text-left min-w-[600px] md:min-w-full">
             <thead className="bg-white/[0.02] text-[10px] uppercase font-black text-slate-500 tracking-[0.15em]">
               <tr>
                 <th className="px-8 py-5">Oportunidad</th>
