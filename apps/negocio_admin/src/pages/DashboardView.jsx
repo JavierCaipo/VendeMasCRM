@@ -168,7 +168,7 @@ export default function DashboardView() {
         .order('fecha_creacion', { ascending: false })
         .limit(5)
 
-      // ── 6. KPI GRID & 7. ACTIVIDAD RECIENTE ────────────────────────
+      // ── 6. DATA MAPPING FINAL ────────────────────────
       const fmtUSD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
       const recentCots = cots.slice(0, 5).map(c => ({
         id: c.id,
@@ -182,59 +182,28 @@ export default function DashboardView() {
         estado: (c.estado || 'borrador').charAt(0).toUpperCase() + (c.estado || 'borrador').slice(1)
       }))
 
+      const opsMapped = (ops || []).slice(0, 5).map(op => ({
+        id: op.id,
+        tipo: 'oportunidad',
+        titulo: op.titulo,
+        cliente: op.cliente?.nombre_razon_social || 'Cliente s/n',
+        monto: fmtUSD.format(op.valor_estimado),
+        fecha: new Date(op.fecha_creacion).toLocaleDateString('es-PE'),
+        estado: op.etapa?.nombre || 'Pipeline'
+      }))
+
       return {
-        stats: [
-          {
-            title: 'Total en Embudo',
-            rawUSD: totalEmbudo,
-            value: null,
-            icon: Wallet,
-            color: 'text-indigo-400',
-            bgColor: 'bg-indigo-500/15',
-            borderColor: 'border-indigo-500/25',
-            trend: `${activasCount} cots. activas`
-          },
-          {
-            title: 'Cierres Ganados',
-            rawUSD: totalGanado,
-            value: null,
-            icon: Trophy,
-            color: 'text-emerald-400',
-            bgColor: 'bg-emerald-500/15',
-            borderColor: 'border-emerald-500/25',
-            trend: `${cots.filter(c => (c.estado||'').toLowerCase() === 'aceptada').length} este mes`
-          },
-          {
-            title: 'Oportunidades Activas',
-            rawUSD: null,
-            value: activasCount.toString(),
-            icon: Target,
-            color: 'text-sky-400',
-            bgColor: 'bg-sky-500/15',
-            borderColor: 'border-sky-500/25',
-            trend: `+${cots.filter(c => new Date(c.fecha_creacion).toDateString() === hoy.toDateString()).length} hoy`
-          },
-          {
-            title: 'Ticket Promedio',
-            rawUSD: ticketPromedio,
-            value: null,
-            icon: TrendingUp,
-            color: 'text-amber-400',
-            bgColor: 'bg-amber-500/15',
-            borderColor: 'border-amber-500/25',
-            trend: 'Mes en curso'
-          },
-        ],
-        recent: recentCots.length > 0 ? recentCots : (ops || []).slice(0, 5).map(op => ({
-          id: op.id,
-          tipo: 'oportunidad',
-          titulo: op.titulo,
-          cliente: op.cliente?.nombre_razon_social || 'Cliente s/n',
-          monto: fmtUSD.format(op.valor_estimado),
-          fecha: new Date(op.fecha_creacion).toLocaleDateString('es-PE'),
-          estado: op.etapa?.nombre || 'Pipeline'
-        })),
-        quotaData: { meta: metaMensual, alcanzada: totalGanadoUsuario, cierres: cantidadCierresUsuario }
+        totalEmbudo,
+        cierresGanados: totalGanado,
+        oportunidadesActivas: activasCount,
+        ticketPromedio,
+        metaMensual,
+        alcanzada: totalGanadoUsuario,
+        cantidadCierres: cantidadCierresUsuario,
+        negociosRecientes: recentCots.length > 0 ? recentCots : opsMapped,
+        hoyStr: hoy.toDateString(),
+        cotsActivasHoyCount: cots.filter(c => new Date(c.fecha_creacion).toDateString() === hoy.toDateString()).length,
+        cotsGanadasMes: cots.filter(c => (c.estado||'').toLowerCase() === 'aceptada').length
       }
 
     } catch (err) {
@@ -244,9 +213,56 @@ export default function DashboardView() {
   }
 
   const { data, isLoading: loading, mutate } = useSWR(tenant?.id ? ['dashboard', tenant.id] : null, fetchDashboardData)
-  const stats = data?.stats || []
-  const recent = data?.recent || []
-  const quotaData = data?.quotaData || { meta: 10, alcanzada: 0, cierres: 0 }
+
+  const stats = [
+    {
+      title: 'Total en Embudo',
+      rawUSD: data?.totalEmbudo || 0,
+      value: null,
+      icon: Wallet,
+      color: 'text-indigo-400',
+      bgColor: 'bg-indigo-500/15',
+      borderColor: 'border-indigo-500/25',
+      trend: `${data?.oportunidadesActivas || 0} cots. activas`
+    },
+    {
+      title: 'Cierres Ganados',
+      rawUSD: data?.cierresGanados || 0,
+      value: null,
+      icon: Trophy,
+      color: 'text-emerald-400',
+      bgColor: 'bg-emerald-500/15',
+      borderColor: 'border-emerald-500/25',
+      trend: `${data?.cotsGanadasMes || 0} este mes`
+    },
+    {
+      title: 'Oportunidades Activas',
+      rawUSD: null,
+      value: (data?.oportunidadesActivas || 0).toString(),
+      icon: Target,
+      color: 'text-sky-400',
+      bgColor: 'bg-sky-500/15',
+      borderColor: 'border-sky-500/25',
+      trend: `+${data?.cotsActivasHoyCount || 0} hoy`
+    },
+    {
+      title: 'Ticket Promedio',
+      rawUSD: data?.ticketPromedio || 0,
+      value: null,
+      icon: TrendingUp,
+      color: 'text-amber-400',
+      bgColor: 'bg-amber-500/15',
+      borderColor: 'border-amber-500/25',
+      trend: 'Mes en curso'
+    },
+  ]
+
+  const recent = data?.negociosRecientes || []
+  const quotaData = { 
+    meta: data?.metaMensual || 500000, 
+    alcanzada: data?.alcanzada || 0, 
+    cierres: data?.cantidadCierres || 0 
+  }
 
 
   // ── SYNC DE HUÉRFANOS ──────────────────────────────────────────
@@ -359,7 +375,7 @@ export default function DashboardView() {
   }
 
   return (
-    <div className="p-8 space-y-10 fade-up overflow-y-auto max-h-[calc(100vh-100px)] custom-scrollbar">
+    <div className="p-4 md:p-8 pb-20 md:pb-6 space-y-6 md:space-y-10 fade-up overflow-y-auto max-h-[calc(100vh-100px)] custom-scrollbar">
       
       {/* ── HEADER DE BIENVENIDA ────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -401,7 +417,7 @@ export default function DashboardView() {
       </div>
 
       {/* ── KPI GRID ────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 md:gap-6 mb-6">
         {stats.map((kpi, idx) => (
           <div key={idx} className="group glass bg-slate-900/50 border border-white/5 p-6 rounded-[2rem] hover:scale-[1.02] hover:bg-slate-900/80 transition-all duration-300">
             <div className="flex justify-between items-start mb-5">
