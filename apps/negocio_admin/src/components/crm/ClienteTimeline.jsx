@@ -116,15 +116,23 @@ export default function ClienteTimeline({ cliente_id }) {
         if (response.ok) {
           const data = await response.json();
           const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-          // Limpieza estricta de JSON por si Gemini devuelve bloques markdown
-          const jsonText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
-          const parsed = JSON.parse(jsonText);
-          if (parsed.sentimiento) sentimiento = parsed.sentimiento.toUpperCase();
-          if (parsed.resumen_ia) resumen_ia = parsed.resumen_ia;
+          console.log("Respuesta cruda Gemini:", rawText);
+          
+          const match = rawText.match(/\{[\s\S]*\}/);
+          if (match) {
+            const parsed = JSON.parse(match[0]);
+            if (parsed.sentimiento) sentimiento = parsed.sentimiento.toUpperCase();
+            if (parsed.resumen_ia) resumen_ia = parsed.resumen_ia;
+          }
+        } else {
+          const errText = await response.text();
+          console.error("🔥 ERROR CRÍTICO GEMINI (Status " + response.status + "):", errText);
         }
+      } else {
+        console.error("🔥 ERROR CRÍTICO GEMINI: No se encontró VITE_GEMINI_API_KEY");
       }
-    } catch (err) {
-      console.warn("Error al llamar a Gemini:", err)
+    } catch (error) {
+      console.error("🔥 ERROR CRÍTICO GEMINI:", error)
     }
 
     // Aseguramos estrictamente que negocio_id esté presente.

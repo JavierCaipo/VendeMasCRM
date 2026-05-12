@@ -48,11 +48,13 @@ function SortableLead({ lead, onClick, etapa }) {
   const isDealRot = diasInactivo > 7 && etapa?.nombre && /borrador|propuesta|negociaci[oó]n/i.test(etapa.nombre);
 
   // Simulated AI probability formula
-  let calcBase = 80;
-  if (etapa?.orden === 1) calcBase = 20;
-  else if (etapa?.orden === 2) calcBase = 50;
-  else if (etapa?.orden === 3) calcBase = 80;
-  else if (etapa?.orden >= 4) calcBase = 100;
+  const nombreEtapa = (etapa?.nombre || '').toLowerCase();
+  let calcBase = 20;
+  if (nombreEtapa.includes('prospecto')) calcBase = 20;
+  else if (nombreEtapa.includes('calificado')) calcBase = 30;
+  else if (nombreEtapa.includes('propuesta')) calcBase = 50;
+  else if (nombreEtapa.includes('negociaci')) calcBase = 80;
+  else if (nombreEtapa.includes('cerrado') || nombreEtapa.includes('ganad')) calcBase = 100;
   
   const discount = isDealRot ? (diasInactivo * 2) : 0;
   const baseProb = Math.max(5, calcBase - discount);
