@@ -16,6 +16,7 @@ const INITIAL_FORM = {
   direccion: '',
   tarifa_asignada: 'C',
   agente_asignado_id: '',
+  descripcion_empresa: '',
 }
 
 export default function ClienteModal({ isOpen, onClose, onSuccess, onError, clienteToEdit }) {
@@ -53,6 +54,7 @@ export default function ClienteModal({ isOpen, onClose, onSuccess, onError, clie
           direccion: clienteToEdit.direccion || '',
           tarifa_asignada: clienteToEdit.tarifa_asignada || 'C',
           agente_asignado_id: clienteToEdit.agente_asignado_id || '',
+          descripcion_empresa: clienteToEdit.descripcion_empresa || '',
         })
       } else {
         setForm(INITIAL_FORM)
@@ -257,6 +259,18 @@ export default function ClienteModal({ isOpen, onClose, onSuccess, onError, clie
                 <option value="C" className="bg-slate-900">Tarifa C (Normal)</option>
               </select>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1.5">Descripción / Actividad de la Empresa</label>
+            <textarea
+              name="descripcion_empresa"
+              value={form.descripcion_empresa}
+              onChange={handleChange}
+              rows={3}
+              placeholder="¿A qué se dedica la empresa? (Contexto para la IA)"
+              className="w-full px-3 py-2.5 rounded-xl text-sm text-slate-100 placeholder-slate-500 bg-white/5 border border-white/10 focus:outline-none focus:border-indigo-500/60 custom-scrollbar resize-none"
+            />
           </div>
 
           {userRole === 'admin' && (

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../context/TenantContext'
-import { Settings, Plus, DollarSign, GripVertical, User, Calendar, RefreshCw } from 'lucide-react'
+import { Settings, Plus, DollarSign, GripVertical, User, Calendar, RefreshCw, Clock, Wand2, Flame } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   DndContext,
@@ -22,7 +22,7 @@ import OportunidadModal from '../../components/crm/OportunidadModal'
 
 // ── COMPONENTES INTERNOS DE DND-KIT ─────────────────────────────
 
-function SortableLead({ lead, onClick }) {
+function SortableLead({ lead, onClick, etapa }) {
   const {
     attributes,
     listeners,
@@ -41,6 +41,16 @@ function SortableLead({ lead, onClick }) {
     opacity: isDragging ? 0.5 : 1,
   }
 
+  const diasInactivo = lead.fecha_creacion 
+    ? Math.floor((new Date() - new Date(lead.fecha_creacion)) / (1000 * 60 * 60 * 24))
+    : 0;
+
+  const isDealRot = diasInactivo > 7 && etapa?.nombre && /borrador|propuesta|negociaci[oó]n/i.test(etapa.nombre);
+
+  // Simulated AI probability formula
+  const baseProb = Math.min(95, Math.max(10, 80 - (diasInactivo * 2)));
+  const probColor = baseProb > 70 ? 'text-emerald-400' : baseProb > 40 ? 'text-amber-400' : 'text-red-400';
+
   return (
     <div 
       ref={setNodeRef}
@@ -50,9 +60,31 @@ function SortableLead({ lead, onClick }) {
       onClick={onClick}
       className="p-4 bg-white/5 border border-white/10 rounded-xl hover:border-indigo-500/30 transition-all cursor-grab group glass shadow-sm hover:shadow-indigo-500/10"
     >
-      <div className="flex justify-between items-start mb-2">
+      <div className="flex justify-between items-start mb-2 gap-2">
         <h4 className="text-sm font-bold text-slate-200 line-clamp-2 leading-snug">{lead.titulo}</h4>
+        {isDealRot && (
+          <button 
+            onClick={(e) => { e.stopPropagation(); toast('Sugerencia IA', { description: 'Próximamente: Sugerir mensaje de re-enganche con IA', icon: '🪄' }) }}
+            className="shrink-0 p-1.5 rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 transition-colors"
+            title="Sugerir mensaje de re-enganche con IA"
+          >
+            <Wand2 size={14} />
+          </button>
+        )}
       </div>
+      
+      {/* Indicadores de Lead Scoring y Deal Rot */}
+      <div className="flex flex-wrap items-center gap-2 mt-2">
+        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white/5 border border-white/5">
+          <Flame size={10} className={probColor} />
+          <span className={`text-[9px] font-bold ${probColor}`}>{baseProb}%</span>
+        </div>
+        <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md border ${isDealRot ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-white/5 border-white/5 text-slate-500'}`}>
+          <Clock size={10} />
+          <span className="text-[9px] font-bold">{diasInactivo} días</span>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between mt-3">
         <span className="text-xs font-black text-slate-300">
           ${parseFloat(lead.valor_estimado || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
@@ -100,7 +132,7 @@ function DroppableColumn({ etapa, leads, onLeadClick, onAddClick }) {
     >
       <SortableContext items={leads.map(l => l.id)} strategy={verticalListSortingStrategy}>
         {leads.map(lead => (
-          <SortableLead key={lead.id} lead={lead} onClick={() => onLeadClick(lead)} />
+          <SortableLead key={lead.id} lead={lead} onClick={() => onLeadClick(lead)} etapa={etapa} />
         ))}
       </SortableContext>
       
