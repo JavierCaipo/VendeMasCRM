@@ -96,13 +96,45 @@ export default function ClienteTimeline({ cliente_id }) {
     if (!contenido.trim() || !user || !tenant?.id) return
     
     setSubmitting(true)
+
+    // Conexión del "Cerebro IA"
+    let sentimiento = 'NEUTRAL'
+    let resumen_ia = ''
+    try {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY
+      if (apiKey) {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{ text: `Analiza esta nota comercial. Devuelve ÚNICAMENTE un JSON válido con dos propiedades: 'sentimiento' (que debe ser estrictamente la cadena POSITIVO, NEUTRAL o NEGATIVO) y 'resumen_ia' (un string de máximo 12 palabras que sintetice la interacción).\n\nNota:\n${contenido.trim()}` }]
+            }]
+          })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          const jsonText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+          const parsed = JSON.parse(jsonText);
+          if (parsed.sentimiento) sentimiento = parsed.sentimiento.toUpperCase();
+          if (parsed.resumen_ia) resumen_ia = parsed.resumen_ia;
+        }
+      }
+    } catch (err) {
+      console.warn("Error al llamar a Gemini:", err)
+    }
+
     const payload = {
       negocio_id: tenant.id,
       cliente_id: cliente_id,
       agente_id: user.id,
       tipo: tipoSeleccionado,
       contenido: contenido.trim(),
-      metadata: metadataIA
+      metadata: metadataIA,
+      sentimiento,
+      resumen_ia
     }
     
     const { data, error } = await supabase

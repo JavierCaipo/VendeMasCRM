@@ -142,24 +142,25 @@ export default function DashboardView() {
 
       // ── 3. CUOTA DEL USUARIO ACTIVO (sin bloqueo por rol) ──────────────────
       const { data: { user } } = await supabase.auth.getUser()
-      let metaMensual = 10
-      let alcanzada = 0
+      let metaMensual = 500000 // default fallback
+      let totalGanadoUsuario = 0
       if (user) {
-        // maybeSingle() no lanza error si no hay fila → fallback seguro a 10
         const { data: userData, error: uErr } = await supabase
           .from('usuarios_negocio')
-          .select('meta_mensual')
+          .select('meta_ventas_mensual')
           .eq('id', user.id)
           .maybeSingle()
-        if (uErr) console.error('[Dashboard] Error al leer meta_mensual:', uErr)
-        metaMensual = userData?.meta_mensual || 10
-        // Cualquier rol ve sus propios cierres ganados este mes
-        alcanzada = cots.filter(c =>
-          c.agente_id === user.id &&
-          (c.estado || '').toLowerCase() === 'aceptada'
-        ).length
+        if (uErr) console.error('[Dashboard] Error al leer meta_ventas_mensual:', uErr)
+        metaMensual = userData?.meta_ventas_mensual || 500000
+        
+        // Calcular total monetario ganado por el usuario actual en el mes
+        cots.forEach(cot => {
+          if (cot.agente_id === user.id && (cot.estado || '').toLowerCase() === 'aceptada') {
+            totalGanadoUsuario += toUSD(cot)
+          }
+        })
       }
-      setQuotaData({ meta: metaMensual, alcanzada })
+      setQuotaData({ meta: metaMensual, alcanzada: totalGanadoUsuario })
 
       // ── 4. OPORTUNIDADES — solo para "Recientes" ───────────────────
       const { data: ops } = await supabase
@@ -527,13 +528,13 @@ export default function DashboardView() {
            </div>
            <div>
              <h3 className="text-sm font-black text-slate-200 uppercase tracking-widest">Meta de Ventas</h3>
-             <p className="text-[10px] text-slate-500 font-medium">Cotizaciones Aceptadas / Mes</p>
+             <p className="text-[10px] text-slate-500 font-medium">Cuota Monetaria / Mes</p>
            </div>
         </div>
         
         <div className="flex-1 flex flex-col items-center justify-center py-6">
-           <div className="text-5xl font-black text-slate-100 mb-2">
-             {quotaData.alcanzada} <span className="text-2xl text-slate-500">/ {quotaData.meta}</span>
+           <div className="text-3xl lg:text-4xl font-black text-slate-100 mb-2 whitespace-nowrap">
+             {formatMonto(quotaData.alcanzada, 'USD')} <span className="text-xl lg:text-2xl text-slate-500">/ {formatMonto(quotaData.meta, 'USD')}</span>
            </div>
            <p className="text-xs text-slate-400 font-medium">Cierres logrados este mes</p>
            
@@ -541,11 +542,11 @@ export default function DashboardView() {
            <div className="w-full mt-8 bg-white/5 rounded-full h-4 overflow-hidden border border-white/5 relative">
               <div 
                 className="h-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-1000 ease-out"
-                style={{ width: `${Math.min((quotaData.alcanzada / quotaData.meta) * 100, 100)}%` }}
+                style={{ width: `${Math.min((quotaData.alcanzada / quotaData.meta) * 100, 100) || 0}%` }}
               />
            </div>
            <p className="w-full text-right text-[10px] text-amber-400 font-bold mt-2 uppercase tracking-wider">
-             {Math.round((quotaData.alcanzada / quotaData.meta) * 100)}% Completado
+             {Math.round((quotaData.alcanzada / quotaData.meta) * 100) || 0}% Completado
            </p>
         </div>
       </div>
