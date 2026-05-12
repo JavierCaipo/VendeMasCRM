@@ -164,8 +164,6 @@ export default function DashboardView() {
           }
         })
       }
-      setQuotaData({ meta: metaMensual, alcanzada: totalGanadoUsuario, cierres: cantidadCierresUsuario })
-
       // ── 4. OPORTUNIDADES — solo para "Recientes" ───────────────────
       const { data: ops } = await supabase
         .from('oportunidades')
