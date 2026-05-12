@@ -151,7 +151,7 @@ export default function PipelineView() {
           .order('orden', { ascending: true }),
         supabase
           .from('oportunidades')
-          .select('id, titulo, valor_estimado, etapa_id, negocio_id, cliente_id, fecha_creacion, fecha_cierre, cliente:clientes(nombre_razon_social)')
+          .select('id, titulo, valor_estimado, etapa_id, negocio_id, cliente_id, fecha_creacion, fecha_cierre, cliente:clientes(nombre_razon_social), cotizaciones(moneda, tipo_cambio)')
           .eq('negocio_id', tenant.id)
           .order('fecha_creacion', { ascending: false })
       ])
@@ -349,8 +349,27 @@ export default function PipelineView() {
             // Multimoneda: valor_estimado se asume en USD (columna no tiene moneda propia)
             // Para futura paridad, usar el tipo de cambio del negocio como referencia
             const tcRef = tenant?.tipo_cambio_usd_pen || 3.8
-            const toUSD = (lead) => parseFloat(lead.valor_estimado) || 0
-            const totalValor = allLeads.reduce((acc, lead) => acc + toUSD(lead), 0)
+
+            // ── MISIÓN 1+2: Moneda real desde JOIN de cotizaciones ────────────────
+            // Convierte cada oportunidad a USD usando la moneda de su cotización vinculada
+            const toUSDLead = (lead) => {
+              const v  = parseFloat(lead.valor_estimado) || 0
+              const cot = lead.cotizaciones?.[0]
+              const mon = (cot?.moneda || 'PEN').toUpperCase()
+              const tc  = parseFloat(cot?.tipo_cambio) || tcRef
+              return mon === 'USD' ? v : v / tc
+            }
+            const totalValorUSD = allLeads.reduce((acc, lead) => acc + toUSDLead(lead), 0)
+
+            // Determinar si mostrar en S/ o $ según la moneda predominante de la columna
+            const hayPEN = allLeads.some(l => {
+              const mon = (l.cotizaciones?.[0]?.moneda || 'PEN').toUpperCase()
+              return mon === 'PEN'
+            })
+            const simbolo = hayPEN ? 'S/' : '$'
+            const totalMostrado = hayPEN
+              ? totalValorUSD * tcRef  // USD → PEN para mostrar en soles
+              : totalValorUSD
 
             return (
               <div 
@@ -380,7 +399,7 @@ export default function PipelineView() {
                   <div className="mt-2 flex items-center justify-between">
                     <span className="text-xs text-slate-500 font-medium tracking-wide">Valor Estimado</span>
                     <span className={`text-sm font-black text-${color}-400`}>
-                      ${totalValor.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      {simbolo} {totalMostrado.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                 </div>

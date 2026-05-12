@@ -93,8 +93,8 @@ export default function DashboardView() {
       const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString()
       const tcRef = tenant.tipo_cambio_usd_pen || 3.8
 
-      // ── 1. COTIZACIONES DEL MES ACTUAL (Fuente de Verdad Financiera) ──
-      const { data: cots, error: cotError } = await supabase
+      // ── 1a. COTIZACIONES DEL MES — fuente para "Cierres Ganados" y Ticket ──
+      const { data: cotsDelMes, error: cotError } = await supabase
         .from('cotizaciones')
         .select('id, estado, total, moneda, tipo_cambio, fecha_creacion, agente_id, correlativo, cliente_id, clientes(nombre_razon_social)')
         .eq('negocio_id', tenant.id)
@@ -103,30 +103,42 @@ export default function DashboardView() {
 
       if (cotError) throw cotError
 
+      // ── 1b. EMBUDO ACTIVO — borrador + enviada SIN filtro de fecha ──────────
+      // El embudo son deals vivos HOY, independientemente de cuándo se crearon.
+      const { data: cotsEmbudo } = await supabase
+        .from('cotizaciones')
+        .select('id, estado, total, moneda, tipo_cambio')
+        .eq('negocio_id', tenant.id)
+        .in('estado', ['borrador', 'BORRADOR', 'enviada', 'ENVIADA'])
+
       // ── 2. MOTOR MULTIMONEDA ──────────────────────────────────────
-      // Convierte cualquier monto a USD usando el tipo_cambio de la cotización
-      // o el tipo_cambio de referencia del negocio si no hay uno específico
       const toUSD = (cot) => {
         const monto = parseFloat(cot.total) || 0
         const tc = parseFloat(cot.tipo_cambio) || tcRef
-        return cot.moneda === 'USD' ? monto : monto / tc
+        return (cot.moneda || 'USD') === 'USD' ? monto : monto / tc
       }
 
+      // KPI Ganado y Ticket: solo cotizaciones del mes
       let totalGanado = 0
-      let totalEmbudo = 0
-      let activasCount = 0
-
-      cots.forEach(cot => {
-        const estadoNorm = (cot.estado || '').toLowerCase()
-        if (estadoNorm === 'aceptada') {
+      cotsDelMes?.forEach(cot => {
+        if ((cot.estado || '').toLowerCase() === 'aceptada') {
           totalGanado += toUSD(cot)
-        } else if (estadoNorm === 'borrador' || estadoNorm === 'enviada') {
-          totalEmbudo += toUSD(cot)
-          activasCount++
         }
       })
+      const ticketPromedio = (cotsDelMes?.length ?? 0) > 0
+        ? (cotsDelMes.reduce((acc, c) => acc + toUSD(c), 0)) / cotsDelMes.length
+        : 0
 
-      const ticketPromedio = cots.length > 0 ? (totalGanado + totalEmbudo) / cots.length : 0
+      // KPI Embudo: TODAS las activas vivas (sin filtro de fecha)
+      let totalEmbudo = 0
+      let activasCount = 0
+      cotsEmbudo?.forEach(cot => {
+        totalEmbudo += toUSD(cot)
+        activasCount++
+      })
+
+      // Alias para compatibilidad con el resto del código (agente_id, correlativo...)
+      const cots = cotsDelMes || []
 
       // ── 3. CUOTA DEL USUARIO ACTIVO (sin bloqueo por rol) ──────────────────
       const { data: { user } } = await supabase.auth.getUser()
