@@ -66,7 +66,7 @@ export default function DashboardView() {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState([])
   const [recent, setRecent] = useState([])
-  const [quotaData, setQuotaData] = useState({ meta: 10, alcanzada: 0 })
+  const [quotaData, setQuotaData] = useState({ meta: 10, alcanzada: 0, cierres: 0 })
   const [displayCurrency, setDisplayCurrency] = useState('USD')
 
   // ── CONVERSOR UNIVERSAL DE MONEDA ──────────────────────────────────
@@ -144,6 +144,7 @@ export default function DashboardView() {
       const { data: { user } } = await supabase.auth.getUser()
       let metaMensual = 500000 // default fallback
       let totalGanadoUsuario = 0
+      let cantidadCierresUsuario = 0
       if (user) {
         const { data: userData, error: uErr } = await supabase
           .from('usuarios_negocio')
@@ -157,10 +158,11 @@ export default function DashboardView() {
         cots.forEach(cot => {
           if (cot.agente_id === user.id && (cot.estado || '').toLowerCase() === 'aceptada') {
             totalGanadoUsuario += toUSD(cot)
+            cantidadCierresUsuario++
           }
         })
       }
-      setQuotaData({ meta: metaMensual, alcanzada: totalGanadoUsuario })
+      setQuotaData({ meta: metaMensual, alcanzada: totalGanadoUsuario, cierres: cantidadCierresUsuario })
 
       // ── 4. OPORTUNIDADES — solo para "Recientes" ───────────────────
       const { data: ops } = await supabase
@@ -334,6 +336,13 @@ export default function DashboardView() {
       supabase.removeChannel(channel)
     }
   }, [tenant?.id])
+
+  // ── CÁLCULO DE PROYECCIÓN DE METAS ──────────────────────────────
+  const ticketPromedioComercial = (quotaData.cierres || 0) > 0 
+    ? quotaData.alcanzada / quotaData.cierres 
+    : 10000;
+  const brecha = quotaData.meta - quotaData.alcanzada;
+  const cierresFaltantes = Math.ceil(brecha / ticketPromedioComercial);
 
   if (loading) {
     return (
@@ -532,22 +541,31 @@ export default function DashboardView() {
            </div>
         </div>
         
-        <div className="flex-1 flex flex-col items-center justify-center py-6">
-           <div className="text-3xl lg:text-4xl font-black text-slate-100 mb-2 whitespace-nowrap">
-             {formatMonto(quotaData.alcanzada, 'USD')} <span className="text-xl lg:text-2xl text-slate-500">/ {formatMonto(quotaData.meta, 'USD')}</span>
+        <div className="flex-1 flex flex-col items-center justify-center py-6 w-full">
+           <div className="text-xl lg:text-2xl font-bold text-slate-100 mb-2 whitespace-nowrap">
+             {formatMonto(quotaData.alcanzada, 'USD')} <span className="text-lg lg:text-xl text-slate-500 font-bold">/ {formatMonto(quotaData.meta, 'USD')}</span>
            </div>
-           <p className="text-xs text-slate-400 font-medium">Cierres logrados este mes</p>
+           <p className="text-sm text-slate-400">{quotaData.cierres || 0} cierres logrados este mes</p>
            
            {/* Barra de progreso */}
-           <div className="w-full mt-8 bg-white/5 rounded-full h-4 overflow-hidden border border-white/5 relative">
+           <div className="w-full mt-6 bg-white/5 rounded-full h-4 overflow-hidden border border-white/5 relative">
               <div 
                 className="h-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-1000 ease-out"
                 style={{ width: `${Math.min((quotaData.alcanzada / quotaData.meta) * 100, 100) || 0}%` }}
               />
            </div>
-           <p className="w-full text-right text-[10px] text-amber-400 font-bold mt-2 uppercase tracking-wider">
-             {Math.round((quotaData.alcanzada / quotaData.meta) * 100) || 0}% Completado
-           </p>
+           <div className="flex justify-between items-center w-full mt-2">
+             <p className="text-right text-[10px] text-amber-400 font-bold uppercase tracking-wider ml-auto">
+               {Math.round((quotaData.alcanzada / quotaData.meta) * 100) || 0}% Completado
+             </p>
+           </div>
+           
+           {/* Proyección Predictiva */}
+           {brecha > 0 && (
+             <div className="mt-3 p-2 bg-indigo-950/30 border border-indigo-900/50 rounded text-xs text-indigo-300 w-full text-center">
+               ✨ Proyección: Te faltan aprox. <b>{cierresFaltantes}</b> ventas promedio para alcanzar la meta.
+             </div>
+           )}
         </div>
       </div>
 
