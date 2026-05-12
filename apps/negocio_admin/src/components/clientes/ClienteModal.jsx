@@ -144,7 +144,7 @@ export default function ClienteModal({ isOpen, onClose, onSuccess, onError, clie
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-950 backdrop-blur-3xl" onClick={onClose} />
+      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={onClose} />
       
       <div className="relative glass border border-white/15 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden fade-up">
         
@@ -154,9 +154,9 @@ export default function ClienteModal({ isOpen, onClose, onSuccess, onError, clie
             <div className="w-9 h-9 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
               <User size={18} className="text-indigo-400" />
             </div>
-            <div>
-              <h2 className="text-base font-semibold text-slate-100">
-                {clienteToEdit ? 'Editar Cliente' : 'Nuevo Cliente'}
+            <div className="min-w-0">
+              <h2 className="text-base font-semibold text-slate-100 break-words">
+                {clienteToEdit ? `Editar: ${clienteToEdit.nombre_razon_social || 'Cliente'}` : 'Nuevo Cliente'}
               </h2>
               <p className="text-xs text-slate-400">Información de facturación y contacto</p>
             </div>

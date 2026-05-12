@@ -19,7 +19,7 @@ export default function SentimentChart() {
 
         const { data: items, error } = await supabase
           .from('cliente_interacciones')
-          .select('sentimiento, resumen_ia, cliente:clientes(nombre_razon_social), created_at')
+          .select('sentimiento, resumen_ia, descripcion, cliente:clientes(nombre_razon_social), created_at')
           .eq('negocio_id', tenant.id)
           .gte('created_at', unMesAtras.toISOString())
           .order('created_at', { ascending: false })
@@ -40,16 +40,21 @@ export default function SentimentChart() {
         })
         setSentData({ positivo: pos, neutral: neu, negativo: neg, total: pos + neu + neg })
 
-        // Feed: solo las que tienen resumen_ia
-        const conResumen = (items || [])
-          .filter(i => i.resumen_ia && i.resumen_ia.trim().length > 0)
+        // Feed: usa resumen_ia si existe; si no, descripcion truncada como fallback
+        const conTexto = (items || [])
+          .filter(i => (i.resumen_ia?.trim() || i.descripcion?.trim()))
           .slice(0, 5)
-          .map(i => ({
-            cliente: i.cliente?.nombre_razon_social || 'Cliente',
-            resumen: i.resumen_ia,
-            sent: (i.sentimiento || 'neutral').toLowerCase()
-          }))
-        setNotas(conResumen)
+          .map(i => {
+            const texto = i.resumen_ia?.trim() ||
+              (i.descripcion?.trim()?.slice(0, 120) + (i.descripcion?.length > 120 ? '...' : '') || '')
+            return {
+              cliente: i.cliente?.nombre_razon_social || 'Cliente',
+              resumen: texto,
+              sent: (i.sentimiento || 'neutral').toLowerCase(),
+              esIA: !!i.resumen_ia
+            }
+          })
+        setNotas(conTexto)
       } catch (err) {
         console.error('[SentimentChart]', err)
       } finally {
@@ -158,9 +163,18 @@ export default function SentimentChart() {
       {notaViva ? (
         <div className="bg-white/[0.03] border border-white/8 rounded-xl p-3 flex flex-col gap-1.5 min-h-[72px] transition-all duration-500">
           <div className="flex items-center justify-between">
-            <span className={`text-[10px] font-black uppercase tracking-wider ${notaColor}`}>
-              {notaViva.cliente}
-            </span>
+              <div className="flex items-center gap-2">
+                <span className={`text-[10px] font-black uppercase tracking-wider ${notaColor}`}>
+                  {notaViva.cliente}
+                </span>
+                <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full border ${
+                  notaViva.esIA
+                    ? 'bg-indigo-500/15 text-indigo-400 border-indigo-500/20'
+                    : 'bg-white/5 text-slate-500 border-white/10'
+                }`}>
+                  {notaViva.esIA ? '✦ IA' : 'Nota'}
+                </span>
+              </div>
             {notas.length > 1 && (
               <div className="flex gap-1">
                 {notas.map((_, i) => (

@@ -3,7 +3,7 @@
 // src/pages/ventas/CotizacionesView.jsx
 // ============================================
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { 
   FileText, Plus, Search, Filter, Loader2, 
   Eye, Download, Send, CheckCircle2, AlertCircle, Clock,
@@ -46,6 +46,7 @@ const MENSAJES_ESTRATEGICOS = [
 export default function CotizacionesView() {
   const { tenant } = useTenant()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()   // ← MISIÓN 1: deep linking
   
   const [cotizaciones, setCotizaciones] = useState([])
   const [loading, setLoading] = useState(true)
@@ -83,6 +84,18 @@ export default function CotizacionesView() {
   }, [tenant.id])
 
   useEffect(() => { fetchCotizaciones() }, [fetchCotizaciones])
+
+  // ── MISIÓN 1: Deep Linking — abre la cotización del ?id= en la URL ────────────────
+  // Espera a que cotizaciones esté cargado antes de redirigir
+  useEffect(() => {
+    const targetId = searchParams.get('id')
+    if (!targetId || cotizaciones.length === 0) return
+    const found = cotizaciones.find(c => c.id === targetId)
+    if (found) {
+      // Abre en la vista de edición/detalle que ya existe
+      navigate(`/cotizaciones/nueva?id=${found.id}`, { replace: true })
+    }
+  }, [cotizaciones, searchParams, navigate])
 
   // ── REALTIME: escucha cambios de estado desde el portal del cliente ─────────────────
   useEffect(() => {
