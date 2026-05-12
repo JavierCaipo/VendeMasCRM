@@ -2,7 +2,7 @@
 // CERCO 2 — Motor de Cotizaciones
 // src/pages/ventas/NuevaCotizacion.jsx
 // ============================================
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { 
   FilePlus2, User, Package, Trash2, Plus, 
@@ -17,10 +17,14 @@ export default function NuevaCotizacion() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   
+  const idUrl = searchParams.get('id')
   const oportunidadIdUrl = searchParams.get('oportunidad_id')
   const clienteIdUrl = searchParams.get('cliente_id')
   
   const [loading, setLoading] = useState(false)
+  const isHydrating = useRef(true)
+  const [cotizacionExistente, setCotizacionExistente] = useState(null)
+  const isReadOnly = cotizacionExistente?.estado === 'aceptada' || cotizacionExistente?.estado === 'rechazada'
   const [clientes, setClientes] = useState([])
   const [productos, setProductos] = useState([])
   const [userRole, setUserRole] = useState('comercial')
@@ -92,12 +96,49 @@ export default function NuevaCotizacion() {
 
     const loadedClientes = clis.data || []
     setClientes(loadedClientes)
-    setProductos(prods.data || [])
+    const loadedProductos = prods.data || []
+    setProductos(loadedProductos)
 
-    if (clienteIdUrl) {
+    if (idUrl) {
+      const { data: quote, error } = await supabase
+        .from('cotizaciones')
+        .select(`*, detalles:cotizacion_detalles(*)`)
+        .eq('id', idUrl)
+        .single()
+        
+      if (!error && quote) {
+        setCotizacionExistente(quote)
+        const cli = loadedClientes.find(c => c.id === quote.cliente_id)
+        if (cli) setSelectedCliente(cli)
+        
+        if (quote.moneda) setMoneda(quote.moneda)
+        if (quote.tipo_cambio) setTipoCambioReferencial(quote.tipo_cambio)
+        
+        if (quote.detalles && quote.detalles.length > 0) {
+          const loadedItems = quote.detalles.map((d, index) => {
+            const prod = loadedProductos.find(p => p.id === d.producto_id)
+            return {
+              id: Date.now() + index,
+              producto_id: d.producto_id,
+              nombre: prod ? prod.nombre : '',
+              precio_unitario: d.precio_unitario,
+              cantidad: d.cantidad,
+              descuento: d.descuento_porcentaje || 0,
+              total: d.subtotal,
+              tarifa_ref: d.precio_unitario,
+              stockTotal: prod?.inventario?.reduce((acc, inv) => acc + Number(inv.stock_actual), 0) || 0,
+              stockBreakdown: prod?.inventario?.map(inv => `${inv.almacen?.nombre || 'Almacén'}: ${inv.stock_actual}`).join('\n') || 'Sin stock registrado'
+            }
+          })
+          setItems(loadedItems)
+        }
+      }
+    } else if (clienteIdUrl) {
       const preselected = loadedClientes.find(c => c.id === clienteIdUrl)
       if (preselected) setSelectedCliente(preselected)
     }
+    
+    setTimeout(() => { isHydrating.current = false }, 500)
   }
 
   useEffect(() => {
@@ -116,7 +157,15 @@ export default function NuevaCotizacion() {
       .eq('cliente_id', clienteId)
       .order('nombre_completo')
     setContactos(data || [])
-    setSelectedContacto(null)
+    
+    setCotizacionExistente(prev => {
+      if (prev?.contacto_id && prev.cliente_id === clienteId) {
+        setSelectedContacto((data || []).find(c => c.id === prev.contacto_id) || null)
+      } else {
+        setSelectedContacto(null)
+      }
+      return prev
+    })
   }
 
   const filteredClientes = useMemo(() => {
@@ -183,6 +232,7 @@ export default function NuevaCotizacion() {
 
   // Recálculo Reactivo al Cambiar Moneda o Tipo de Cambio
   useEffect(() => {
+    if (isHydrating.current) return;
     if (!selectedCliente || productos.length === 0) return;
     
     setItems(prevItems => prevItems.map(item => {
@@ -424,8 +474,8 @@ export default function NuevaCotizacion() {
             
             <div className="relative">
               <div 
-                onClick={() => setClienteDropdownOpen(!clienteDropdownOpen)}
-                className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-sm text-slate-100 flex items-center justify-between cursor-pointer hover:border-white/20 transition-all"
+                onClick={() => !isReadOnly && setClienteDropdownOpen(!clienteDropdownOpen)}
+                className={`w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-sm text-slate-100 flex items-center justify-between transition-all ${isReadOnly ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer hover:border-white/20'}`}
               >
                 {selectedCliente ? (
                   <span className="truncate font-medium">{selectedCliente.nombre_razon_social}</span>
@@ -494,9 +544,10 @@ export default function NuevaCotizacion() {
                 <div className="pt-2 mt-2 border-t border-indigo-500/10">
                   <label className="block text-[10px] font-bold text-slate-500 uppercase px-1 mb-1.5">Atención a (Contacto)</label>
                   <select
+                    disabled={isReadOnly}
                     value={selectedContacto?.id || ''}
                     onChange={e => setSelectedContacto(contactos.find(c => c.id === e.target.value) || null)}
-                    className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-100 focus:outline-none focus:border-indigo-500/50"
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-100 focus:outline-none focus:border-indigo-500/50 disabled:opacity-70"
                   >
                     <option value="" className="bg-slate-900">Sin contacto específico...</option>
                     {contactos.map(c => (
@@ -523,21 +574,24 @@ export default function NuevaCotizacion() {
                     <input 
                       type="number" 
                       step="0.001"
+                      disabled={isReadOnly}
                       value={tipoCambioReferencial} 
                       onChange={e => setTipoCambioReferencial(e.target.value)}
-                      className="w-16 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-slate-300 text-right focus:outline-none focus:border-indigo-500/50"
+                      className="w-16 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-slate-300 text-right focus:outline-none focus:border-indigo-500/50 disabled:opacity-70"
                     />
                   </div>
                   <div className="flex p-1 bg-slate-900/50 rounded-xl border border-white/5">
                   <button 
+                    disabled={isReadOnly}
                     onClick={() => setMoneda('PEN')}
-                    className={`px-3 py-1 text-[10px] font-black rounded-lg transition-all ${moneda === 'PEN' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                    className={`px-3 py-1 text-[10px] font-black rounded-lg transition-all ${moneda === 'PEN' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'} disabled:opacity-70`}
                   >
                     PEN
                   </button>
                   <button 
+                    disabled={isReadOnly}
                     onClick={() => setMoneda('USD')}
-                    className={`px-3 py-1 text-[10px] font-black rounded-lg transition-all ${moneda === 'USD' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                    className={`px-3 py-1 text-[10px] font-black rounded-lg transition-all ${moneda === 'USD' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'} disabled:opacity-70`}
                   >
                     USD
                   </button>
@@ -577,9 +631,10 @@ export default function NuevaCotizacion() {
                   <div className="flex-1 space-y-1.5">
                     <label className="text-[10px] font-bold text-slate-500 uppercase px-1">Producto</label>
                     <select
+                      disabled={isReadOnly}
                       value={item.producto_id}
                       onChange={e => handleItemChange(item.id, 'producto_id', e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-100 focus:outline-none focus:border-indigo-500/50"
+                      className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-100 focus:outline-none focus:border-indigo-500/50 disabled:opacity-70"
                     >
                       <option value="" className="bg-slate-900">Seleccionar...</option>
                       {productos.map(p => (
@@ -597,9 +652,10 @@ export default function NuevaCotizacion() {
                       <input
                         type="number"
                         min="1"
+                        disabled={isReadOnly}
                         value={item.cantidad}
                         onChange={e => handleItemChange(item.id, 'cantidad', parseFloat(e.target.value) || 0)}
-                        className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-100 text-center focus:outline-none focus:border-indigo-500/50"
+                        className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-100 text-center focus:outline-none focus:border-indigo-500/50 disabled:opacity-70"
                       />
                       {item.producto_id && (
                         <div 
@@ -617,9 +673,10 @@ export default function NuevaCotizacion() {
                         <input
                           type="number"
                           step="0.01"
+                          disabled={isReadOnly}
                           value={item.precio_unitario}
                           onChange={e => handleItemChange(item.id, 'precio_unitario', parseFloat(e.target.value) || 0)}
-                          className="w-full pl-8 pr-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-100 focus:outline-none focus:border-indigo-500/50 font-bold"
+                          className="w-full pl-8 pr-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-100 focus:outline-none focus:border-indigo-500/50 font-bold disabled:opacity-70"
                         />
                       </div>
                       {item.tarifa_ref > 0 && (
@@ -635,9 +692,10 @@ export default function NuevaCotizacion() {
                         min="0"
                         max="100"
                         step="0.1"
+                        disabled={isReadOnly}
                         value={item.descuento}
                         onChange={e => handleItemChange(item.id, 'descuento', parseFloat(e.target.value) || 0)}
-                        className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-100 text-center focus:outline-none focus:border-indigo-500/50"
+                        className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-100 text-center focus:outline-none focus:border-indigo-500/50 disabled:opacity-70"
                       />
                     </div>
                   </div>
@@ -651,25 +709,29 @@ export default function NuevaCotizacion() {
                   </div>
 
                   {/* Acciones */}
-                  <button 
-                    onClick={() => handleRemoveLine(item.id)}
-                    className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                  >
-                    <X size={12} />
-                  </button>
+                  {!isReadOnly && (
+                    <button 
+                      onClick={() => handleRemoveLine(item.id)}
+                      className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
                 </div>
               ))}
 
               {/* Botón Agregar Fila (UX Mejorada) */}
-              <button
-                onClick={handleAddLine}
-                className="w-full py-4 mt-2 rounded-2xl border-2 border-dashed border-white/5 hover:border-indigo-500/30 hover:bg-indigo-500/5 text-slate-500 hover:text-indigo-400 transition-all flex items-center justify-center gap-2 group"
-              >
-                <div className="w-8 h-8 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Plus size={16} />
-                </div>
-                <span className="text-xs font-bold uppercase tracking-widest">Agregar nuevo producto</span>
-              </button>
+              {!isReadOnly && (
+                <button
+                  onClick={handleAddLine}
+                  className="w-full py-4 mt-2 rounded-2xl border-2 border-dashed border-white/5 hover:border-indigo-500/30 hover:bg-indigo-500/5 text-slate-500 hover:text-indigo-400 transition-all flex items-center justify-center gap-2 group"
+                >
+                  <div className="w-8 h-8 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Plus size={16} />
+                  </div>
+                  <span className="text-xs font-bold uppercase tracking-widest">Agregar nuevo producto</span>
+                </button>
+              )}
             </div>
 
             <div className="p-6 bg-white/5 border-t border-white/10 flex items-center gap-3">

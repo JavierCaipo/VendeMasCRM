@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Sparkles, Loader2, TrendingUp, TrendingDown, Minus, MessageSquare, ChevronRight } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../context/TenantContext'
 
 export default function SentimentChart() {
   const { tenant } = useTenant()
+  const navigate = useNavigate()
   const [sentData, setSentData] = useState({ positivo: 0, neutral: 0, negativo: 0, total: 0 })
   const [notas, setNotas] = useState([])          // últimas notas con resumen_ia
   const [notaActiva, setNotaActiva] = useState(0) // índice del feed rotativo
@@ -97,7 +99,12 @@ export default function SentimentChart() {
         <MessageSquare size={28} className="text-slate-600" />
         <p className="text-xs text-slate-500 font-medium text-center leading-relaxed">
           Sin interacciones este mes.<br />
-          <span className="text-indigo-400">Registra notas</span> en la Timeline de clientes.
+          <span 
+            onClick={() => navigate('/clientes')}
+            className="text-indigo-400 cursor-pointer hover:text-indigo-300 transition-colors"
+          >
+            Registra notas
+          </span> en la Timeline de clientes.
         </p>
       </div>
     </div>
