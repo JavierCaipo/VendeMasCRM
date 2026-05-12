@@ -145,10 +145,10 @@ export default function ClienteModal({ isOpen, onClose, onSuccess, onError, clie
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-sm">
       <div className="absolute inset-0" onClick={onClose} />
       
-      <div className="relative glass border border-white/15 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden fade-up max-h-[90vh] overflow-y-auto">
+      <div className="bg-slate-900 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl flex flex-col">
         
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
@@ -169,7 +169,7 @@ export default function ClienteModal({ isOpen, onClose, onSuccess, onError, clie
         </div>
 
         {/* Formulario */}
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-1">
@@ -261,15 +261,17 @@ export default function ClienteModal({ isOpen, onClose, onSuccess, onError, clie
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1.5">Descripción / Actividad de la Empresa</label>
+          <div className="col-span-1 md:col-span-2 mt-4">
+            <label className="block text-xs font-medium text-slate-400 mb-1">
+              Descripción / Actividad de la Empresa
+            </label>
             <textarea
               name="descripcion_empresa"
-              value={form.descripcion_empresa}
+              value={form.descripcion_empresa || ''}
               onChange={handleChange}
               rows={3}
-              placeholder="¿A qué se dedica la empresa? (Contexto para la IA)"
-              className="w-full px-3 py-2.5 rounded-xl text-sm text-slate-100 placeholder-slate-500 bg-white/5 border border-white/10 focus:outline-none focus:border-indigo-500/60 custom-scrollbar resize-none"
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 resize-none"
+              placeholder="Ej: Contratista minero especializado en movimiento de tierras..."
             />
           </div>
 
