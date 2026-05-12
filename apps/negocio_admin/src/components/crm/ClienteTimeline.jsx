@@ -113,7 +113,9 @@ export default function ClienteTimeline({ cliente_id }) {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 contents: [{
-                  parts: [{ text: `Analiza esta nota comercial. Devuelve ÚNICAMENTE un JSON válido con dos propiedades: 'sentimiento' (que debe ser estrictamente la cadena POSITIVO, NEUTRAL o NEGATIVO) y 'resumen_ia' (un string de máximo 12 palabras que sintetice la interacción).\n\nNota:\n${contenido.trim()}` }]
+                  parts: [{
+                    text: `Analiza esta nota comercial. Devuelve ÚNICAMENTE un JSON válido con dos propiedades: 'sentimiento' (estrictamente POSITIVO, NEUTRAL o NEGATIVO) y 'resumen_ia' (máximo 12 palabras). Nota: ${contenido.trim()}`
+                  }]
                 }]
               })
             });
@@ -290,23 +292,44 @@ export default function ClienteTimeline({ cliente_id }) {
                   <Icon size={16} className={config.color} />
                 </div>
                 
-                {/* Contenido de la Tarjeta */}
                 <div className="flex-1 glass p-4 rounded-2xl border border-white/5 hover:border-white/10 transition-colors group">
                   <div className="flex justify-between items-start mb-2">
-                    <div>
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <span className="text-[11px] font-bold text-slate-300">{nombreAgente}</span>
-                      <span className="text-[11px] text-slate-500 mx-1.5">•</span>
+                      <span className="text-[11px] text-slate-500">•</span>
                       <span className={`text-[10px] font-black uppercase tracking-wider ${config.color}`}>
                         {config.label}
                       </span>
+                      
+                      {/* Badge de Sentimiento */}
+                      {(() => {
+                        const sent = (item.sentimiento || 'NEUTRAL').toUpperCase()
+                        let badgeClass = 'bg-slate-500/20 text-slate-400'
+                        let emoji = '⚪'
+                        if (sent === 'POSITIVO') { badgeClass = 'bg-emerald-500/20 text-emerald-400'; emoji = '🟢' }
+                        else if (sent === 'NEGATIVO') { badgeClass = 'bg-rose-500/20 text-rose-400'; emoji = '🔴' }
+                        return (
+                          <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold ml-2 ${badgeClass}`}>
+                            {emoji} {sent}
+                          </span>
+                        )
+                      })()}
                     </div>
-                    <span className="text-[10px] font-medium text-slate-500 uppercase">
+                    <span className="text-[10px] font-medium text-slate-500 uppercase shrink-0">
                       {new Date(item.created_at).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
                   <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap font-medium">
                     {item.contenido}
                   </p>
+                  {item.resumen_ia && (
+                    <div className="mt-3 pt-3 border-t border-white/5">
+                      <p className="text-xs text-slate-400 italic flex items-start gap-1.5">
+                        <Sparkles size={12} className="text-indigo-400 shrink-0 mt-0.5" />
+                        "{item.resumen_ia}"
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             )
