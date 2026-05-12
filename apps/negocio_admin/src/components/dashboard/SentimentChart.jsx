@@ -21,7 +21,7 @@ export default function SentimentChart() {
 
         const { data: items, error } = await supabase
           .from('cliente_interacciones')
-          .select('sentimiento, resumen_ia, descripcion, cliente:clientes(nombre_razon_social), created_at')
+          .select('sentimiento, resumen_ia, contenido, cliente:clientes(nombre_razon_social), created_at')
           .eq('negocio_id', tenant.id)
           .gte('created_at', unMesAtras.toISOString())
           .order('created_at', { ascending: false })
@@ -29,6 +29,7 @@ export default function SentimentChart() {
 
         if (error) {
           console.error('[SentimentChart] Error:', error)
+          setSentData({ positivo: 0, neutral: 0, negativo: 0, total: 0, error: true })
           return
         }
 
@@ -42,13 +43,13 @@ export default function SentimentChart() {
         })
         setSentData({ positivo: pos, neutral: neu, negativo: neg, total: pos + neu + neg })
 
-        // Feed: usa resumen_ia si existe; si no, descripcion truncada como fallback
+        // Feed: usa resumen_ia si existe; si no, contenido truncado como fallback
         const conTexto = (items || [])
-          .filter(i => (i.resumen_ia?.trim() || i.descripcion?.trim()))
+          .filter(i => (i.resumen_ia?.trim() || i.contenido?.trim()))
           .slice(0, 5)
           .map(i => {
             const texto = i.resumen_ia?.trim() ||
-              (i.descripcion?.trim()?.slice(0, 120) + (i.descripcion?.length > 120 ? '...' : '') || '')
+              (i.contenido?.trim()?.slice(0, 120) + (i.contenido?.length > 120 ? '...' : '') || '')
             return {
               cliente: i.cliente?.nombre_razon_social || 'Cliente',
               resumen: texto,
@@ -84,8 +85,8 @@ export default function SentimentChart() {
     </div>
   )
 
-  // ── ESTADO VACÍO ──────────────────────────────────────────────────────────
-  if (sentData.total === 0) return (
+  // ── ESTADO VACÍO O ERROR ──────────────────────────────────────────────────────────
+  if (sentData.total === 0 || sentData.error) return (
     <div className="glass bg-slate-900/50 border border-white/5 p-6 rounded-[2rem] flex flex-col justify-between min-h-[200px]">
       <div className="flex justify-between items-start mb-4">
         <div className="p-3.5 rounded-2xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/25">

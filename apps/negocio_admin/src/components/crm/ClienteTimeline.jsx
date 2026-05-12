@@ -126,8 +126,16 @@ export default function ClienteTimeline({ cliente_id }) {
       console.warn("Error al llamar a Gemini:", err)
     }
 
+    // Aseguramos estrictamente que negocio_id esté presente.
+    const currentTenantId = tenant?.id || user?.user_metadata?.negocio_id;
+    if (!currentTenantId) {
+      toast.error('Error crítico: Falta el ID del negocio (tenant) para registrar la nota.');
+      setSubmitting(false);
+      return;
+    }
+
     const payload = {
-      negocio_id: tenant.id,
+      negocio_id: currentTenantId,
       cliente_id: cliente_id,
       agente_id: user.id,
       tipo: tipoSeleccionado,
