@@ -216,8 +216,10 @@ export default function DashboardView() {
       ])
 
       // ── 7. ACTIVIDAD RECIENTE (mezcla cots + ops) ──────────────────
+      const fmtUSD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
       const recentCots = cots.slice(0, 5).map(c => ({
         id: c.id,
+        tipo: 'cotizacion',
         titulo: `Cotización #${c.correlativo || c.id.toString().slice(0,6)}`,
         cliente: c.clientes?.nombre_razon_social || 'Cliente s/n',
         montoRaw: parseFloat(c.total) || 0,
@@ -228,9 +230,10 @@ export default function DashboardView() {
       }))
       setRecent(recentCots.length > 0 ? recentCots : (ops || []).slice(0, 5).map(op => ({
         id: op.id,
+        tipo: 'oportunidad',
         titulo: op.titulo,
         cliente: op.cliente?.nombre_razon_social || 'Cliente s/n',
-        monto: formatter.format(op.valor_estimado),
+        monto: fmtUSD.format(op.valor_estimado),
         fecha: new Date(op.fecha_creacion).toLocaleDateString('es-PE'),
         estado: op.etapa?.nombre || 'Pipeline'
       })))
@@ -490,7 +493,15 @@ export default function DashboardView() {
                     </span>
                   </td>
                   <td className="px-8 py-6 text-right">
-                    <button className="p-2.5 hover:bg-indigo-500/20 rounded-xl text-slate-500 hover:text-indigo-400 transition-all border border-transparent hover:border-indigo-500/30">
+                    <button
+                      title={item.tipo === 'cotizacion' ? 'Ver cotización' : 'Ver en Pipeline'}
+                      onClick={() =>
+                        item.tipo === 'cotizacion'
+                          ? navigate(`/cotizaciones?id=${item.id}`)
+                          : navigate('/pipeline')
+                      }
+                      className="p-2.5 hover:bg-indigo-500/20 rounded-xl text-slate-500 hover:text-indigo-400 transition-all border border-transparent hover:border-indigo-500/30"
+                    >
                       <ArrowUpRight size={18} />
                     </button>
                   </td>
