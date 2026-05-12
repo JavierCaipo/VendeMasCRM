@@ -103,30 +103,45 @@ export default function ClienteTimeline({ cliente_id }) {
     try {
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY
       if (apiKey) {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{ text: `Analiza esta nota comercial. Devuelve ÚNICAMENTE un JSON válido con dos propiedades: 'sentimiento' (que debe ser estrictamente la cadena POSITIVO, NEUTRAL o NEGATIVO) y 'resumen_ia' (un string de máximo 12 palabras que sintetice la interacción).\n\nNota:\n${contenido.trim()}` }]
-            }]
-          })
-        });
+        const modelos = ['gemini-1.5-flash-latest', 'gemini-1.5-flash', 'gemini-pro', 'gemini-1.0-pro'];
+        let success = false;
         
-        if (response.ok) {
-          const data = await response.json();
-          const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-          console.log("Respuesta cruda Gemini:", rawText);
-          
-          const match = rawText.match(/\{[\s\S]*\}/);
-          if (match) {
-            const parsed = JSON.parse(match[0]);
-            if (parsed.sentimiento) sentimiento = parsed.sentimiento.toUpperCase();
-            if (parsed.resumen_ia) resumen_ia = parsed.resumen_ia;
+        for (const modelo of modelos) {
+          try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${apiKey}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{
+                  parts: [{ text: `Analiza esta nota comercial. Devuelve ÚNICAMENTE un JSON válido con dos propiedades: 'sentimiento' (que debe ser estrictamente la cadena POSITIVO, NEUTRAL o NEGATIVO) y 'resumen_ia' (un string de máximo 12 palabras que sintetice la interacción).\n\nNota:\n${contenido.trim()}` }]
+                }]
+              })
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+              console.log(`Respuesta cruda Gemini (${modelo}):`, rawText);
+              
+              const match = rawText.match(/\{[\s\S]*\}/);
+              if (match) {
+                const parsed = JSON.parse(match[0]);
+                if (parsed.sentimiento) sentimiento = parsed.sentimiento.toUpperCase();
+                if (parsed.resumen_ia) resumen_ia = parsed.resumen_ia;
+              }
+              success = true;
+              break; // Romper el bucle si la petición fue exitosa
+            } else {
+              const errText = await response.text();
+              console.warn(`⚠️ Modelo ${modelo} falló con Status ${response.status}:`, errText);
+            }
+          } catch (innerErr) {
+            console.warn(`⚠️ Excepción probando modelo ${modelo}:`, innerErr);
           }
-        } else {
-          const errText = await response.text();
-          console.error("🔥 ERROR CRÍTICO GEMINI (Status " + response.status + "):", errText);
+        }
+        
+        if (!success) {
+          console.error("🔥 ERROR CRÍTICO GEMINI: Todos los modelos de fallback fallaron.");
         }
       } else {
         console.error("🔥 ERROR CRÍTICO GEMINI: No se encontró VITE_GEMINI_API_KEY");
