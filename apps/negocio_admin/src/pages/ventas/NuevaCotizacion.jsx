@@ -625,18 +625,18 @@ export default function NuevaCotizacion() {
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4">
               {items.map((item, idx) => (
-                <div key={item.id} className="group relative flex flex-col md:flex-row gap-4 p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-all animate-in slide-in-from-right-4">
+                <div key={item.id} className="group relative flex flex-col gap-4 p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-all animate-in slide-in-from-right-4">
                   
-                  {/* Selector de Producto */}
-                  <div className="flex-1 space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase px-1">Producto</label>
+                  {/* ── Fila 1: Selector de Producto — ancho completo ── */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase px-1 tracking-widest">Producto</label>
                     <select
                       disabled={isReadOnly}
                       value={item.producto_id}
                       onChange={e => handleItemChange(item.id, 'producto_id', e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-100 focus:outline-none focus:border-indigo-500/50 disabled:opacity-70"
+                      className="w-full h-12 px-3 rounded-xl bg-white/5 border border-white/10 text-sm text-slate-100 focus:outline-none focus:border-indigo-500/50 disabled:opacity-70 cursor-pointer"
                     >
-                      <option value="" className="bg-slate-900">Seleccionar...</option>
+                      <option value="" className="bg-slate-900">Seleccionar producto...</option>
                       {productos.map(p => (
                         <option key={p.id} value={p.id} className="bg-slate-900">
                           {p.nombre} ({p.sku})
@@ -645,72 +645,72 @@ export default function NuevaCotizacion() {
                     </select>
                   </div>
 
-                  {/* Cantidad y Precio */}
-                  <div className="flex gap-4">
-                    <div className="w-20 space-y-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase px-1">Cant.</label>
+                  {/* ── Fila 2: Métricas — 2 cols en móvil, 3 en md ── */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+
+                    {/* Cantidad */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase px-1 tracking-widest">Cantidad</label>
                       <input
-                        type="number"
-                        min="1"
-                        disabled={isReadOnly}
+                        type="number" min="1" disabled={isReadOnly}
                         value={item.cantidad}
                         onChange={e => handleItemChange(item.id, 'cantidad', parseFloat(e.target.value) || 0)}
-                        className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-100 text-center focus:outline-none focus:border-indigo-500/50 disabled:opacity-70"
+                        className="w-full h-12 px-3 rounded-xl bg-white/5 border border-white/10 text-sm text-slate-100 text-center focus:outline-none focus:border-indigo-500/50 disabled:opacity-70"
                       />
                       {item.producto_id && (
-                        <div 
-                          title={item.stockBreakdown}
-                          className={`text-[10px] mt-1 font-medium text-center cursor-help ${item.cantidad > item.stockTotal ? 'text-red-400 animate-pulse' : 'text-slate-400'}`}
-                        >
+                        <div title={item.stockBreakdown} className={`text-[10px] px-1 font-medium cursor-help ${item.cantidad > item.stockTotal ? 'text-red-400 animate-pulse' : 'text-slate-500'}`}>
                           Stock: {item.stockTotal || 0} und.
                         </div>
                       )}
                     </div>
-                    <div className="w-28 space-y-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase px-1">Precio Unit.</label>
+
+                    {/* Precio Unitario */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase px-1 tracking-widest">Precio Unit.</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-[10px]">{moneda === 'USD' ? '$' : 'S/'}</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold pointer-events-none">
+                          {moneda === 'USD' ? '$' : 'S/'}
+                        </span>
                         <input
-                          type="number"
-                          step="0.01"
-                          disabled={isReadOnly}
+                          type="number" step="0.01" disabled={isReadOnly}
                           value={item.precio_unitario}
                           onChange={e => handleItemChange(item.id, 'precio_unitario', parseFloat(e.target.value) || 0)}
-                          className="w-full pl-8 pr-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-100 focus:outline-none focus:border-indigo-500/50 font-bold disabled:opacity-70"
+                          className="w-full h-12 pl-8 pr-3 rounded-xl bg-white/5 border border-white/10 text-sm text-slate-100 font-bold focus:outline-none focus:border-indigo-500/50 disabled:opacity-70"
                         />
                       </div>
                       {item.tarifa_ref > 0 && (
-                        <span className="block text-[9px] text-slate-500 font-bold uppercase px-1">
-                          Ref Tarifa {selectedCliente?.tarifa_asignada}: {moneda === 'USD' ? '$' : 'S/'} {item.tarifa_ref}
+                        <span className="block text-[10px] text-slate-500 px-1">
+                          Tarifa {selectedCliente?.tarifa_asignada}: {moneda === 'USD' ? '$' : 'S/'} {item.tarifa_ref}
                         </span>
                       )}
                     </div>
-                    <div className="w-20 space-y-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase px-1">Dcto (%)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.1"
-                        disabled={isReadOnly}
-                        value={item.descuento}
-                        onChange={e => handleItemChange(item.id, 'descuento', parseFloat(e.target.value) || 0)}
-                        className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-100 text-center focus:outline-none focus:border-indigo-500/50 disabled:opacity-70"
-                      />
+
+                    {/* Descuento — col-span-2 en xs, 1 en md */}
+                    <div className="space-y-1.5 col-span-2 md:col-span-1">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase px-1 tracking-widest">Dcto. (%)</label>
+                      <div className="relative">
+                        <input
+                          type="number" min="0" max="100" step="0.1" disabled={isReadOnly}
+                          value={item.descuento}
+                          onChange={e => handleItemChange(item.id, 'descuento', parseFloat(e.target.value) || 0)}
+                          className="w-full h-12 px-3 pr-8 rounded-xl bg-white/5 border border-white/10 text-sm text-slate-100 text-center focus:outline-none focus:border-indigo-500/50 disabled:opacity-70"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs pointer-events-none">%</span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Total Línea */}
-                  <div className="w-32 space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase px-1">Subtotal</label>
-                    <div className="w-full px-3 py-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-300 font-black flex items-center justify-center">
+                  {/* ── Fila 3: Subtotal resaltado ── */}
+                  <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-indigo-500/10 border border-indigo-500/25">
+                    <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Subtotal línea</span>
+                    <span className="text-base font-black text-indigo-300">
                       {moneda === 'USD' ? '$' : 'S/'} {formatNumber(item.total)}
-                    </div>
+                    </span>
                   </div>
 
-                  {/* Acciones */}
+                  {/* Botón eliminar */}
                   {!isReadOnly && (
-                    <button 
+                    <button
                       onClick={() => handleRemoveLine(item.id)}
                       className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                     >
@@ -719,7 +719,6 @@ export default function NuevaCotizacion() {
                   )}
                 </div>
               ))}
-
               {/* Botón Agregar Fila (UX Mejorada) */}
               {!isReadOnly && (
                 <button
