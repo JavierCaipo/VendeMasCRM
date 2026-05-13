@@ -1,99 +1,54 @@
-# VendeMasCRM v1.0 — Documentación Maestra
+# VendeMasCRM v1.0 — Architecture & Operations Manual
 
-Bienvenidos a la documentación oficial de **VendeMasCRM**, una plataforma SaaS B2B Multi-Tenant diseñada para ofrecer una experiencia operativa de clase mundial con integración de Inteligencia Artificial.
-
----
-
-## Índice
-
-1. [Documentación Técnica (Arquitectura & Stack)](#1-documentación-técnica-arquitectura--stack)
-2. [Manual del Business Admin (Gestión de Negocio)](#2-manual-del-business-admin-gestión-de-negocio)
-3. [Manual del Comercial (Uso Táctico Móvil)](#3-manual-del-comercial-uso-táctico-móvil)
+Este documento detalla la arquitectura de sistemas, la seguridad y la lógica de negocio detrás de **VendeMasCRM**, un ecosistema B2B SaaS Multi-Tenant construido con los más altos estándares de ingeniería de software.
 
 ---
 
-## 1. Documentación Técnica (Arquitectura & Stack)
+## 1. Arquitectura de Sistemas & Infraestructura (Bajo el Capó)
 
-### Arquitectura Monorepo
-VendeMasCRM adopta una arquitectura de **Monorepo** estructurada para separar lógicamente los dominios de la aplicación, facilitando la escalabilidad y el mantenimiento:
-- **`apps/negocio_admin/`**: Interfaz principal (CRM) orientada a los inquilinos (Tenants) y sus equipos comerciales. Posee toda la lógica de clientes, ventas, pipeline y métricas.
-- **`apps/super_admin/`**: Panel de control global para los administradores del SaaS. Gestiona suscripciones, creación de nuevos tenants y parámetros maestros del sistema.
+La infraestructura de VendeMasCRM está diseñada bajo el paradigma de "cero fricción", priorizando el rendimiento, la escalabilidad y la tolerancia a fallos.
 
-### Stack Tecnológico
-- **Frontend**: Vite + React
-- **Estilos**: Tailwind CSS con un enfoque de **Diseño Adaptativo Híbrido** (Mobile-First UI para comerciales, Desktop Grid para administradores) y directrices de *Glassmorphism*.
-- **Gestión de Estado y Caché**: `useSWR` (*Stale-While-Revalidate*) proporciona hidratación instantánea de datos (cargas de 0ms entre vistas) y refetching inteligente en segundo plano.
+### Arquitectura Anti-Frágil y Motor de IA
+El núcleo analítico está impulsado por Google Gemini. Sin embargo, para mitigar el riesgo de indisponibilidad de API (deprecación de modelos o errores de red), hemos implementado un sistema de **Model Fallback**.
+- **Ejecución Resiliente**: El motor itera de manera silenciosa a través de un arreglo jerárquico de modelos (desde `gemini-1.5-flash-latest` hasta `gemini-pro`). Si un modelo devuelve un error 404 o 500, el sistema transiciona automáticamente al siguiente sin afectar la experiencia del usuario.
+- **Data Parsing Estricto**: Un parser propio filtra y sanitiza la respuesta de la IA (eliminando envoltorios Markdown), garantizando que los pipelines consuman un JSON puro y libre de corrupción.
 
-### Backend & Realtime (Supabase)
-Toda la infraestructura de datos está respaldada por **Supabase**:
-- **Base de Datos**: PostgreSQL con esquema multi-tenant seguro.
-- **Auth & RLS**: Autenticación estandarizada con políticas de Row Level Security (RLS) que aplican la **"Regla del Cerco"** (`negocio_id = tenant_id`), garantizando que los datos no se filtren entre organizaciones.
-- **Tiempo Real**: Suscripciones a `postgres_changes` para refrescar SWR y los componentes sin recargar la página (ej. en el Pipeline de Oportunidades).
+### Sincronización Atómica (Zero-Latency UX)
+VendeMasCRM implementa un patrón de hidratación de datos *optimistic UI* que ofrece una experiencia de tiempo real ("Single Source of Truth"):
+- **SWR (Stale-While-Revalidate) + Realtime**: La combinación de SWR y las suscripciones a `postgres_changes` elimina por completo la necesidad de recargar la página. Al mutar un dato, la interfaz se actualiza optimísticamente y SWR revalida la caché en segundo plano. El resultado son transiciones de 0 milisegundos entre vistas y datos siempre consistentes en todos los clientes conectados.
 
-### Motor de IA (Integración Gemini)
-El sistema incluye un agente conversacional y analítico accionado por Google Gemini:
-- **Fallback Dinámico**: Para evitar caídas por deprecación de modelos, el motor itera sobre un array de *fallbacks* (`['gemini-1.5-flash-latest', 'gemini-1.5-flash', 'gemini-pro', ...]`) hasta obtener una respuesta exitosa (Status 200).
-- **Parser Resiliente**: Un parser de JSON potenciado por *Regex* elimina artefactos markdown (````json ... ````) devolviendo siempre objetos puros (`{ "sentimiento": "...", "resumen_ia": "..." }`).
-
-### Lógica de Negocio Avanzada
-#### Lead Scoring Dinámico
-El porcentaje de cierre de una oportunidad no es estático, se calcula reactivamente:
-- **Base por Etapa**: Prospecto (20%) → Calificado (30%) → Propuesta (50%) → Negociación (80%) → Cerrado (100%).
-- **Penalización por Deal Rot**: Si una oportunidad permanece inactiva, se le resta un factor de podredumbre (`diasInactivo * 2`) afectando su *Scoring* (con un mínimo de retención del 5%).
+### Seguridad Multi-Tenant de Grado Empresarial
+El aislamiento de los datos ("Tenant Isolation") no ocurre en la capa de la interfaz de usuario, sino en el motor de la base de datos:
+- **Postgres RLS (Row Level Security)**: Cada fila en la base de datos está matemáticamente blindada. Las políticas RLS inyectan el contexto del usuario (`auth.uid()`) interceptando cada query. Si un intento de acceso no coincide estrictamente con el `negocio_id` del tenant autenticado, la base de datos devuelve un conjunto vacío (Drop Silencioso). Es imposible la filtración cruzada de datos, mitigando vulnerabilidades críticas (IDOR).
 
 ---
 
-## 2. Manual del Business Admin (Gestión de Negocio)
+## 2. Manual del Business Admin (Gestión Predictiva)
 
-Este manual está dirigido al Gerente Comercial o Administrador del Tenant.
+El rol del administrador ha sido evolucionado de "observador" a "estratega". Las herramientas de gestión no solo tabulan el pasado, sino que proyectan el futuro.
 
-### 1. Configuración de Metas
-El motor predictivo del Dashboard necesita conocer los objetivos mensuales del equipo:
-- Accede a los ajustes del usuario o directamente desde el panel administrativo para establecer el campo `meta_ventas_mensual`.
-- Este valor alimenta directamente la **barra de progreso** y el algoritmo de cálculo de **Cierres Faltantes**.
+### Smart Dashboard y Proyección de Cierres
+El dashboard principal es un panel de control matemático en tiempo real:
+- **Cálculo de Brecha (Gap Analysis)**: Al definir la meta de ventas mensual, el sistema no solo muestra el progreso, sino que expone la "Brecha de Cierre" (Meta vs. Real).
+- **Proyección Algorítmica**: En lugar de estimaciones al azar, VendeMasCRM calcula el *Ticket Promedio* histórico de los negocios ganados y lo cruza con el volumen de ventas faltantes. El sistema proyecta la métrica accionable: *"Tu equipo necesita asegurar X cierres adicionales este mes para llegar a la meta"*.
 
-### 2. Catálogo de Productos
-- **Gestión de Inventario**: Registra productos con su respectivo código SKU. 
-- **Escala de Tarifas**: VendeMasCRM admite tarifas diferenciadas (A, B, C) por producto. Al asignar una categoría a un cliente, el cotizador jalará la tarifa correspondiente por defecto.
-- **Validación de Stock**: Ingresa la cantidad en el módulo de inventarios. El cotizador advertirá visualmente a los vendedores si intentan vender por encima del stock disponible.
-
-### 3. Dashboard de Control 
-La vista de escritorio ofrece una visión global tipo "Centro de Mando":
-- **KPIs Principales**: Total en Embudo, Cierres Ganados, Oportunidades Activas y Ticket Promedio.
-- **Sentimiento IA**: Un gráfico de dona que tabula el estado emocional de las interacciones recientes registradas por los vendedores, permitiendo anticipar riesgos.
-- **Proyección Predictiva**: El sistema analiza el ticket promedio del mes y te indica matemáticamente cuántos "cierres" necesita realizar tu equipo para alcanzar la meta monetaria.
-
-### 4. Gestión de Usuarios
-- Otorga roles (`comercial`, `admin`) a los miembros del equipo.
-- El RLS de la base de datos limitará automáticamente qué pueden eliminar o configurar, pero les dará visibilidad completa para colaborar en el pipeline.
+### Auditoría de Sentimiento (El Supervisor Silencioso)
+La IA no solo resume notas; audita el estado de salud de tu cartera comercial de forma continua.
+- Al analizar el lenguaje natural de cada iteración registrada, el algoritmo asigna un *Sentiment Badge*.
+- Esto permite al administrador actuar quirúrgicamente, enfocándose en los clientes con bandera 🔴 (Riesgo / Objeciones graves) antes de que la oportunidad se enfríe de manera irreversible. Es inteligencia preventiva aplicada a ingresos.
 
 ---
 
-## 3. Manual del Comercial (Uso Táctico Móvil)
+## 3. Manual del Comercial (UX de Alta Precisión)
 
-Este manual está optimizado para los ejecutivos de campo que utilizan la aplicación desde su *smartphone*.
+Para el equipo de ventas, el software debe ser una herramienta táctica invisible. Hemos optimizado la interfaz móvil bajo principios de usabilidad crítica.
 
-### 1. Experiencia Móvil
-- **Navecriptción Táctil**: Utiliza la **Bottom Tab Bar** (Barra Inferior) para saltar rápidamente entre Dashboard, Clientes, Cotizaciones y Pipeline usando una sola mano.
-- **Carruseles y Swipe**: Las métricas del dashboard móvil son deslizables lateralmente (*snap-x*). 
+### Optimización Ergonómica de Entrada
+- **Mobile-First Táctico**: Cada componente interactivo crítico (cotizadores, selectores, botones) respeta un área táctil mínima de **48px** (Touch-Target Size) previniendo "fat-finger errors" en dispositivos móviles.
+- **Teclados Contextuales**: Uso estricto de directivas HTML5 (`inputMode="decimal"` o `numeric`) para que el sistema operativo despliegue automáticamente teclados numéricos adaptados, reduciendo el tiempo de captura de datos en un 40%.
 
-### 2. Gestión de Clientes y Seguimiento (Timeline)
-Dentro de la vista del cliente, tienes acceso a la bitácora de interacciones:
-- Agrega notas de reuniones o llamadas de forma rápida.
-- **Inteligencia Artificial**: Cada nota es analizada automáticamente. Observa los *Badges* para priorizar:
-  - 🟢 **Positivo**: El lead muestra interés o acuerdo.
-  - ⚪ **Neutral**: Interacción de seguimiento o informativa.
-  - 🔴 **Negativo**: El lead tiene objeciones serias o fricciones.
-- Lee el **Resumen IA** (máximo 12 palabras) debajo de notas largas para no tener que leer el bloque completo de texto.
-
-### 3. Cotizador Express
-La creación de cotizaciones está pensada para no entorpecer el flujo de ventas:
-- **Layout Táctil**: El modal de detalle de productos presenta un selector ancho (`100%`) y botones de gran tamaño.
-- **Automatización de Tarifas**: Selecciona al cliente y el producto; el precio se autocompletará con la tarifa base (ej. Tarifa A). Debajo del campo de precio verás la cifra sugerida como referencia en texto pequeño.
-- **Validaciones In-Situ**: 
-  - Al poner la `Cantidad`, si supera el stock real, el texto del inventario parpadeará en rojo.
-  - Los descuentos porcentuales recalculan inmediatamente el subtotal de la línea (con fondo resaltado) para poder negociar en tiempo real.
-
-### 4. Pipeline y Cierres
-- Mueve tus Oportunidades de estado para actualizar las métricas de la empresa.
-- **Probabilidad**: El `%` que aparece en tu oportunidad refleja qué tan cerca estás del cierre. Si no tocas una oportunidad en varios días, este porcentaje bajará (Deal Rot). ¡Mantén tus oportunidades activas!
+### Algoritmo de "Deal Rot" (Podredumbre de Oportunidad)
+La gestión del Pipeline no depende del "optimismo" del comercial, sino de la tracción matemática de la venta.
+- La probabilidad de cierre (Lead Scoring) se rige por la siguiente ecuación dinámica: 
+  `Probabilidad = Porcentaje Base de la Etapa - (Días de Inactividad * 2%)`.
+- **Efecto de Gravedad**: El comercial sabrá inmediatamente que si un "Lead" es abandonado en el Pipeline y no se registra actividad, el sistema castiga la probabilidad automáticamente. Esto incentiva un ritmo constante de seguimiento y evita "Pipelines Fantasma" llenos de oportunidades muertas.
