@@ -105,26 +105,30 @@ export default function AlmacenesView() {
           </h1>
           <p className="text-slate-400 mt-1">Controla los puntos de almacenamiento de tus productos.</p>
         </div>
-        {userRole === 'admin' && (
-          <button
-            onClick={() => { setEditingAlm(null); setForm({ nombre: '', ubicacion: '' }); setModalOpen(true); }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all shadow-lg shadow-indigo-500/20"
-          >
-            <Plus size={18} />
-            Nuevo Almacén
-          </button>
-        )}
       </div>
 
-      <div className="relative max-w-md">
-        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar almacén..."
-          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/50 transition-all"
-        />
+      <div className="flex flex-col sm:flex-row gap-4 items-center">
+        <div className="relative flex-1 w-full max-w-md">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar almacén..."
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/50 transition-all"
+          />
+        </div>
+        {userRole === 'admin' && (
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => { setEditingAlm(null); setForm({ nombre: '', ubicacion: '' }); setModalOpen(true); }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all shadow-lg shadow-indigo-500/20"
+            >
+              <Plus size={18} />
+              Nuevo Almacén
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="glass rounded-2xl border border-white/10 overflow-hidden">

@@ -154,24 +154,6 @@ export default function CatalogoView() {
           </h1>
           <p className="text-slate-400 mt-1">Gestión avanzada de artículos y fichas técnicas.</p>
         </div>
-        {userRole === 'admin' && (
-          <div className="flex gap-3">
-            <button
-              onClick={() => setCsvModalOpen(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-sm font-bold transition-all"
-            >
-              <FileSpreadsheet size={18} />
-              Importar CSV
-            </button>
-            <button
-              onClick={() => { setProductoToEdit(null); setFormOpen(true); }}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold transition-all shadow-lg shadow-indigo-500/25"
-            >
-              <Plus size={18} />
-              Nuevo Artículo
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Filters Bar */}
@@ -217,6 +199,25 @@ export default function CatalogoView() {
             <List size={18} />
           </button>
         </div>
+
+        {userRole === 'admin' && (
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setCsvModalOpen(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-sm font-bold transition-all"
+            >
+              <FileSpreadsheet size={18} />
+              Carga Masiva
+            </button>
+            <button
+              onClick={() => { setProductoToEdit(null); setFormOpen(true); }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold transition-all shadow-lg shadow-indigo-500/25"
+            >
+              <Plus size={18} />
+              Nuevo Producto
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Product Grid */}
