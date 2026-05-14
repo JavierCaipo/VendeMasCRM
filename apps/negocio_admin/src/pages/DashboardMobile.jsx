@@ -5,7 +5,8 @@
 import { useState } from 'react'
 import {
   Wallet, Trophy, Target, TrendingUp,
-  ArrowUpRight, Clock, ChevronRight, DollarSign, RefreshCcw, Sparkles
+  ArrowUpRight, Clock, ChevronRight, DollarSign, RefreshCcw, Sparkles,
+  MoreVertical, UserPlus, PackagePlus, UploadCloud
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useTenant } from '../context/TenantContext'
@@ -38,10 +39,11 @@ function estadoBadgeClass(estado) {
   return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
 }
 
-export default function DashboardMobile({ data, isLoading }) {
+export default function DashboardMobile({ data, isLoading, userRole, onNewCliente, onNewProducto, onCargaMasiva }) {
   const { tenant } = useTenant()
   const navigate = useNavigate()
   const [displayCurrency, setDisplayCurrency] = useState('USD')
+  const [menuOpen, setMenuOpen] = useState(false)
 
   const tcRef = tenant?.tipo_cambio_usd_pen || 3.8
   const formatMonto = (monto, monedaOrigen = 'USD') => {
@@ -75,24 +77,63 @@ export default function DashboardMobile({ data, isLoading }) {
           <h1 className="text-xl font-black text-slate-100 tracking-tight">Resumen</h1>
           <p className="text-xs text-slate-500">{tenant?.nombre}</p>
         </div>
-        {/* Mini switch de moneda */}
-        <div className="flex items-center gap-0.5 p-1 bg-white/5 border border-white/10 rounded-xl">
-          <button
-            onClick={() => setDisplayCurrency('USD')}
-            className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase transition-all ${
-              displayCurrency === 'USD' ? 'bg-indigo-500 text-white' : 'text-slate-500'
-            }`}
-          >
-            $ USD
-          </button>
-          <button
-            onClick={() => setDisplayCurrency('PEN')}
-            className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase transition-all ${
-              displayCurrency === 'PEN' ? 'bg-amber-500 text-white' : 'text-slate-500'
-            }`}
-          >
-            S/ PEN
-          </button>
+        {/* Mini switch de moneda y Menú Admin */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-0.5 p-1 bg-white/5 border border-white/10 rounded-xl">
+            <button
+              onClick={() => setDisplayCurrency('USD')}
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase transition-all ${
+                displayCurrency === 'USD' ? 'bg-indigo-500 text-white' : 'text-slate-500'
+              }`}
+            >
+              $ USD
+            </button>
+            <button
+              onClick={() => setDisplayCurrency('PEN')}
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase transition-all ${
+                displayCurrency === 'PEN' ? 'bg-amber-500 text-white' : 'text-slate-500'
+              }`}
+            >
+              S/ PEN
+            </button>
+          </div>
+
+          {userRole === 'admin' && (
+            <div className="relative">
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="p-2 bg-indigo-600/20 text-indigo-400 rounded-xl border border-indigo-500/30 active:scale-95 transition-all"
+              >
+                <MoreVertical size={16} />
+              </button>
+              
+              {menuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+                  <div className="absolute right-0 mt-2 w-56 bg-[#0B0F19] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden fade-up">
+                    <button
+                      onClick={() => { setMenuOpen(false); onNewCliente(); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-200 hover:bg-white/5 transition-all"
+                    >
+                      <UserPlus size={16} className="text-indigo-400" /> Crear Cliente
+                    </button>
+                    <button
+                      onClick={() => { setMenuOpen(false); onNewProducto(); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-200 hover:bg-white/5 transition-all"
+                    >
+                      <PackagePlus size={16} className="text-emerald-400" /> Crear Producto
+                    </button>
+                    <button
+                      onClick={() => { setMenuOpen(false); onCargaMasiva(); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-200 hover:bg-white/5 transition-all border-t border-white/5"
+                    >
+                      <UploadCloud size={16} className="text-slate-400" /> Carga Masiva
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

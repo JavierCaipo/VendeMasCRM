@@ -2,12 +2,16 @@
 // Dashboard Controller (Router) — VendeMas Business
 // src/pages/DashboardView.jsx
 // ============================================
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import useSWR from 'swr'
 import { supabase } from '../lib/supabaseClient'
 import { useTenant } from '../context/TenantContext'
 import DashboardDesktop from './DashboardDesktop'
 import DashboardMobile  from './DashboardMobile'
+
+import ClienteModal from '../components/clientes/ClienteModal'
+import ProductoForm from '../components/inventario/ProductoForm'
+import CsvImportModal from '../components/clientes/CsvImportModal'
 
 // ─────────────────────────────────────────────────────────────────
 // SWR FETCHER — recibe la clave [key, tenantId] y devuelve datos crudos
@@ -193,6 +197,17 @@ async function syncHuerfanos(tenantId) {
 // ─────────────────────────────────────────────────────────────────
 export default function DashboardView() {
   const { tenant } = useTenant()
+  const [userRole, setUserRole] = useState('comercial')
+  
+  const [showClienteModal, setShowClienteModal] = useState(false)
+  const [showProductoModal, setShowProductoModal] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setUserRole(user.user_metadata?.rol || 'comercial')
+    })
+  }, [])
 
   const { data, isLoading, mutate } = useSWR(
     tenant?.id ? ['dashboard', tenant.id] : null,
@@ -226,13 +241,44 @@ export default function DashboardView() {
     <>
       {/* Escritorio (xl+) */}
       <div className="hidden xl:block h-full overflow-y-auto custom-scrollbar">
-        <DashboardDesktop data={data} isLoading={isLoading} />
+        <DashboardDesktop 
+          data={data} 
+          isLoading={isLoading} 
+          userRole={userRole}
+          onNewCliente={() => setShowClienteModal(true)}
+          onNewProducto={() => setShowProductoModal(true)}
+          onCargaMasiva={() => setShowImportModal(true)}
+        />
       </div>
 
       {/* Móvil / Tablet (< xl) */}
       <div className="block xl:hidden h-full overflow-y-auto overflow-x-hidden custom-scrollbar">
-        <DashboardMobile data={data} isLoading={isLoading} />
+        <DashboardMobile 
+          data={data} 
+          isLoading={isLoading} 
+          userRole={userRole}
+          onNewCliente={() => setShowClienteModal(true)}
+          onNewProducto={() => setShowProductoModal(true)}
+          onCargaMasiva={() => setShowImportModal(true)}
+        />
       </div>
+
+      {/* Modales Compartidos */}
+      <ClienteModal 
+        isOpen={showClienteModal} 
+        onClose={() => setShowClienteModal(false)}
+        onSuccess={() => { mutate(); setShowClienteModal(false); }}
+      />
+      <ProductoForm 
+        isOpen={showProductoModal} 
+        onClose={() => setShowProductoModal(false)}
+        onSuccess={() => { mutate(); setShowProductoModal(false); }}
+      />
+      <CsvImportModal 
+        isOpen={showImportModal} 
+        onClose={() => setShowImportModal(false)}
+        onSuccess={() => { mutate(); setShowImportModal(false); }}
+      />
     </>
   )
 }

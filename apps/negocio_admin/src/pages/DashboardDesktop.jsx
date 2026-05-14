@@ -5,7 +5,8 @@
 import { useState } from 'react'
 import {
   Wallet, Trophy, Target, TrendingUp,
-  ArrowUpRight, Clock, Briefcase, DollarSign, RefreshCcw
+  ArrowUpRight, Clock, Briefcase, DollarSign, RefreshCcw,
+  UserPlus, PackagePlus, UploadCloud
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useTenant } from '../context/TenantContext'
@@ -25,7 +26,7 @@ function KpiSkeleton() {
   )
 }
 
-export default function DashboardDesktop({ data, isLoading }) {
+export default function DashboardDesktop({ data, isLoading, userRole, onNewCliente, onNewProducto, onCargaMasiva }) {
   const { tenant } = useTenant()
   const navigate = useNavigate()
   const [displayCurrency, setDisplayCurrency] = useState('USD')
@@ -108,6 +109,28 @@ export default function DashboardDesktop({ data, isLoading }) {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {userRole === 'admin' && (
+            <div className="flex items-center gap-3 mr-2 pr-4 border-r border-white/10">
+              <button
+                onClick={onNewCliente}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-indigo-500/25"
+              >
+                <UserPlus size={16} /> Crear Cliente
+              </button>
+              <button
+                onClick={onNewProducto}
+                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-indigo-300 rounded-xl text-xs font-bold transition-all border border-indigo-500/30"
+              >
+                <PackagePlus size={16} /> Crear Producto
+              </button>
+              <button
+                onClick={onCargaMasiva}
+                className="flex items-center gap-2 px-4 py-2 bg-transparent hover:bg-white/5 text-slate-300 rounded-xl text-xs font-bold transition-all border border-slate-600 border-dashed"
+              >
+                <UploadCloud size={16} /> Carga Masiva
+              </button>
+            </div>
+          )}
           <div className="flex items-center gap-1 p-1 bg-white/5 border border-white/10 rounded-xl">
             <button
               onClick={() => setDisplayCurrency('USD')}
