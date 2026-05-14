@@ -18,10 +18,13 @@ export default function CategoriasView() {
   const [submitting, setSubmitting] = useState(false)
   const [toast, setToast] = useState(null)
   const [userRole, setUserRole] = useState('comercial')
+  const [currentUser, setCurrentUser] = useState(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      setUserRole(user?.user_metadata?.rol || 'comercial')
+      setCurrentUser(user)
+      const rol = user?.rol || user?.user_metadata?.rol || user?.role || 'comercial'
+      setUserRole(rol)
     })
   }, [])
 
@@ -118,7 +121,7 @@ export default function CategoriasView() {
             className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/50 transition-all"
           />
         </div>
-        {userRole === 'admin' && (
+        {userRole && ['admin', 'administrador', 'admin_negocio'].includes(userRole.toLowerCase()) && (
           <div className="flex items-center gap-3">
             <button
               onClick={() => { setEditingCat(null); setForm({ nombre: '', descripcion: '' }); setModalOpen(true); }}
@@ -137,7 +140,7 @@ export default function CategoriasView() {
             <tr>
               <th className="px-6 py-4 text-slate-400 font-semibold">Nombre</th>
               <th className="px-6 py-4 text-slate-400 font-semibold">Descripción</th>
-              {userRole === 'admin' && <th className="px-6 py-4 text-right text-slate-400 font-semibold">Acciones</th>}
+              {userRole && ['admin', 'administrador', 'admin_negocio'].includes(userRole.toLowerCase()) && <th className="px-6 py-4 text-right text-slate-400 font-semibold">Acciones</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
@@ -158,7 +161,7 @@ export default function CategoriasView() {
               <tr key={cat.id} className="hover:bg-white/5 transition-colors group">
                 <td className="px-6 py-4 font-medium text-slate-200">{cat.nombre}</td>
                 <td className="px-6 py-4 text-slate-400 truncate max-w-xs">{cat.descripcion || '—'}</td>
-                {userRole === 'admin' && (
+                {userRole && ['admin', 'administrador', 'admin_negocio'].includes(userRole.toLowerCase()) && (
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
