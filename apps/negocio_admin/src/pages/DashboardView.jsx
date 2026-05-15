@@ -71,20 +71,73 @@ async function fetchDashboardData([, tenantId]) {
     let metaMensual          = 500000
     let alcanzada            = 0
     let cantidadCierres      = 0
+    let isAdmin              = false
+    let rendimientoEquipo    = []
+    let metaAgregada         = 0
+
     if (user) {
       const { data: userData } = await supabase
         .from('usuarios_negocio')
-        .select('meta_ventas_mensual')
+        .select('meta_ventas_mensual, rol')
         .eq('id', user.id)
         .maybeSingle()
-      metaMensual = userData?.meta_ventas_mensual || 500000
 
-      cots.forEach(c => {
-        if (c.agente_id === user.id && (c.estado || '').toLowerCase() === 'aceptada') {
-          alcanzada += toUSD(c)
-          cantidadCierres++
-        }
-      })
+      const rolActual = userData?.rol || user.user_metadata?.rol || 'user'
+      isAdmin = ['admin', 'admin_negocio', 'superadmin'].includes(rolActual)
+
+      if (isAdmin) {
+        // Admin: cuota agregada de todo el negocio
+        const { data: todoElEquipo } = await supabase
+          .from('usuarios_negocio')
+          .select('id, nombre_completo, meta_ventas_mensual, estado')
+          .eq('negocio_id', tenantId)
+          .eq('estado', 'activo')
+
+        const equipo = todoElEquipo || []
+        metaAgregada = equipo.reduce((acc, u) => acc + (u.meta_ventas_mensual || 0), 0)
+        metaMensual  = metaAgregada || 500000
+
+        // Total ganado por el negocio completo
+        cots.forEach(c => {
+          if ((c.estado || '').toLowerCase() === 'aceptada') {
+            alcanzada += toUSD(c)
+            cantidadCierres++
+          }
+        })
+
+        // Rendimiento por vendedor
+        const { data: cotsEmbudo2 } = await supabase
+          .from('cotizaciones')
+          .select('id, estado, agente_id')
+          .eq('negocio_id', tenantId)
+          .in('estado', ['borrador', 'BORRADOR', 'enviada', 'ENVIADA'])
+
+        rendimientoEquipo = equipo.map(agente => {
+          const ganado = cots
+            .filter(c => c.agente_id === agente.id && (c.estado || '').toLowerCase() === 'aceptada')
+            .reduce((s, c) => s + toUSD(c), 0)
+          const activas = (cotsEmbudo2 || []).filter(c => c.agente_id === agente.id).length
+          const meta    = agente.meta_ventas_mensual || 0
+          const pct     = meta > 0 ? Math.round((ganado / meta) * 100) : null
+          return {
+            id: agente.id,
+            nombre: agente.nombre_completo || 'Sin nombre',
+            totalGanado: ganado,
+            oportunidadesActivas: activas,
+            meta,
+            cumplimientoPct: pct
+          }
+        }).sort((a, b) => b.totalGanado - a.totalGanado)
+      } else {
+        // Usuario comercial: cuota personal
+        metaMensual = userData?.meta_ventas_mensual || 500000
+        cots.forEach(c => {
+          if (c.agente_id === user.id && (c.estado || '').toLowerCase() === 'aceptada') {
+            alcanzada += toUSD(c)
+            cantidadCierres++
+          }
+        })
+      }
     }
 
     // 3. Oportunidades recientes
@@ -128,6 +181,8 @@ async function fetchDashboardData([, tenantId]) {
       metaMensual,
       alcanzada,
       cantidadCierres,
+      isAdmin,
+      rendimientoEquipo,
       negociosRecientes: recentCots.length > 0 ? recentCots : opsMapped,
       cotsActivasHoyCount: cots.filter(c => new Date(c.fecha_creacion).toDateString() === hoy.toDateString()).length,
       cotsGanadasMes: cots.filter(c => (c.estado || '').toLowerCase() === 'aceptada').length

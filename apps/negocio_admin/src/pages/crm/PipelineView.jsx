@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import useSWR from 'swr'
 import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../context/TenantContext'
-import { Settings, Plus, DollarSign, GripVertical, User, Calendar, RefreshCw, Clock, Wand2, Flame } from 'lucide-react'
+import { Settings, Plus, DollarSign, GripVertical, User, Calendar, RefreshCw, Clock, Wand2, Flame, Snowflake } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   DndContext,
@@ -42,13 +42,15 @@ function SortableLead({ lead, onClick, etapa }) {
     opacity: isDragging ? 0.5 : 1,
   }
 
-  const diasInactivo = lead.fecha_creacion 
-    ? Math.floor((new Date() - new Date(lead.fecha_creacion)) / (1000 * 60 * 60 * 24))
-    : 0;
+  const diasInactivo = lead.ultima_actividad
+    ? Math.floor((new Date() - new Date(lead.ultima_actividad)) / (1000 * 60 * 60 * 24))
+    : lead.fecha_creacion
+      ? Math.floor((new Date() - new Date(lead.fecha_creacion)) / (1000 * 60 * 60 * 24))
+      : 0;
 
   const isDealRot = diasInactivo > 7 && etapa?.nombre && /borrador|propuesta|negociaci[oó]n/i.test(etapa.nombre);
 
-  // Simulated AI probability formula
+  // Lead Scoring: probabilidad base según etapa
   const nombreEtapa = (etapa?.nombre || '').toLowerCase();
   let calcBase = 20;
   if (nombreEtapa.includes('prospecto')) calcBase = 20;
@@ -57,8 +59,13 @@ function SortableLead({ lead, onClick, etapa }) {
   else if (nombreEtapa.includes('negociaci')) calcBase = 80;
   else if (nombreEtapa.includes('cerrado') || nombreEtapa.includes('ganad')) calcBase = 100;
   
-  const discount = isDealRot ? (diasInactivo * 2) : 0;
-  const baseProb = Math.max(5, calcBase - discount);
+  // Deal Rot: aplica descuento por inactividad (2% por día) para cualquier día sin actividad.
+  // Piso absoluto: 5%. Efecto Gravedad documentado en DOCUMENTATION.md.
+  const penaltyPoints = diasInactivo > 0 ? diasInactivo * 2 : 0;
+  const baseProb = Math.max(5, calcBase - penaltyPoints);
+  
+  // Efecto de Hielo: si la penalización bajó la probabilidad más de 20 puntos del base original
+  const isCongelado = penaltyPoints > 20;
   const probColor = baseProb > 70 ? 'text-emerald-400' : baseProb > 40 ? 'text-amber-400' : 'text-red-400';
 
   return (
@@ -72,15 +79,22 @@ function SortableLead({ lead, onClick, etapa }) {
     >
       <div className="flex justify-between items-start mb-2 gap-2">
         <h4 className="text-sm font-bold text-slate-200 line-clamp-2 leading-snug">{lead.titulo}</h4>
-        {isDealRot && (
-          <button 
-            onClick={(e) => { e.stopPropagation(); toast('Sugerencia IA', { description: 'Próximamente: Sugerir mensaje de re-enganche con IA', icon: '🪄' }) }}
-            className="shrink-0 p-1.5 rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 transition-colors"
-            title="Sugerir mensaje de re-enganche con IA"
-          >
-            <Wand2 size={14} />
-          </button>
-        )}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {isCongelado && (
+            <span title={`Deal frío: la inactividad penalizó ${penaltyPoints}% la probabilidad`} className="p-1 rounded-full bg-sky-500/10 text-sky-400">
+              <Snowflake size={12} />
+            </span>
+          )}
+          {isDealRot && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); toast('Sugerencia IA', { description: 'Próximamente: Sugerir mensaje de re-enganche con IA', icon: '🪄' }) }}
+              className="shrink-0 p-1.5 rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 transition-colors"
+              title="Sugerir mensaje de re-enganche con IA"
+            >
+              <Wand2 size={14} />
+            </button>
+          )}
+        </div>
       </div>
       
       {/* Indicadores de Lead Scoring y Deal Rot */}

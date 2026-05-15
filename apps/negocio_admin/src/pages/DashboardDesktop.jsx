@@ -6,7 +6,7 @@ import { useState } from 'react'
 import {
   Wallet, Trophy, Target, TrendingUp,
   ArrowUpRight, Clock, Briefcase, DollarSign, RefreshCcw,
-  UserPlus, PackagePlus, UploadCloud
+  UserPlus, PackagePlus, UploadCloud, Users, Medal
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useTenant } from '../context/TenantContext'
@@ -95,6 +95,8 @@ export default function DashboardDesktop({ data, isLoading, userRole, onNewClien
   ]
 
   const recent = data?.negociosRecientes || []
+  const isAdmin = data?.isAdmin || false
+  const rendimientoEquipo = data?.rendimientoEquipo || []
   const quotaData = {
     meta: data?.metaMensual || 500000,
     alcanzada: data?.alcanzada || 0,
@@ -306,7 +308,9 @@ export default function DashboardDesktop({ data, isLoading, userRole, onNewClien
             </div>
             <div>
               <h3 className="text-sm font-black text-slate-200 uppercase tracking-widest">Meta de Ventas</h3>
-              <p className="text-[10px] text-slate-500 font-medium">Cuota Monetaria / Mes</p>
+              <p className="text-[10px] text-slate-500 font-medium">
+                {isAdmin ? 'Cuota Agregada del Negocio' : 'Cuota Monetaria / Mes'}
+              </p>
             </div>
           </div>
 
@@ -347,6 +351,91 @@ export default function DashboardDesktop({ data, isLoading, userRole, onNewClien
           </div>
         </div>
       </div>
+
+      {/* ── WIDGET DE RENDIMIENTO DEL EQUIPO (solo admin) ── */}
+      {isAdmin && rendimientoEquipo.length > 0 && (
+        <div className="glass bg-slate-900/50 border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
+          <div className="p-8 border-b border-white/5 flex justify-between items-center bg-white/5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                <Users size={20} />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-slate-200 uppercase tracking-widest">Rendimiento del Equipo</h3>
+                <p className="text-[10px] text-slate-500 font-medium">Comparativa de comerciales — mes en curso</p>
+              </div>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-white/[0.02] text-[10px] uppercase font-black text-slate-500 tracking-[0.15em]">
+                <tr>
+                  <th className="px-8 py-4">#</th>
+                  <th className="px-8 py-4">Vendedor</th>
+                  <th className="px-8 py-4">Total Ganado</th>
+                  <th className="px-8 py-4">Ops. Activas</th>
+                  <th className="px-8 py-4">Meta Personal</th>
+                  <th className="px-8 py-4">Cumplimiento</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {rendimientoEquipo.map((agente, idx) => {
+                  const pct = agente.cumplimientoPct
+                  const pctColor = pct === null ? 'text-slate-500' : pct >= 100 ? 'text-emerald-400' : pct >= 60 ? 'text-amber-400' : 'text-red-400'
+                  const barColor = pct === null ? 'bg-white/10' : pct >= 100 ? 'bg-emerald-500' : pct >= 60 ? 'bg-amber-500' : 'bg-red-500'
+                  const medalColor = idx === 0 ? 'text-amber-400' : idx === 1 ? 'text-slate-400' : idx === 2 ? 'text-amber-700' : 'text-slate-600'
+                  return (
+                    <tr key={agente.id} className="hover:bg-white/[0.03] transition-colors group">
+                      <td className="px-8 py-5">
+                        {idx < 3
+                          ? <Medal size={16} className={medalColor} />
+                          : <span className="text-xs text-slate-600 font-bold">{idx + 1}</span>
+                        }
+                      </td>
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-[10px] text-indigo-400 font-black">
+                            {agente.nombre.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="text-sm font-bold text-slate-200 truncate max-w-[140px]">{agente.nombre}</span>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5">
+                        <span className="text-sm font-black text-emerald-400">
+                          {formatMonto(agente.totalGanado, 'USD')}
+                        </span>
+                      </td>
+                      <td className="px-8 py-5">
+                        <span className="text-xs font-bold text-slate-300">{agente.oportunidadesActivas}</span>
+                      </td>
+                      <td className="px-8 py-5">
+                        <span className="text-xs text-slate-400">
+                          {agente.meta > 0 ? formatMonto(agente.meta, 'USD') : <span className="text-slate-600 italic">Sin meta</span>}
+                        </span>
+                      </td>
+                      <td className="px-8 py-5">
+                        {pct !== null ? (
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1 h-2 rounded-full bg-white/5 overflow-hidden min-w-[60px]">
+                              <div
+                                className={`h-full rounded-full transition-all duration-700 ${barColor}`}
+                                style={{ width: `${Math.min(pct, 100)}%` }}
+                              />
+                            </div>
+                            <span className={`text-xs font-black w-10 text-right ${pctColor}`}>{pct}%</span>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-slate-600 italic">Sin meta definida</span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

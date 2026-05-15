@@ -7,7 +7,8 @@ import { useParams } from 'react-router-dom'
 import { 
   CheckCircle2, XCircle, MessageSquare, Send, 
   Package, Loader2, Building2, Phone, Mail, MapPin,
-  Calendar, CreditCard, Sparkles, Share2, Printer, Check
+  Calendar, CreditCard, Sparkles, Share2, Printer, Check,
+  FileText, Award, Download
 } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
 import confetti from 'canvas-confetti'
@@ -259,6 +260,52 @@ export default function PublicQuoteView() {
               </div>
             </div>
           </div>
+
+          {/* ── TECHNICAL DOCS SECTION ── */}
+          {(() => {
+            const docsItems = []
+            quote.detalles?.forEach(item => {
+              if (item.producto?.url_ficha_tecnica) {
+                docsItems.push({ label: `Ficha Técnica — ${item.producto.nombre}`, url: item.producto.url_ficha_tecnica, type: 'ficha' })
+              }
+              if (item.producto?.url_certificado_calidad) {
+                docsItems.push({ label: `Certificado de Calidad — ${item.producto.nombre}`, url: item.producto.url_certificado_calidad, type: 'cert' })
+              }
+            })
+            if (docsItems.length === 0) return null
+            return (
+              <div className="px-10 md:px-16 py-12 border-t border-slate-100">
+                <div className="flex items-center gap-2 mb-6">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block">Documentación Técnica</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {docsItems.map((doc, i) => (
+                    <a
+                      key={i}
+                      href={doc.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      download
+                      className="group flex items-center gap-4 p-4 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/50 transition-all duration-200 no-underline"
+                    >
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
+                        doc.type === 'cert'
+                          ? 'bg-emerald-50 text-emerald-500 group-hover:bg-emerald-100'
+                          : 'bg-indigo-50 text-indigo-500 group-hover:bg-indigo-100'
+                      }`}>
+                        {doc.type === 'cert' ? <Award size={18} /> : <FileText size={18} />}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-slate-800 truncate group-hover:text-indigo-700 transition-colors">{doc.label}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">PDF — Clic para descargar</p>
+                      </div>
+                      <Download size={14} className="text-slate-300 group-hover:text-indigo-400 transition-colors flex-shrink-0" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
 
           {/* Business Footer */}
           <div className="bg-slate-50 p-10 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
