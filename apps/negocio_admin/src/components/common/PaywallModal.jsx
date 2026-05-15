@@ -45,28 +45,20 @@ export default function PaywallModal({ isOpen, onClose, reason }) {
 
       console.log("Iniciando checkout para:", tenant.id);
 
-      // By-pass temporal para forzar la llamada a la función local en tu Mac
-      const response = await fetch('http://127.0.0.1:54321/functions/v1/mp-checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      // Llamada a la Edge Function de producción vía el cliente oficial
+      const { data, error } = await supabase.functions.invoke('mp-checkout', {
+        body: {
           negocio_id: tenant.id,
           email: user.email
-        }),
+        }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Error al conectar con el servidor local");
-      }
+      if (error) throw new Error(error.message || 'Error al conectar con la pasarela');
 
       if (data?.init_point) {
         window.location.href = data.init_point;
       } else {
-        throw new Error("Respuesta inválida de la pasarela local.");
+        throw new Error("Respuesta inválida de Mercado Pago.");
       }
 
     } catch (err) {

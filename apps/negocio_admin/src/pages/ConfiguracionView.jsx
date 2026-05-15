@@ -3,7 +3,7 @@
 // src/pages/ConfiguracionView.jsx
 // ============================================
 import { useState, useEffect } from 'react'
-import { Settings2, Save, Loader2, CheckCircle2, AlertCircle, ImagePlus, Zap, ShieldCheck } from 'lucide-react'
+import { Settings2, Save, Loader2, CheckCircle2, AlertCircle, ImagePlus, Zap, ShieldCheck, Crown, Check, X as XIcon } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { useTenant } from '../context/TenantContext'
 import { useFreemium } from '../hooks/useFreemium'
@@ -56,18 +56,14 @@ export default function ConfiguracionView() {
     
     setIsLoadingCancel(true);
     try {
-      // By-pass local para pruebas en entorno de desarrollo
-      const response = await fetch('http://127.0.0.1:54321/functions/v1/mp-cancel-subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ negocio_id: tenant.id })
+      // Llamada a la Edge Function de producción vía el cliente oficial
+      const { data, error } = await supabase.functions.invoke('mp-cancel-subscription', {
+        body: { negocio_id: tenant.id }
       });
 
-      const data = await response.json();
+      if (error) throw new Error(error.message || 'Error al procesar la cancelación');
 
-      if (!response.ok) throw new Error(data.error || "Error al procesar la cancelación");
-
-      showToast('success', 'Suscripción cancelada. Has vuelto al Plan Gratuito.');
+      showToast('success', 'Suscripción cancelada. Has vuelto al Plan Starter.');
       await refreshTenant();
     } catch (err) {
       console.error("Cancelation error:", err);
@@ -177,48 +173,130 @@ export default function ConfiguracionView() {
             </div>
           ) : (
             <div className="bg-slate-500/10 border border-white/10 px-3 py-1 rounded-full flex items-center gap-2">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Plan Gratuito</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Plan Starter</span>
             </div>
           )}
         </div>
-        
-        <div className="p-6">
-          {tenant?.plan === 'pro' ? (
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div className="space-y-1">
-                <p className="text-sm text-slate-300 font-medium">¡Gracias por ser parte de VendeMas PRO!</p>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Tienes acceso ilimitado a Marca Blanca, PDFs Luxury y nuestro Motor Anti-Spam de WhatsApp.
-                </p>
-              </div>
-              <button 
-                type="button"
-                onClick={handleCancelSubscription}
-                disabled={isLoadingCancel}
-                className="text-xs font-bold text-red-400 hover:text-red-300 transition-colors uppercase tracking-widest border border-red-500/20 px-4 py-2 rounded-xl hover:bg-red-500/5 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoadingCancel ? 'Cancelando...' : 'Cancelar Suscripción'}
-              </button>
+
+        {tenant?.plan === 'pro' ? (
+          /* ── Vista PRO activo ── */
+          <div className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="space-y-1">
+              <p className="text-sm text-slate-300 font-medium">¡Gracias por ser parte de VendeMas PRO!</p>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Tienes acceso a usuarios ilimitados, 10GB de almacenamiento, Dashboard Gerencial, Cargas Masivas y Marca Blanca.
+              </p>
             </div>
-          ) : (
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div className="space-y-1">
-                <p className="text-sm text-slate-300 font-medium">Lleva tu negocio al siguiente nivel</p>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Desbloquea la marca blanca, reportes avanzados y soporte prioritario hoy mismo.
-                </p>
+            <button
+              type="button"
+              onClick={handleCancelSubscription}
+              disabled={isLoadingCancel}
+              className="text-xs font-bold text-red-400 hover:text-red-300 transition-colors uppercase tracking-widest border border-red-500/20 px-4 py-2 rounded-xl hover:bg-red-500/5 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoadingCancel ? 'Cancelando...' : 'Cancelar Suscripción'}
+            </button>
+          </div>
+        ) : (
+          /* ── Vista Starter: comparativa lado a lado ── */
+          <div className="p-6 space-y-6">
+            <p className="text-xs text-slate-500 text-center">
+              Compara tu plan actual con todo lo que desbloquea <span className="text-indigo-400 font-bold">VendeMas PRO</span>.
+            </p>
+
+            {/* Tabla comparativa */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+              {/* Card Starter */}
+              <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 flex flex-col gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-slate-700/50 flex items-center justify-center">
+                    <ShieldCheck size={16} className="text-slate-400" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Plan Actual</p>
+                    <h3 className="text-sm font-black text-slate-300">Starter</h3>
+                  </div>
+                  <span className="ml-auto text-[10px] font-black text-slate-500 border border-white/10 rounded-full px-2 py-0.5">Gratis</span>
+                </div>
+                <ul className="space-y-2.5">
+                  {[
+                    'Hasta 9 usuarios',
+                    '100 MB de almacenamiento',
+                    'Máx. 2 MB por PDF',
+                    'Cotizador Express Básico',
+                    'Pipeline Estándar',
+                  ].map(f => (
+                    <li key={f} className="flex items-start gap-2.5 text-xs text-slate-500">
+                      <div className="w-4 h-4 rounded-full bg-slate-700/60 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Check size={10} className="text-slate-400" />
+                      </div>
+                      {f}
+                    </li>
+                  ))}
+                  {[
+                    'Dashboard Gerencial',
+                    'Cargas Masivas CSV',
+                    'Marca Blanca',
+                  ].map(f => (
+                    <li key={f} className="flex items-start gap-2.5 text-xs text-slate-700">
+                      <div className="w-4 h-4 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <XIcon size={10} className="text-slate-700" />
+                      </div>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <button 
-                type="button"
-                onClick={() => setPaywall({ open: true, reason: 'Potencia tu negocio con las herramientas exclusivas de nuestra versión profesional.' })}
-                className="bg-white text-slate-950 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-indigo-50 transition-all shadow-lg shadow-white/5 active:scale-95"
-              >
-                <Zap size={14} fill="currentColor" />
-                Mejorar a PRO
-              </button>
+
+              {/* Card PRO (destacado) */}
+              <div className="relative rounded-2xl border border-indigo-500/40 bg-indigo-950/20 p-5 flex flex-col gap-4 shadow-lg shadow-indigo-500/10">
+                {/* Glow line */}
+                <div className="absolute inset-x-0 top-0 h-0.5 rounded-t-2xl bg-gradient-to-r from-indigo-600 via-purple-500 to-indigo-600" />
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400/20 to-orange-500/20 border border-amber-400/20 flex items-center justify-center">
+                    <Crown size={16} className="text-amber-400" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Recomendado</p>
+                    <h3 className="text-sm font-black text-slate-100">PRO</h3>
+                  </div>
+                  <span className="ml-auto text-[10px] font-black text-indigo-300 border border-indigo-500/30 rounded-full px-2 py-0.5 bg-indigo-500/10">US$ 29/mes</span>
+                </div>
+                <ul className="space-y-2.5">
+                  {[
+                    'Usuarios Ilimitados',
+                    '10 GB de almacenamiento',
+                    'Máx. 20 MB por PDF',
+                    'Dashboard Gerencial (Rendimiento)',
+                    'Cargas Masivas (CSV)',
+                    'Marca Blanca en Portal de Clientes',
+                    'Soporte Prioritario 24/7',
+                  ].map(f => (
+                    <li key={f} className="flex items-start gap-2.5 text-xs text-slate-300 font-medium">
+                      <div className="w-4 h-4 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Check size={10} className="text-indigo-400" />
+                      </div>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
-          )}
-        </div>
+
+            {/* CTA Button */}
+            <button
+              type="button"
+              onClick={() => setPaywall({ open: true, reason: 'Potencia tu negocio con las herramientas exclusivas de nuestra versión profesional.' })}
+              className="w-full h-12 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-500/25 active:scale-[0.98]"
+            >
+              <Zap size={16} fill="currentColor" />
+              ⚡️ Mejorar a PRO
+            </button>
+            <p className="text-center text-[10px] text-slate-600">
+              Cancela cuando quieras · Sin permanencia · Pago seguro con Mercado Pago
+            </p>
+          </div>
+        )}
       </div>
 
       {/* ── Form Card ── */}
