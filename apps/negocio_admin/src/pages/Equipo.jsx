@@ -18,13 +18,17 @@ import {
   X,
   Target,
   Save,
-  Edit2
+  Edit2,
+  Crown
 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { useTenant } from '../context/TenantContext'
+import { useFreemium } from '../hooks/useFreemium'
+import PaywallModal from '../components/common/PaywallModal'
 
 export default function Equipo() {
   const { tenant } = useTenant()
+  const { checkLimit, isPro, maxUsers } = useFreemium()
 
   const [usuarios, setUsuarios] = useState([])
   const [filtered, setFiltered] = useState([])
@@ -38,6 +42,8 @@ export default function Equipo() {
 
   // Modals
   const [inviteModalOpen, setInviteModalOpen] = useState(false)
+  const [paywallOpen, setPaywallOpen]         = useState(false)
+  const [paywallReason, setPaywallReason]     = useState('')
   const [form, setForm] = useState({
     nombre: '',
     email: '',
@@ -169,15 +175,38 @@ export default function Equipo() {
           <p className="text-sm text-slate-400 mt-0.5">
             Administra los accesos y roles de tus comerciales
           </p>
+          {!isPro && (
+            <p className="text-[11px] text-amber-400/80 mt-1 font-medium">
+              {usuarios.filter(u => u.estado === 'activo').length} / {maxUsers} usuarios en tu plan Starter
+            </p>
+          )}
         </div>
         
-        <button
-          onClick={() => setInviteModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all shadow-lg shadow-indigo-500/20"
-        >
-          <Plus size={15} />
-          Invitar Comercial
-        </button>
+        {/* Invite button — gated by plan */}
+        {(() => {
+          const activos = usuarios.filter(u => u.estado === 'activo').length
+          const limit = checkLimit('USERS', activos)
+          if (!limit.allowed) {
+            return (
+              <button
+                onClick={() => { setPaywallReason(limit.reason); setPaywallOpen(true) }}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 text-sm font-semibold transition-all"
+              >
+                <Crown size={15} />
+                Actualizar a Pro
+              </button>
+            )
+          }
+          return (
+            <button
+              onClick={() => setInviteModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all shadow-lg shadow-indigo-500/20"
+            >
+              <Plus size={15} />
+              Invitar Comercial
+            </button>
+          )
+        })()}
       </div>
 
       {/* ── Filtro / Búsqueda ── */}
@@ -412,6 +441,13 @@ export default function Equipo() {
           {toast.msg}
         </div>
       )}
+
+      {/* ── Paywall Modal ── */}
+      <PaywallModal
+        isOpen={paywallOpen}
+        onClose={() => setPaywallOpen(false)}
+        reason={paywallReason}
+      />
 
     </div>
   )

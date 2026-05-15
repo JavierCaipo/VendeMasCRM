@@ -5,15 +5,16 @@ export function useFreemium() {
   const { tenant } = useTenant();
 
   const limits = useMemo(() => {
-    const isPro = tenant?.plan === 'premium' || tenant?.plan === 'pro';
+    const isPro = tenant?.plan === 'pro';
     
     return {
       isPro,
-      maxUsers: 10,
-      maxFileSizeMB: isPro ? 50 : 2,
-      maxFileSizeBytes: (isPro ? 50 : 2) * 1024 * 1024,
+      isStarter: !isPro,
+      maxUsers: isPro ? Infinity : 9,           // starter: 9 usuarios max
+      maxFileSizeMB: isPro ? 20 : 2,           // starter: 2MB, pro: 20MB
+      maxFileSizeBytes: (isPro ? 20 : 2) * 1024 * 1024,
       whiteLabelEnabled: isPro,
-      planName: isPro ? 'VendeMas PRO' : 'Plan Free'
+      planName: isPro ? 'VendeMas PRO' : 'Plan Starter'
     };
   }, [tenant]);
 
@@ -25,7 +26,7 @@ export function useFreemium() {
         if (value > limits.maxFileSizeBytes) {
           return { 
             allowed: false, 
-            reason: `Este archivo supera los ${limits.maxFileSizeMB}MB. Sube archivos de alta calidad con el plan Pro.` 
+            reason: `El archivo supera el límite de ${limits.maxFileSizeMB}MB de tu plan. Sube archivos más grandes con el Plan Pro (hasta 20MB).` 
           };
         }
         break;
@@ -38,10 +39,18 @@ export function useFreemium() {
         }
         break;
       case 'USERS':
-        if (value >= limits.maxUsers) {
+        if (!limits.isPro && value >= limits.maxUsers) {
           return { 
             allowed: false, 
-            reason: `Has alcanzado el límite de ${limits.maxUsers} usuarios de tu equipo.` 
+            reason: `Has alcanzado el límite de ${limits.maxUsers} usuarios del Plan Starter. Actualiza a Pro para añadir más miembros a tu equipo sin límite.` 
+          };
+        }
+        break;
+      case 'BULK_IMPORT':
+        if (!limits.isPro) {
+          return {
+            allowed: false,
+            reason: 'La Carga Masiva de productos es una funcionalidad exclusiva del Plan Pro. Importa cientos de productos desde una hoja de cálculo.'
           };
         }
         break;

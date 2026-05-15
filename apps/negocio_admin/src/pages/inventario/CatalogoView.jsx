@@ -7,15 +7,18 @@ import {
   PackageSearch, Plus, Search, Filter, Loader2, 
   FileText, FileCheck, Edit, Trash2, 
   CheckCircle2, AlertCircle, Box, FileSpreadsheet,
-  LayoutGrid, List
+  LayoutGrid, List, Crown
 } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../context/TenantContext'
+import { useFreemium } from '../../hooks/useFreemium'
 import ProductoForm from '../../components/inventario/ProductoForm'
 import CsvProductModal from '../../components/inventario/CsvProductModal'
+import PaywallModal from '../../components/common/PaywallModal'
 
 export default function CatalogoView() {
   const { tenant } = useTenant()
+  const { checkLimit } = useFreemium()
   const [productos, setProductos] = useState([])
   const [categorias, setCategorias] = useState([])
   const [loading, setLoading] = useState(true)
@@ -25,6 +28,8 @@ export default function CatalogoView() {
   
   const [formOpen, setFormOpen] = useState(false)
   const [csvModalOpen, setCsvModalOpen] = useState(false)
+  const [paywallOpen, setPaywallOpen] = useState(false)
+  const [paywallReason, setPaywallReason] = useState('')
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [productoToEdit, setProductoToEdit] = useState(null)
   const [productoToDelete, setProductoToDelete] = useState(null)
@@ -215,7 +220,15 @@ export default function CatalogoView() {
         ) : userRole && ['superadmin', 'admin_negocio'].includes(userRole.toLowerCase()) && (
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setCsvModalOpen(true)}
+              onClick={() => {
+                const limit = checkLimit('BULK_IMPORT')
+                if (!limit.allowed) {
+                  setPaywallReason(limit.reason)
+                  setPaywallOpen(true)
+                } else {
+                  setCsvModalOpen(true)
+                }
+              }}
               className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-sm font-bold transition-all"
             >
               <FileSpreadsheet size={18} />
@@ -430,6 +443,12 @@ export default function CatalogoView() {
         onClose={() => setCsvModalOpen(false)}
         onSuccess={msg => { showToast('success', msg); fetchCatalogData(); }}
         onError={msg => showToast('error', msg)}
+      />
+
+      <PaywallModal
+        isOpen={paywallOpen}
+        onClose={() => setPaywallOpen(false)}
+        reason={paywallReason}
       />
 
       {/* Modal de Confirmación de Borrado */}
