@@ -69,15 +69,18 @@ Deno.serve(async (req) => {
       throw new Error(cancelData.message || 'Error al cancelar en Mercado Pago')
     }
 
-    // 3. Actualizar la base de datos (Plan -> free)
+    // 3. FIX #3: Actualizar BD con plan 'starter' (consistencia con modelo PLG) + estado vencida
     const { error: updateError } = await supabase
       .from('negocios')
-      .update({ plan: 'free' })
+      .update({
+        plan:               'starter',
+        estado_suscripcion: 'vencida',
+      })
       .eq('id', negocio_id)
 
     if (updateError) throw updateError
 
-    console.log(`Cancelación exitosa para el negocio ${negocio_id}`)
+    console.log(`[mp-cancel] ⬇️ Cancelación exitosa para el negocio ${negocio_id} → plan Starter`)
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

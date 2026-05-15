@@ -19,63 +19,110 @@ Deno.serve(async (req) => {
     )
 
     const payload = await req.json()
-    console.log('Webhook received:', payload)
+    console.log('[mp-webhook] Payload recibido:', JSON.stringify(payload))
 
     const { type, action, data } = payload
     const MP_ACCESS_TOKEN = Deno.env.get('MP_ACCESS_TOKEN')
 
-    // Procesar notificaciones de suscripciones (Preapproval)
-    // El "type" puede venir como "subscription_preapproval" o similar según la versión de la API
+    if (!MP_ACCESS_TOKEN) {
+      throw new Error('MP_ACCESS_TOKEN not configured')
+    }
+
+    // MercadoPago envía notificaciones de suscripciones con type = 'subscription_preapproval'
+    // o action que incluye 'preapproval' (variantes según versión de API)
     if (type === 'subscription_preapproval' || action?.includes('preapproval')) {
-      const subscriptionId = data.id
-      
-      // 1. Verificación de Seguridad: Consultar directamente a Mercado Pago
-      console.log(`Verificando suscripción ${subscriptionId}...`)
-      
+      const subscriptionId = data?.id
+
+      if (!subscriptionId) {
+        console.warn('[mp-webhook] Notificación sin subscription ID — ignorando')
+        // Devolvemos 200 para que MP no reintente
+        return new Response(JSON.stringify({ received: true, skipped: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        })
+      }
+
+      // 1. Verificación de Seguridad: consultar directamente a MP (no confiar en el payload)
+      console.log(`[mp-webhook] Verificando suscripción ${subscriptionId} con MP...`)
       const mpResponse = await fetch(`https://api.mercadopago.com/preapproval/${subscriptionId}`, {
-        headers: {
-          'Authorization': `Bearer ${MP_ACCESS_TOKEN}`
-        }
+        headers: { 'Authorization': `Bearer ${MP_ACCESS_TOKEN}` }
       })
 
       if (!mpResponse.ok) {
-        throw new Error('No se pudo verificar la suscripción con Mercado Pago')
+        throw new Error(`No se pudo verificar la suscripción ${subscriptionId} con MercadoPago`)
       }
 
-      const subscriptionData = await mpResponse.json()
-      
-      // 2. Validar estado y obtener negocio_id (external_reference)
-      // Los estados comunes son: authorized, active
-      if (subscriptionData.status === 'authorized' || subscriptionData.status === 'active') {
-        const negocio_id = subscriptionData.external_reference
-        
-        console.log(`Suscripción aprobada para el negocio: ${negocio_id}. Actualizando a plan PRO...`)
+      const sub = await mpResponse.json()
+      const negocio_id = sub.external_reference
+      const status     = sub.status           // authorized | active | cancelled | paused | pending
 
-        // 3. Actualizar la base de datos (Saltando RLS con Service Role)
+      console.log(`[mp-webhook] Suscripción ${subscriptionId} — status: ${status} — negocio: ${negocio_id}`)
+
+      if (!negocio_id) {
+        console.error('[mp-webhook] external_reference vacío — no se puede identificar el tenant')
+        // 200 para que MP no reintente; el error es de configuración en el checkout
+        return new Response(JSON.stringify({ received: true, warning: 'missing external_reference' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        })
+      }
+
+      // 2. Bifurcación según estado de la suscripción
+
+      if (status === 'authorized' || status === 'active') {
+        // ── Suscripción ACTIVA ─────────────────────────────────────────────
+        console.log(`[mp-webhook] Activando PRO para negocio ${negocio_id}...`)
         const { error: updateError } = await supabase
           .from('negocios')
-          .update({ plan: 'pro' })
+          .update({
+            plan:                'pro',
+            estado_suscripcion:  'activa',
+          })
           .eq('id', negocio_id)
 
-        if (updateError) {
-          throw updateError
-        }
+        if (updateError) throw updateError
+        console.log(`[mp-webhook] ✅ Negocio ${negocio_id} → plan PRO activo`)
 
-        console.log(`Negocio ${negocio_id} actualizado exitosamente.`)
+      } else if (status === 'cancelled' || status === 'paused') {
+        // ── Suscripción CANCELADA o PAUSADA (ej: fallo de cobro recurrente) ──
+        //    FIX #2: revertir a starter para no dejar acceso PRO vencido
+        console.log(`[mp-webhook] Suscripción ${status} — revirtiendo a Starter para negocio ${negocio_id}...`)
+        const { error: updateError } = await supabase
+          .from('negocios')
+          .update({
+            plan:                'starter',
+            estado_suscripcion:  'vencida',
+          })
+          .eq('id', negocio_id)
+
+        if (updateError) throw updateError
+        console.log(`[mp-webhook] ⬇️ Negocio ${negocio_id} → plan Starter (suscripción ${status})`)
+
+      } else {
+        // Estados intermedios: pending, in_process, etc. — no modificamos el plan
+        console.log(`[mp-webhook] Status intermedio '${status}' — sin acción para negocio ${negocio_id}`)
       }
+    } else {
+      // Tipo de notificación que no manejamos (pagos individuales, reclamos, etc.)
+      console.log(`[mp-webhook] Tipo '${type}' / action '${action}' no manejado — ignorando`)
     }
 
-    // Responder 200 OK a Mercado Pago inmediatamente
+    // Responder 200 OK a MercadoPago SIEMPRE (MP reintenta si recibe 4xx/5xx)
     return new Response(JSON.stringify({ received: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })
 
-  } catch (error) {
-    console.error('Webhook Error:', error.message)
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
-    })
+  } catch (error: any) {
+    console.error('[mp-webhook] Error:', error.message)
+    // IMPORTANTE: devolver 200 aunque haya error interno para evitar retries infinitos de MP
+    // El error queda logueado en Supabase Edge Function logs
+    return new Response(
+      JSON.stringify({ received: true, internal_error: error.message }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      }
+    )
   }
 })

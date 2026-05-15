@@ -15,17 +15,21 @@ Deno.serve(async (req: Request) => {
   try {
     const { negocio_id, email } = await req.json()
     const MP_ACCESS_TOKEN = Deno.env.get('MP_ACCESS_TOKEN')
-    
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    if (!negocio_id || !email) {
+      throw new Error('negocio_id y email son requeridos')
+    }
+
     if (!MP_ACCESS_TOKEN) {
       throw new Error('MP_ACCESS_TOKEN not configured')
     }
 
-    // 1. Obtener configuración dinámica (Precio y Tipo de Cambio)
+    // 1. Obtener configuración dinámica de precio (tabla global gestionada por SuperAdmin)
     const { data: config, error: configError } = await supabase
       .from('saas_config')
       .select('precio_mensual_usd, tipo_cambio_pen')
@@ -37,15 +41,29 @@ Deno.serve(async (req: Request) => {
       throw new Error('No se pudo obtener la configuración de precios.')
     }
 
-    // 2. Cálculo seguro del precio en moneda local (PEN)
-    // Envolvemos en Number() para que TypeScript no arroje errores de tipado
-    const precio_usd = Number(config.precio_mensual_usd)
-    const tipo_cambio = Number(config.tipo_cambio_pen)
-    const precioFinalSoles = parseFloat((precio_usd * tipo_cambio).toFixed(2))
+    // 2. Obtener tipo de cambio específico del tenant (si tiene uno personalizado)
+    //    Fallback al tipo de cambio global de saas_config
+    const { data: negocio } = await supabase
+      .from('negocios')
+      .select('tipo_cambio_usd_pen, nombre')
+      .eq('id', negocio_id)
+      .single()
 
-    console.log(`Iniciando suscripción: $${precio_usd} USD -> S/ ${precioFinalSoles} PEN`)
+    const precio_usd   = Number(config.precio_mensual_usd)
+    // Prioridad: tipo de cambio del tenant → tipo de cambio global de saas_config
+    const tipo_cambio  = Number(negocio?.tipo_cambio_usd_pen ?? config.tipo_cambio_pen)
+    const montoLocal   = parseFloat((precio_usd * tipo_cambio).toFixed(2))
 
-    // 3. Crear suscripción (Preapproval) en Mercado Pago
+    console.log(`[mp-checkout] Negocio: ${negocio?.nombre} (${negocio_id})`)
+    console.log(`[mp-checkout] Precio: $${precio_usd} USD × ${tipo_cambio} = S/ ${montoLocal} PEN`)
+
+    // 3. Determinar back_url base dinámicamente (env var → fallback a header Origin)
+    const appUrl = Deno.env.get('APP_URL')
+      ?? req.headers.get('origin')
+      ?? 'https://vendemas-crm.vercel.app'
+    const backUrlBase = appUrl.replace(/\/$/, '') // quitar trailing slash
+
+    // 4. Crear suscripción recurrente (Preapproval) en Mercado Pago
     const response = await fetch('https://api.mercadopago.com/preapproval', {
       method: 'POST',
       headers: {
@@ -53,19 +71,19 @@ Deno.serve(async (req: Request) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        reason: "Suscripción VendeMas PRO",
+        reason:             "Suscripción VendeMas PRO",
         external_reference: negocio_id,
-        payer_email: email,
+        payer_email:        email,
         auto_recurring: {
-          frequency: 1,
-          frequency_type: "months",
-          transaction_amount: precioFinalSoles,
-          currency_id: "PEN"
+          frequency:          1,
+          frequency_type:     "months",
+          transaction_amount: montoLocal,
+          currency_id:        "PEN"
         },
         back_urls: {
-          success: "https://vendemas-crm.vercel.app/configuracion?pago=exito", 
-          failure: "https://vendemas-crm.vercel.app/configuracion",
-          pending: "https://vendemas-crm.vercel.app/configuracion" 
+          success: `${backUrlBase}/configuracion?pago=exito`,
+          failure: `${backUrlBase}/configuracion?pago=error`,
+          pending: `${backUrlBase}/configuracion?pago=pendiente`,
         },
         status: "pending"
       })
@@ -74,26 +92,29 @@ Deno.serve(async (req: Request) => {
     const data = await response.json()
 
     if (!response.ok) {
-      console.error('Mercado Pago Subscription Error:', data)
+      console.error('[mp-checkout] MercadoPago error:', data)
       throw new Error(data.message || 'Error al generar la suscripción recurrente')
     }
 
-    // Retornamos el init_point para la redirección
+    // FIX #1: init_point de producción tiene prioridad — sandbox_init_point solo como fallback de dev
+    const initPoint = data.init_point || data.sandbox_init_point
+    console.log(`[mp-checkout] Redirigiendo a: ${initPoint}`)
+
     return new Response(
-      JSON.stringify({ init_point: data.sandbox_init_point || data.init_point }),
-      { 
+      JSON.stringify({ init_point: initPoint }),
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
+        status: 200
       }
     )
 
   } catch (error: any) {
-    console.error('Edge Function Error:', error.message)
+    console.error('[mp-checkout] Error:', error.message)
     return new Response(
       JSON.stringify({ error: error.message }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400 
+        status: 400
       }
     )
   }
