@@ -98,7 +98,7 @@ export default function DashboardMobile({ data, isLoading, userRole, onNewClient
             </button>
           </div>
 
-          {userRole === 'admin' && (
+          {userRole && ['superadmin', 'admin_negocio'].includes(userRole.toLowerCase()) && (
             <div className="relative">
               <button
                 onClick={() => setMenuOpen(!menuOpen)}

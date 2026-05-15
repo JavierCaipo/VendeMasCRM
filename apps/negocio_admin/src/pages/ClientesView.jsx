@@ -21,7 +21,7 @@ export default function ClientesView() {
   const [loading, setLoading]   = useState(true)
   const [user, setUser]         = useState(null)
 
-  const userRole = user?.user_metadata?.rol || 'comercial'
+  const userRole = user?.user_metadata?.rol || 'user'
 
   // Modals
   const [modalOpen, setModalOpen]       = useState(false)
@@ -225,7 +225,7 @@ export default function ClientesView() {
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
                         <UserCircle size={14} className={c.agente_asignado_id ? 'text-indigo-400' : 'text-slate-600'} />
-                        {userRole === 'admin' ? (
+                        {userRole && ['superadmin', 'admin_negocio'].includes(userRole.toLowerCase()) ? (
                           <select
                             value={c.agente_asignado_id || ''}
                             onChange={(e) => handleAsignarAgente(c.id, e.target.value)}

@@ -27,7 +27,7 @@ export default function NuevaCotizacion() {
   const isReadOnly = cotizacionExistente?.estado === 'aceptada' || cotizacionExistente?.estado === 'rechazada'
   const [clientes, setClientes] = useState([])
   const [productos, setProductos] = useState([])
-  const [userRole, setUserRole] = useState('comercial')
+  const [userRole, setUserRole] = useState('user')
 
   const formatNumber = (num) => {
     return (parseFloat(num) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -69,7 +69,7 @@ export default function NuevaCotizacion() {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       const { data: dbUser } = await supabase.from('usuarios_negocio').select('rol').eq('id', user.id).single()
-      setUserRole(dbUser?.rol || 'comercial')
+      setUserRole(dbUser?.rol || 'user')
     }
 
     const [clis, prods] = await Promise.all([
@@ -339,7 +339,7 @@ export default function NuevaCotizacion() {
       if (!quotePayload.contacto_id || quotePayload.contacto_id === '') delete quotePayload.contacto_id;
       if (!quotePayload.oportunidad_id || quotePayload.oportunidad_id === '') delete quotePayload.oportunidad_id;
 
-      if (userRole === 'comercial' && user) {
+      if (userRole === 'user' && user) {
         quotePayload.agente_id = user.id
       } else {
         quotePayload.agente_id = user.id // Default para admin si no se añade un selector de agentes a futuro

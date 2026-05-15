@@ -109,7 +109,7 @@ export default function DashboardDesktop({ data, isLoading, userRole, onNewClien
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {userRole === 'admin' && (
+          {userRole && ['superadmin', 'admin_negocio'].includes(userRole.toLowerCase()) && (
             <div className="flex items-center gap-3 mr-2 pr-4 border-r border-white/10">
               <button
                 onClick={onNewCliente}

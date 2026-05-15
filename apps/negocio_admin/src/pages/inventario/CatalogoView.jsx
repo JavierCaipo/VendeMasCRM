@@ -29,13 +29,13 @@ export default function CatalogoView() {
   const [productoToEdit, setProductoToEdit] = useState(null)
   const [productoToDelete, setProductoToDelete] = useState(null)
   const [toast, setToast] = useState(null)
-  const [userRole, setUserRole] = useState('comercial')
+  const [userRole, setUserRole] = useState('user')
   const [currentUser, setCurrentUser] = useState(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setCurrentUser(user)
-      const rol = user?.rol || user?.user_metadata?.rol || user?.role || 'comercial'
+      const rol = user?.rol || user?.user_metadata?.rol || user?.role || 'user'
       setUserRole(rol)
     })
   }, [])
@@ -205,7 +205,7 @@ export default function CatalogoView() {
           </button>
         </div>
 
-        {userRole && ['admin', 'administrador', 'admin_negocio'].includes(userRole.toLowerCase()) && (
+        {userRole && ['superadmin', 'admin_negocio'].includes(userRole.toLowerCase()) && (
           <div className="flex items-center gap-3">
             <button
               onClick={() => setCsvModalOpen(true)}
@@ -306,7 +306,7 @@ export default function CatalogoView() {
                 </div>
 
                 {/* Actions Overlay */}
-                {userRole && ['admin', 'administrador', 'admin_negocio'].includes(userRole.toLowerCase()) && (
+                {userRole && ['superadmin', 'admin_negocio'].includes(userRole.toLowerCase()) && (
                   <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => { setProductoToEdit(prod); setFormOpen(true); }}
@@ -383,7 +383,7 @@ export default function CatalogoView() {
                             <FileText size={14} />
                           </a>
                         )}
-                        {userRole && ['admin', 'administrador', 'admin_negocio'].includes(userRole.toLowerCase()) && (
+                        {userRole && ['superadmin', 'admin_negocio'].includes(userRole.toLowerCase()) && (
                           <>
                             <button
                               onClick={() => { setProductoToEdit(prod); setFormOpen(true); }}

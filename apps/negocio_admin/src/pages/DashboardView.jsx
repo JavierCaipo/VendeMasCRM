@@ -197,15 +197,17 @@ async function syncHuerfanos(tenantId) {
 // ─────────────────────────────────────────────────────────────────
 export default function DashboardView() {
   const { tenant } = useTenant()
-  const [userRole, setUserRole] = useState('comercial')
+  const [userRole, setUserRole] = useState('user')
   
   const [showClienteModal, setShowClienteModal] = useState(false)
   const [showProductoModal, setShowProductoModal] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
 
   useEffect(() => {
+    fetchDashboardData()
+
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setUserRole(user.user_metadata?.rol || 'comercial')
+      if (user) setUserRole(user.user_metadata?.rol || 'user')
     })
   }, [])
 

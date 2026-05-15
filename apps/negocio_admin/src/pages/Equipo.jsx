@@ -41,7 +41,7 @@ export default function Equipo() {
   const [form, setForm] = useState({
     nombre: '',
     email: '',
-    rol: 'comercial'
+    rol: 'user'
   })
 
   const [toast, setToast] = useState(null)
@@ -146,7 +146,7 @@ export default function Equipo() {
 
       showToast('success', 'Invitación enviada con éxito')
       setInviteModalOpen(false)
-      setForm({ nombre: '', email: '', rol: 'comercial' })
+      setForm({ nombre: '', email: '', rol: 'user' })
       fetchUsuarios() // Recargar lista
     } catch (err) {
       console.error('Error invitando usuario:', err)
@@ -278,7 +278,7 @@ export default function Equipo() {
                           <span className="text-xs font-black text-slate-300">
                             S/ {(u.meta_ventas_mensual || 0).toLocaleString('en-US', { minimumFractionDigits: 0 })}
                           </span>
-                          {u.rol === 'comercial' && (
+                          {u.rol === 'user' && (
                             <button 
                               onClick={() => {
                                 setEditingMetaId(u.id);
@@ -377,7 +377,7 @@ export default function Equipo() {
                   onChange={e => setForm({...form, rol: e.target.value})}
                   className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/50 transition-all cursor-pointer"
                 >
-                  <option value="comercial" className="bg-slate-900">Comercial (Acceso estándar)</option>
+                  <option value="user" className="bg-slate-900">Usuario (Acceso estándar)</option>
                   <option value="admin" className="bg-slate-900">Administrador (Control total)</option>
                 </select>
               </div>

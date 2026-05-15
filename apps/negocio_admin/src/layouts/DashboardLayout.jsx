@@ -6,36 +6,33 @@ import { useState, useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, PackageSearch, Users, Settings, LogOut,
-  Building2, Menu, X, Tags, Warehouse, FileText, Kanban, User
+  Building2, Menu, X, Tags, Warehouse, FileText, Kanban, User, DollarSign, Shield
 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { useTenant } from '../context/TenantContext'
 
 const NAV_ITEMS = [
-  { path: '/',              label: 'Dashboard',     icon: LayoutDashboard, rolesAllowed: ['admin', 'comercial'] },
-  { path: '/clientes',      label: 'Clientes',      icon: Users,           rolesAllowed: ['admin', 'comercial'] },
-  { 
-    group: 'Ventas',
-    items: [
-      { path: '/pipeline',     label: 'Pipeline',     icon: Kanban,        rolesAllowed: ['admin', 'comercial'] },
-      { path: '/cotizaciones', label: 'Cotizaciones', icon: FileText,      rolesAllowed: ['admin', 'comercial'] },
+  { path: '/',              label: 'Dashboard',     icon: LayoutDashboard, rolesAllowed: ['superadmin', 'admin_negocio', 'user'] },
+  { path: '/clientes',      label: 'Clientes',      icon: Users,           rolesAllowed: ['superadmin', 'admin_negocio', 'user'] },
+  {
+    group: 'Ventas', icon: DollarSign, rolesAllowed: ['superadmin', 'admin_negocio', 'user'], items: [
+      { path: '/pipeline',     label: 'Pipeline',     icon: Kanban,        rolesAllowed: ['superadmin', 'admin_negocio', 'user'] },
+      { path: '/cotizaciones', label: 'Cotizaciones', icon: FileText,      rolesAllowed: ['superadmin', 'admin_negocio', 'user'] },
     ]
   },
-  { 
-    group: 'Inventario',
-    items: [
-      { path: '/catalogo',    label: 'Catálogo',      icon: PackageSearch, rolesAllowed: ['admin', 'comercial'] },
-      { path: '/categorias',  label: 'Categorías',    icon: Tags,          rolesAllowed: ['admin', 'comercial'] },
-      { path: '/almacenes',   label: 'Almacenes',     icon: Warehouse,     rolesAllowed: ['admin', 'comercial'] },
+  {
+    group: 'Inventario', icon: PackageSearch, rolesAllowed: ['superadmin', 'admin_negocio', 'user'], items: [
+      { path: '/catalogo',    label: 'Catálogo',      icon: PackageSearch, rolesAllowed: ['superadmin', 'admin_negocio', 'user'] },
+      { path: '/categorias',  label: 'Categorías',    icon: Tags,          rolesAllowed: ['superadmin', 'admin_negocio', 'user'] },
+      { path: '/almacenes',   label: 'Almacenes',     icon: Warehouse,     rolesAllowed: ['superadmin', 'admin_negocio', 'user'] },
     ]
   },
-  { 
-    group: 'Recursos Humanos',
-    items: [
-      { path: '/equipo',       label: 'Equipo',        icon: Users,        rolesAllowed: ['admin'] },
+  {
+    group: 'Administración', icon: Shield, rolesAllowed: ['superadmin', 'admin_negocio'], items: [
+      { path: '/equipo',       label: 'Equipo',        icon: Users,        rolesAllowed: ['superadmin', 'admin_negocio'] },
     ]
   },
-  { path: '/configuracion', label: 'Configuración', icon: Settings,        rolesAllowed: ['admin'] },
+  { path: '/configuracion', label: 'Configuración', icon: Settings,        rolesAllowed: ['superadmin', 'admin_negocio'] },
 ]
 
 export default function DashboardLayout() {
@@ -63,11 +60,11 @@ export default function DashboardLayout() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { data: dbUser } = await supabase.from('usuarios_negocio').select('rol, nombre_completo').eq('id', user.id).single()
-        setUserRole(dbUser?.rol || 'comercial')
+        setUserRole(dbUser?.rol || 'user')
         setUserName(dbUser?.nombre_completo)
         setUser(user)
       } else {
-        setUserRole('comercial')
+        setUserRole('user')
       }
       setIsLoadingAuth(false)
     }

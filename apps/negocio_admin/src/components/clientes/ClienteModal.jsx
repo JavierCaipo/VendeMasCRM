@@ -24,14 +24,14 @@ export default function ClienteModal({ isOpen, onClose, onSuccess, onError, clie
   const [form, setForm] = useState(INITIAL_FORM)
   const [loading, setLoading] = useState(false)
   const [comerciales, setComerciales] = useState([])
-  const [userRole, setUserRole] = useState('comercial')
+  const [userRole, setUserRole] = useState('user')
 
   useEffect(() => {
     async function loadAuthAndTeam() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { data: dbUser } = await supabase.from('usuarios_negocio').select('rol').eq('id', user.id).single()
-        setUserRole(dbUser?.rol || 'comercial')
+        setUserRole(dbUser?.rol || 'user')
         
         if (tenant?.id) {
           const { data: team } = await supabase.from('usuarios_negocio').select('id, nombre_completo, email').eq('negocio_id', tenant.id)
@@ -112,7 +112,7 @@ export default function ClienteModal({ isOpen, onClose, onSuccess, onError, clie
         }
 
         // INYECCIÓN DE COMERCIAL EN INSERT
-        if (userRole === 'comercial') {
+        if (userRole === 'user') {
           const { data: { user } } = await supabase.auth.getUser()
           if (user) {
             payload.agente_asignado_id = user.id
@@ -279,7 +279,7 @@ export default function ClienteModal({ isOpen, onClose, onSuccess, onError, clie
             />
           </div>
 
-          {userRole === 'admin' && (
+          {userRole && ['superadmin', 'admin_negocio'].includes(userRole.toLowerCase()) && (
             <div>
               <label className="block text-xs font-medium text-slate-400 mb-1.5">Agente Asignado</label>
               <select

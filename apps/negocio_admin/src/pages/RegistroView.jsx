@@ -176,7 +176,7 @@ export default function RegistroView() {
       password: form.password,
       options: {
         data: {
-          rol: token ? 'admin_negocio' : 'propietario',
+          rol: 'admin_negocio',
           documento: form.documento,
           ...(token ? { negocio_id: invitacion.negocio_id } : { empresa: form.empresa })
         },
