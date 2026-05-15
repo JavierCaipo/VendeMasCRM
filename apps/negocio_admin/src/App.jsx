@@ -25,18 +25,10 @@ import SuperAdminConfig from './pages/SuperAdminConfig'
 import Equipo           from './pages/Equipo'
 import ActualizarPassword from './pages/ActualizarPassword'
 import MiPerfilView     from './pages/MiPerfilView'
-
-
-
-
-// ── Auth Guard ─────────────────────────────────────────────────
+import SplashScreen from './components/common/SplashScreen'// ── Auth Guard ─────────────────────────────────────────────────
 function RequireAuth({ user, children }) {
   if (user === undefined) {
-    return (
-      <div className="bg-mesh min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-indigo-500/40 border-t-indigo-400 rounded-full animate-spin" />
-      </div>
-    )
+    return <SplashScreen />
   }
   return user ? children : <Navigate to="/login" replace />
 }

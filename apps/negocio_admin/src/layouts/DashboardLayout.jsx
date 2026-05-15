@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { useTenant } from '../context/TenantContext'
+import SplashScreen from '../components/common/SplashScreen'
 
 const NAV_ITEMS = [
   { path: '/',              label: 'Dashboard',     icon: LayoutDashboard, rolesAllowed: ['superadmin', 'admin_negocio', 'user'] },
@@ -93,6 +94,10 @@ export default function DashboardLayout() {
         {label}
       </NavLink>
     )
+  }
+
+  if (isLoadingAuth) {
+    return <SplashScreen />
   }
 
   return (
