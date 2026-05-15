@@ -78,11 +78,11 @@ export default function PaywallModal({ isOpen, onClose, reason }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-300" onClick={onClose}>
-      <div 
-        className="bg-[#0B0F19] border border-slate-700 shadow-2xl rounded-3xl w-full max-w-lg relative overflow-hidden flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 animate-in fade-in duration-300">
+      {/* SIBLING 1: Backdrop */}
+      <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={onClose} />
+      {/* SIBLING 2: Card */}
+      <div className="relative z-10 bg-[#0B0F19] border border-slate-700 shadow-2xl rounded-3xl w-full max-w-lg overflow-hidden flex flex-col">
 
         {/* Glow Effect */}
         <div className="absolute -top-24 -left-24 w-48 h-48 bg-indigo-600/20 blur-[100px] rounded-full" />

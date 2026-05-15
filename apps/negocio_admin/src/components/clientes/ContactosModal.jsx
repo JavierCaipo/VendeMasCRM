@@ -55,13 +55,11 @@ export default function ContactosModal({ isOpen, onClose, cliente }) {
   if (!isOpen || !cliente) return null
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-      <div className="absolute inset-0" onClick={onClose} />
-      
-      <div 
-        className="relative glass border border-white/15 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden fade-up max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* SIBLING 1: Backdrop */}
+      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={onClose} />
+      {/* SIBLING 2: Card */}
+      <div className="relative z-10 glass border border-white/15 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden fade-up max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
           <div className="flex items-center gap-3">

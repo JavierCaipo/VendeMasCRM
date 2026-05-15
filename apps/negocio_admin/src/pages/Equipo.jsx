@@ -330,18 +330,14 @@ export default function Equipo() {
 
       {/* ── Modal de Invitación ── */}
       {inviteModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
-          onClick={() => setInviteModalOpen(false)}
-          onMouseDown={() => setInviteModalOpen(false)}
-        >
-          {/* Escudo absoluto: bloquea click, mousedown y touchstart para que nunca alcancen el backdrop */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          {/* SIBLING 1: Backdrop */}
           <div
-            className="glass w-full max-w-md rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-          >
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setInviteModalOpen(false)}
+          />
+          {/* SIBLING 2: Card */}
+          <div className="relative z-10 glass w-full max-w-md rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
               <h3 className="font-bold text-slate-100 flex items-center gap-2">
                 <ShieldCheck size={18} className="text-indigo-400" />
@@ -385,8 +381,6 @@ export default function Equipo() {
                 <select
                   value={form.rol}
                   onChange={e => setForm({...form, rol: e.target.value})}
-                  onClick={(e) => e.stopPropagation()}
-                  onMouseDown={(e) => e.stopPropagation()}
                   className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/50 transition-all cursor-pointer"
                 >
                   <option value="user" className="bg-slate-900">Usuario (Acceso estándar)</option>

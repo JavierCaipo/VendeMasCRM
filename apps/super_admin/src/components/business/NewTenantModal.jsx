@@ -276,17 +276,13 @@ export default function NewTenantModal({ isOpen, onClose, onSuccess }) {
   // ── Render ─────────────────────────────────────────────────
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop — solo cierra si estamos en el formulario */}
+      {/* SIBLING 1: Backdrop (solo cierra si estamos en formulario, no en éxito) */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={result ? undefined : handleClose}
       />
-
-      {/* Modal card */}
-      <div 
-        className="relative glass border border-white/15 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
+      {/* SIBLING 2: Card */}
+      <div className="relative z-10 glass border border-white/15 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
 
         {/* Header — cambia según el estado */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
