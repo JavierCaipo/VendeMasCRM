@@ -115,7 +115,10 @@ export default function CsvImportModal({ isOpen, onClose, onSuccess, onError }) 
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-950 backdrop-blur-3xl" onClick={uploading ? undefined : handleClose} />
       
-      <div className="relative glass border border-white/15 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden fade-up">
+      <div 
+        className="relative glass border border-white/15 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden fade-up"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">

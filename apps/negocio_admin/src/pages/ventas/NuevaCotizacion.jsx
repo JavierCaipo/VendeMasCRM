@@ -566,21 +566,21 @@ export default function NuevaCotizacion() {
               <Calculator size={14} /> Resumen de Venta
             </div>
             <div className="space-y-3">
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Divisa</span>
-                <div className="flex items-center gap-3">
-                  <div className="flex flex-col items-end">
-                    <span className="text-[9px] font-bold text-slate-500 uppercase">T.C. Referencial</span>
+              <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest w-full md:w-auto">Divisa</span>
+                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                  <div className="flex flex-col items-start md:items-end w-full md:w-auto flex-1">
+                    <span className="text-[9px] font-bold text-slate-500 uppercase mb-1">T.C. Referencial</span>
                     <input 
                       type="number" 
                       step="0.001"
                       disabled={isReadOnly}
                       value={tipoCambioReferencial} 
                       onChange={e => setTipoCambioReferencial(e.target.value)}
-                      className="w-16 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-slate-300 text-right focus:outline-none focus:border-indigo-500/50 disabled:opacity-70"
+                      className="w-full md:w-24 bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-300 md:text-right focus:outline-none focus:border-indigo-500/50 disabled:opacity-70"
                     />
                   </div>
-                  <div className="flex p-1 bg-slate-900/50 rounded-xl border border-white/5">
+                  <div className="flex p-1 bg-slate-900/50 rounded-xl border border-white/5 w-full md:w-auto justify-center">
                   <button 
                     disabled={isReadOnly}
                     onClick={() => setMoneda('PEN')}

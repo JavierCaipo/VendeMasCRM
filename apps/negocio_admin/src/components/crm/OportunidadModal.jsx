@@ -133,8 +133,11 @@ export default function OportunidadModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-2xl">
-      <div className="bg-[#0B0F19] border border-slate-700 shadow-2xl rounded-2xl w-full max-w-lg relative overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-2xl" onClick={onClose}>
+      <div 
+        className="bg-[#0B0F19] border border-slate-700 shadow-2xl rounded-2xl w-full max-w-lg relative overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Botón de Cierre Absoluto */}
         <X 
           size={20} 

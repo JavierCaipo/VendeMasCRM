@@ -305,8 +305,11 @@ export default function ProductoForm({ isOpen, onClose, onSuccess, onError, prod
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
-      <div className="relative bg-[#0B0F19] border border-slate-700 shadow-2xl rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col fade-up">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm" onClick={onClose}>
+      <div 
+        className="relative bg-[#0B0F19] border border-slate-700 shadow-2xl rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col fade-up"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Header */}
         <div className="px-8 py-5 border-b border-white/10 flex items-center justify-between bg-white/5">

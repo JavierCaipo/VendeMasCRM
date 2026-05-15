@@ -283,7 +283,10 @@ export default function NewTenantModal({ isOpen, onClose, onSuccess }) {
       />
 
       {/* Modal card */}
-      <div className="relative glass border border-white/15 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+      <div 
+        className="relative glass border border-white/15 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
 
         {/* Header — cambia según el estado */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
