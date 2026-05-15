@@ -45,6 +45,17 @@ export default function DashboardMobile({ data, isLoading, userRole, onNewClient
   const [displayCurrency, setDisplayCurrency] = useState('USD')
   const [menuOpen, setMenuOpen] = useState(false)
 
+  if (!data && isLoading) {
+    return (
+      <div className="p-4 space-y-6 flex flex-col gap-4 fade-up">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-24 glass rounded-3xl animate-pulse bg-white/5 border border-white/5" />
+        ))}
+      </div>
+    )
+  }
+  if (!data) return null
+
   const tcRef = tenant?.tipo_cambio_usd_pen || 3.8
   const formatMonto = (monto, monedaOrigen = 'USD') => {
     const n = parseFloat(monto) || 0

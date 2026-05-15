@@ -31,6 +31,15 @@ export default function DashboardDesktop({ data, isLoading, userRole, onNewClien
   const navigate = useNavigate()
   const [displayCurrency, setDisplayCurrency] = useState('USD')
 
+  if (!data && isLoading) {
+    return (
+      <div className="p-8 pb-6 space-y-10 fade-up grid grid-cols-2 xl:grid-cols-5 gap-6">
+        {Array.from({ length: 4 }).map((_, i) => <KpiSkeleton key={i} />)}
+      </div>
+    )
+  }
+  if (!data) return null
+
   const tcRef = tenant?.tipo_cambio_usd_pen || 3.8
   const formatMonto = (monto, monedaOrigen = 'USD') => {
     const n = parseFloat(monto) || 0

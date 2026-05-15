@@ -204,10 +204,8 @@ export default function DashboardView() {
   const [showImportModal, setShowImportModal] = useState(false)
 
   useEffect(() => {
-    fetchDashboardData()
-
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setUserRole(user.user_metadata?.rol || 'user')
+      if (user) setUserRole(user.user_metadata?.rol || user.rol || user.role)
     })
   }, [])
 
