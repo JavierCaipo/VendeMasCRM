@@ -55,7 +55,11 @@ Deno.serve(async (req: Request) => {
         estado: 'activo'
       })
 
-    if (dbError) throw new Error(`Error al vincular con el negocio: ${dbError.message}`)
+    if (dbError) {
+      // ── ROLLBACK: eliminar el usuario zombie de Auth para evitar cuentas huérfanas ──
+      await supabase.auth.admin.deleteUser(userId)
+      throw new Error(`Error al vincular con el negocio: ${dbError.message}. El usuario de Auth fue eliminado. Por favor intenta de nuevo.`)
+    }
 
     // 5. Éxito absoluto
     return new Response(

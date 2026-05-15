@@ -249,10 +249,11 @@ export default function NewTenantModal({ isOpen, onClose, onSuccess }) {
         .single()
 
       if (invitacionError) {
+        // ── ROLLBACK: eliminar el negocio huérfano para evitar datos corruptos ──
+        await supabase.from('negocios').delete().eq('id', tenantId)
         throw new Error(
-          `Negocio creado (ID: ${tenantId.slice(0, 8)}…), ` +
-          `pero falló la invitación: ${invitacionError.message}. ` +
-          `Por favor crea la invitación manualmente desde la BD.`
+          `No se pudo crear la invitación: ${invitacionError.message}. ` +
+          `El negocio fue eliminado automáticamente. Por favor intenta de nuevo.`
         )
       }
 

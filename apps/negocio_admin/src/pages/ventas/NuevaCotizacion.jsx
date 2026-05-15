@@ -23,6 +23,7 @@ export default function NuevaCotizacion() {
   
   const [loading, setLoading] = useState(false)
   const isHydrating = useRef(true)
+  const isSubmitting = useRef(false) // Guard síncrono contra doble-submit
   const [cotizacionExistente, setCotizacionExistente] = useState(null)
   const isReadOnly = cotizacionExistente?.estado === 'aceptada' || cotizacionExistente?.estado === 'rechazada'
   const [clientes, setClientes] = useState([])
@@ -281,8 +282,12 @@ export default function NuevaCotizacion() {
   }, [items])
 
   async function handleSave() {
-    if (!selectedCliente) return showToast('error', 'Selecciona un cliente')
-    if (items.some(i => !i.producto_id)) return showToast('error', 'Completa todos los productos')
+    // Guard síncrono: bloquea cualquier invocación concurrente antes del re-render
+    if (isSubmitting.current) return
+    isSubmitting.current = true
+
+    if (!selectedCliente) { isSubmitting.current = false; return showToast('error', 'Selecciona un cliente') }
+    if (items.some(i => !i.producto_id)) { isSubmitting.current = false; return showToast('error', 'Completa todos los productos') }
     
     setLoading(true)
     try {
@@ -429,6 +434,7 @@ export default function NuevaCotizacion() {
       showToast('error', err.message || JSON.stringify(err))
     } finally {
       setLoading(false)
+      isSubmitting.current = false  // Libera el guard al terminar
     }
   }
 

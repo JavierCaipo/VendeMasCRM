@@ -203,7 +203,7 @@ export default function PipelineView() {
           .order('orden', { ascending: true }),
         supabase
           .from('oportunidades')
-          .select('id, titulo, valor_estimado, etapa_id, negocio_id, cliente_id, fecha_creacion, fecha_cierre, cliente:clientes(nombre_razon_social), cotizaciones(moneda, tipo_cambio)')
+          .select('id, titulo, valor_estimado, etapa_id, negocio_id, cliente_id, fecha_creacion, fecha_cierre, ultima_actividad, cliente:clientes(nombre_razon_social), cotizaciones(moneda, tipo_cambio)')
           .eq('negocio_id', tenant.id)
           .order('fecha_creacion', { ascending: false })
       ])
@@ -277,9 +277,21 @@ export default function PipelineView() {
 
     // 2. Persistencia en Supabase
     try {
+      const ahora = new Date().toISOString()
+      const updatePayload = {
+        etapa_id: destinoId,
+        ultima_actividad: ahora  // Resetea el contador de Deal Rot en cualquier movimiento
+      }
+
+      // Si la etapa destino es "Ganado" / "Cerrado", estampamos la fecha de cierre real
+      const etapaDestino = etapas.find(e => String(e.id) === String(destinoId))
+      if (etapaDestino && /cerrado|ganad/i.test(etapaDestino.nombre)) {
+        updatePayload.fecha_cierre = ahora.split('T')[0]
+      }
+
       const { error } = await supabase
         .from('oportunidades')
-        .update({ etapa_id: destinoId })
+        .update(updatePayload)
         .eq('id', activeCardId)
       
       if (error) throw error
