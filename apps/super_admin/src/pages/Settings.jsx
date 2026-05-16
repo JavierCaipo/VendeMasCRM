@@ -38,7 +38,7 @@ export default function Settings() {
     try {
       const { data, error } = await supabase
         .from('saas_config')
-        .select('*')
+        .select('precio_mensual_usd, tipo_cambio_pen, updated_at')
         .eq('id', 1)
         .single()
 
@@ -98,7 +98,7 @@ export default function Settings() {
       showToast('success', 'Configuración global actualizada correctamente')
     } catch (err) {
       console.error('Error saving saas_config:', err)
-      showToast('error', 'Error al actualizar: ' + err.message)
+      showToast('error', 'Error al actualizar: ' + (err.message || 'Error desconocido'))
     } finally {
       setIsSaving(false)
     }

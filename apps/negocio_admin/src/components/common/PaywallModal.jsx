@@ -15,7 +15,7 @@ export default function PaywallModal({ isOpen, onClose, reason }) {
       try {
         const { data, error } = await supabase
           .from('saas_config')
-          .select('*')
+          .select('precio_mensual_usd, tipo_cambio_pen')
           .eq('id', 1)
           .single();
 
