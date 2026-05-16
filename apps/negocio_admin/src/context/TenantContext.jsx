@@ -3,6 +3,7 @@
 // src/context/TenantContext.jsx
 // ============================================
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import posthog from 'posthog-js'
 import { supabase } from '../lib/supabaseClient'
 import { toast } from 'sonner'
 
@@ -55,6 +56,13 @@ export function TenantProvider({ children }) {
     }
     
     setTenant(tenantData)
+    
+    // Identificar usuario en PostHog
+    posthog.identify(authData.user.id, {
+      email: authData.user.email,
+      tenant_id: tenantData.id,
+      plan: tenantData.plan
+    });
 
     // Cargar diccionarios
     const [resAgentes, resAlmacenes] = await Promise.all([

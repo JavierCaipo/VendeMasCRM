@@ -3,6 +3,7 @@
 // src/pages/ConfiguracionView.jsx
 // ============================================
 import { useState, useEffect } from 'react'
+import posthog from 'posthog-js'
 import { Settings2, Save, Loader2, CheckCircle2, AlertCircle, ImagePlus, Zap, ShieldCheck, Crown, Check, X as XIcon } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { useTenant } from '../context/TenantContext'
@@ -309,7 +310,10 @@ export default function ConfiguracionView() {
             {/* CTA Button */}
             <button
               type="button"
-              onClick={() => setPaywall({ open: true, reason: 'Potencia tu negocio con las herramientas exclusivas de nuestra versión profesional.' })}
+              onClick={() => {
+                posthog.capture('clicked_upgrade_to_pro_button', { location: 'config_page' });
+                setPaywall({ open: true, reason: 'Potencia tu negocio con las herramientas exclusivas de nuestra versión profesional.' });
+              }}
               className="w-full h-12 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-500/25 active:scale-[0.98]"
             >
               <Zap size={16} fill="currentColor" />
