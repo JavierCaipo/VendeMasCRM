@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react'
 import { 
   ShieldCheck, Zap, BarChart3, Users, 
-  MessageCircle, Rocket, Check, ArrowRight,
-  Globe, Layout, Smartphone, Crown, Sparkles,
-  ChevronDown, Star, Loader2
+  Rocket, Check, ArrowRight, Layout, Smartphone, Crown, Sparkles
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from './lib/supabase'
