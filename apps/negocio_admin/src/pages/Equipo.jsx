@@ -25,6 +25,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useTenant } from '../context/TenantContext'
 import { useFreemium } from '../hooks/useFreemium'
 import PaywallModal from '../components/common/PaywallModal'
+import EmptyState from '../components/common/EmptyState'
 
 export default function Equipo() {
   const { tenant } = useTenant()
@@ -229,11 +230,14 @@ export default function Equipo() {
             <span className="text-sm">Cargando equipo…</span>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-slate-500">
-            <Users size={40} className="mb-3 opacity-30" />
-            <p className="text-sm">
-              {search ? 'Sin resultados para esta búsqueda' : 'No hay miembros en el equipo'}
-            </p>
+          <div className="py-12">
+            <EmptyState
+              title={search ? "Sin resultados" : "Construye tu equipo de ventas"}
+              description={search ? "No se encontraron miembros con este nombre o email." : "Invita a tus comerciales para que empiecen a gestionar sus propios pipelines bajo tu supervisión."}
+              icon={Users}
+              actionLabel={search ? null : "Invitar Usuario"}
+              onAction={search ? null : () => setInviteModalOpen(true)}
+            />
           </div>
         ) : (
           <div className="overflow-x-auto custom-scrollbar">

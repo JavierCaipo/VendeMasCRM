@@ -15,6 +15,7 @@ import { useFreemium } from '../../hooks/useFreemium'
 import ProductoForm from '../../components/inventario/ProductoForm'
 import CsvProductModal from '../../components/inventario/CsvProductModal'
 import PaywallModal from '../../components/common/PaywallModal'
+import EmptyState from '../../components/common/EmptyState'
 
 export default function CatalogoView() {
   const { tenant } = useTenant()
@@ -252,13 +253,13 @@ export default function CatalogoView() {
           <p className="text-sm font-medium">Sincronizando catálogo...</p>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="glass rounded-3xl p-20 flex flex-col items-center justify-center text-center border border-white/5">
-          <Box size={48} className="text-slate-700 mb-4" />
-          <h3 className="text-lg font-bold text-slate-400">Sin resultados</h3>
-          <p className="text-sm text-slate-500 max-w-xs mt-1">
-            No se encontraron productos con los filtros aplicados o tu catálogo está vacío.
-          </p>
-        </div>
+        <EmptyState
+          title={search ? "Sin resultados" : "Tu catálogo está vacío"}
+          description={search ? "No se encontraron productos con los filtros aplicados." : "Empieza a añadir productos manualmente o utiliza la carga masiva CSV para importar tu inventario en segundos."}
+          icon={Box}
+          actionLabel={search ? null : "Añadir Primer Producto"}
+          onAction={search ? null : () => { setProductoToEdit(null); setFormOpen(true); }}
+        />
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filtered.map(prod => {

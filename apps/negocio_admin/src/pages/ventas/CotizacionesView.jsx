@@ -14,6 +14,7 @@ import { useTenant } from '../../context/TenantContext'
 import { PDFDownloadLink } from '@react-pdf/renderer'
 import CotizacionPDF from '../../components/ventas/CotizacionPDF'
 import { toast } from 'sonner'
+import EmptyState from '../../components/common/EmptyState'
 
 const MENSAJES_ESTRATEGICOS = [
   "Hola {cliente}, espero que estés muy bien. 👋 Te comparto la propuesta {correlativo} enfocada en potenciar la eficiencia de tu operación. Puedes ver los detalles aquí: {url}",
@@ -248,8 +249,14 @@ export default function CotizacionesView() {
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan="6" className="px-6 py-20 text-center text-slate-500 italic">
-                  No se encontraron cotizaciones.
+                <td colSpan="6" className="px-6 py-12">
+                  <EmptyState
+                    title={search ? "Sin resultados" : "Aún no hay cotizaciones"}
+                    description={search ? "No se encontraron cotizaciones con los criterios de búsqueda." : "Crea tu primera propuesta comercial y envíasela a tu cliente con un enlace rastreable."}
+                    icon={FileText}
+                    actionLabel={search ? null : "Crear Cotización"}
+                    onAction={search ? null : () => navigate('/cotizaciones/nueva')}
+                  />
                 </td>
               </tr>
             ) : filtered.map(q => (
