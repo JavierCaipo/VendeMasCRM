@@ -93,7 +93,8 @@ Deno.serve(async (req: Request) => {
 
     if (!response.ok) {
       console.error('[mp-checkout] MercadoPago error:', data)
-      throw new Error(data.message || 'Error al generar la suscripción recurrente')
+      const mpErrorMsg = data.message || data.error || (data.cause && data.cause[0]?.description) || 'Error desconocido en Mercado Pago'
+      throw new Error(`MercadoPago: ${mpErrorMsg}`)
     }
 
     // FIX #1: init_point de producción tiene prioridad — sandbox_init_point solo como fallback de dev

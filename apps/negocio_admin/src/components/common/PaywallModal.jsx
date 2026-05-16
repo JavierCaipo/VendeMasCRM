@@ -6,7 +6,7 @@ import { useTenant } from '../../context/TenantContext';
 export default function PaywallModal({ isOpen, onClose, reason }) {
   const { tenant } = useTenant();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
-  const [config, setConfig] = useState({ precio_mensual_usd: 29.00, tipo_cambio_pen: 3.80 });
+  const [config, setConfig] = useState({ precio_mensual_usd: 0, tipo_cambio_pen: 0 });
   const [isLoadingConfig, setIsLoadingConfig] = useState(true);
 
   useEffect(() => {

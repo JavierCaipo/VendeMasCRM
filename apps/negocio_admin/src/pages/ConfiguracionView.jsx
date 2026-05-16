@@ -28,6 +28,8 @@ export default function ConfiguracionView() {
   const [toast,   setToast]   = useState(null)
   const [paywall, setPaywall] = useState({ open: false, reason: '' })
   const [isLoadingCancel, setIsLoadingCancel] = useState(false)
+  const [saasConfig, setSaasConfig] = useState({ precio_mensual_usd: 29.0, tipo_cambio_pen: 3.8 })
+  const [isLoadingConfig, setIsLoadingConfig] = useState(true)
 
   // Cargar datos iniciales del contexto
   useEffect(() => {
@@ -45,6 +47,25 @@ export default function ConfiguracionView() {
       })
     }
   }, [tenant])
+
+  // Cargar configuración global de precios
+  useEffect(() => {
+    async function fetchConfig() {
+      try {
+        const { data, error } = await supabase
+          .from('saas_config')
+          .select('*')
+          .eq('id', 1)
+          .single();
+        if (data) setSaasConfig(data);
+      } catch (err) {
+        console.error("Error loading saas config:", err);
+      } finally {
+        setIsLoadingConfig(false);
+      }
+    }
+    fetchConfig();
+  }, []);
 
   function showToast(type, msg) {
     setToast({ type, msg })
@@ -260,7 +281,9 @@ export default function ConfiguracionView() {
                     <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Recomendado</p>
                     <h3 className="text-sm font-black text-slate-100">PRO</h3>
                   </div>
-                  <span className="ml-auto text-[10px] font-black text-indigo-300 border border-indigo-500/30 rounded-full px-2 py-0.5 bg-indigo-500/10">US$ 29/mes</span>
+                  <span className="ml-auto text-[10px] font-black text-indigo-300 border border-indigo-500/30 rounded-full px-2 py-0.5 bg-indigo-500/10">
+                    {isLoadingConfig ? '...' : `US$ ${saasConfig.precio_mensual_usd}/mes`}
+                  </span>
                 </div>
                 <ul className="space-y-2.5">
                   {[
