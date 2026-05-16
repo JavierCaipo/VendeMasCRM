@@ -83,6 +83,47 @@ Deno.serve(async (req) => {
         if (updateError) throw updateError
         console.log(`[mp-webhook] ✅ Negocio ${negocio_id} → plan PRO activo`)
 
+        // ── Enviar correo de bienvenida PRO (fire-and-forget) ──────────────
+        try {
+          // Obtener datos del tenant y su admin
+          const { data: negocio } = await supabase
+            .from('negocios')
+            .select('nombre')
+            .eq('id', negocio_id)
+            .single()
+
+          const { data: admin } = await supabase
+            .from('usuarios_negocio')
+            .select('email')
+            .eq('negocio_id', negocio_id)
+            .eq('rol', 'admin_negocio')
+            .limit(1)
+            .single()
+
+          if (admin?.email) {
+            const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
+            const SERVICE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+
+            // Llamada interna a la Edge Function de emails
+            await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SERVICE_KEY}`,
+              },
+              body: JSON.stringify({
+                to:   admin.email,
+                type: 'welcome_pro',
+                metadata: { negocio_nombre: negocio?.nombre || '' }
+              })
+            })
+            console.log(`[mp-webhook] 📧 Email welcome_pro disparado a ${admin.email}`)
+          }
+        } catch (emailErr: any) {
+          // No romper el flujo del webhook si el email falla
+          console.warn(`[mp-webhook] ⚠️ Email welcome_pro falló (no crítico): ${emailErr.message}`)
+        }
+
       } else if (status === 'cancelled' || status === 'paused') {
         // ── Suscripción CANCELADA o PAUSADA (ej: fallo de cobro recurrente) ──
         //    FIX #2: revertir a starter para no dejar acceso PRO vencido
