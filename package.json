@@ -1,11 +1,16 @@
 {
   "name": "vendemascrm",
-  "version": "1.0.0",
-  "description": "Vende+CRM - Sistema de gestión de clientes y ventas con Supabase",
-  "main": "server.js",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "dev:admin": "npm run dev -w apps/negocio_admin",
+    "dev:super": "npm run dev -w apps/super_admin",
+    "dev:landing": "npm run dev -w apps/landing",
+    "build:admin": "npm run build -w apps/negocio_admin",
+    "build:super": "npm run build -w apps/super_admin",
+    "build:landing": "npm run build -w apps/landing"
   },
   "keywords": [
     "crm",

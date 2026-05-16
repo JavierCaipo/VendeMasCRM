@@ -4,13 +4,18 @@ import { Sparkles, Loader2, TrendingUp, TrendingDown, Minus, MessageSquare, Chev
 import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../context/TenantContext'
 
+import { useFreemium } from '../../hooks/useFreemium'
+import PaywallModal from '../common/PaywallModal'
+
 export default function SentimentChart() {
   const { tenant } = useTenant()
+  const { isPro } = useFreemium()
   const navigate = useNavigate()
   const [sentData, setSentData] = useState({ positivo: 0, neutral: 0, negativo: 0, total: 0 })
   const [notas, setNotas] = useState([])          // últimas notas con resumen_ia
   const [notaActiva, setNotaActiva] = useState(0) // índice del feed rotativo
   const [loading, setLoading] = useState(true)
+  const [paywallOpen, setPaywallOpen] = useState(false)
 
   useEffect(() => {
     async function fetchSentiment() {
@@ -132,6 +137,63 @@ export default function SentimentChart() {
   const notaColor = notaViva?.sent === 'positivo'
     ? 'text-emerald-400' : notaViva?.sent === 'negativo'
     ? 'text-rose-400' : 'text-slate-400'
+
+  if (!isPro) {
+    return (
+      <div className="relative glass bg-slate-900/50 border border-white/5 p-6 rounded-[2rem] overflow-hidden group">
+        {/* Header (Visible but simplified) */}
+        <div className="flex justify-between items-start mb-4 opacity-40 select-none">
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-2xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/25">
+              <Sparkles size={20} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Sentimiento IA</p>
+              <p className="text-lg font-black text-slate-300 leading-none mt-0.5">---</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Content (Blurred) */}
+        <div className="blur-sm select-none pointer-events-none opacity-20">
+          <div className="mb-4">
+            <div className="flex justify-between text-[10px] font-black mb-1.5">
+              <span>--% Positivo</span>
+              <span>--% Neutral</span>
+              <span>--% Negativo</span>
+            </div>
+            <div className="w-full h-2.5 bg-white/5 rounded-full flex gap-px overflow-hidden">
+               <div className="w-1/3 bg-slate-700" />
+               <div className="w-1/3 bg-slate-800" />
+               <div className="w-1/3 bg-slate-700" />
+            </div>
+          </div>
+          <div className="bg-white/5 rounded-xl p-3 h-16" />
+        </div>
+
+        {/* Overlay CTA */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+          <Crown size={22} className="text-amber-400 mb-2 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
+          <h4 className="text-[11px] font-black text-white uppercase tracking-wider mb-1">Análisis de Sentimiento IA</h4>
+          <p className="text-[9px] text-slate-400 font-medium leading-tight max-w-[140px] mb-3">
+            Descubre el humor de tus clientes con IA. Exclusivo de Plan Pro.
+          </p>
+          <button 
+            onClick={() => setPaywallOpen(true)}
+            className="px-4 py-1.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-[9px] font-black text-white uppercase tracking-tighter transition-all"
+          >
+            Mejorar ahora
+          </button>
+        </div>
+
+        <PaywallModal 
+          isOpen={paywallOpen} 
+          onClose={() => setPaywallOpen(false)} 
+          reason="Desbloquea el análisis de sentimiento basado en IA para entender mejor las interacciones de tus clientes y optimizar tu estrategia comercial."
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="group glass bg-slate-900/50 border border-white/5 p-6 rounded-[2rem] hover:scale-[1.01] hover:bg-slate-900/80 transition-all duration-300 flex flex-col justify-between">

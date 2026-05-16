@@ -11,10 +11,12 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../context/TenantContext'
+import { useFreemium } from '../../hooks/useFreemium'
 import { PDFDownloadLink } from '@react-pdf/renderer'
 import CotizacionPDF from '../../components/ventas/CotizacionPDF'
 import { toast } from 'sonner'
 import EmptyState from '../../components/common/EmptyState'
+import PaywallModal from '../../components/common/PaywallModal'
 
 const MENSAJES_ESTRATEGICOS = [
   "Hola {cliente}, espero que estés muy bien. 👋 Te comparto la propuesta {correlativo} enfocada en potenciar la eficiencia de tu operación. Puedes ver los detalles aquí: {url}",
@@ -46,6 +48,7 @@ const MENSAJES_ESTRATEGICOS = [
 
 export default function CotizacionesView() {
   const { tenant } = useTenant()
+  const { isPro } = useFreemium()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()   // ← MISIÓN 1: deep linking
   
@@ -54,6 +57,7 @@ export default function CotizacionesView() {
   const [search, setSearch] = useState('')
   const [estadoFilter, setEstadoFilter] = useState('all')
   const [chatQuote, setChatQuote] = useState(null)
+  const [paywallOpen, setPaywallOpen] = useState(false)
   const [blinkId, setBlinkId] = useState(null) // ID que recibe animación de aprobación
 
   const formatNumber = (num) => {
@@ -62,13 +66,29 @@ export default function CotizacionesView() {
 
   const handleWhatsApp = (q) => {
     const urlPublica = `${window.location.origin}/c/${q.id}`;
-    const mensajeBase = MENSAJES_ESTRATEGICOS[Math.floor(Math.random() * MENSAJES_ESTRATEGICOS.length)];
+    
+    let mensajeBase = "Hola {cliente}, te comparto la cotización {correlativo}. Puedes ver los detalles aquí: {url}";
+    
+    if (isPro) {
+      // PRO: Rotación aleatoria (Smart Anti-Spam)
+      mensajeBase = MENSAJES_ESTRATEGICOS[Math.floor(Math.random() * MENSAJES_ESTRATEGICOS.length)];
+    }
+
     const mensaje = mensajeBase
       .replace('{cliente}', q.clientes?.nombre_razon_social || 'estimado cliente')
       .replace('{correlativo}', q.correlativo)
       .replace('{url}', urlPublica);
     
     window.open(`https://wa.me/?text=${encodeURIComponent(mensaje)}`, '_blank');
+    
+    if (!isPro) {
+      toast.info("Tip: El Plan PRO incluye rotación inteligente de mensajes para evitar bloqueos de WhatsApp.", {
+        action: {
+          label: "Saber más",
+          onClick: () => setPaywallOpen(true)
+        }
+      });
+    }
   }
 
   const fetchCotizaciones = useCallback(async () => {
@@ -307,7 +327,7 @@ export default function CotizacionesView() {
                     </button>
 
                     {/* 4. PDF */}
-                    <PDFAction cotizacionId={q.id} tenant={tenant} />
+                    <PDFAction cotizacionId={q.id} tenant={tenant} isPro={isPro} />
                   </div>
                 </td>
               </tr>
@@ -322,6 +342,11 @@ export default function CotizacionesView() {
           onClose={() => setChatQuote(null)} 
         />
       )}
+      <PaywallModal 
+        isOpen={paywallOpen}
+        onClose={() => setPaywallOpen(false)}
+        reason="La rotación inteligente de mensajes (Anti-Spam) es una función exclusiva del Plan PRO que ayuda a evitar que WhatsApp detecte tus envíos como spam al variar el texto de cada mensaje."
+      />
     </div>
   )
 }
@@ -404,7 +429,7 @@ function ChatModal({ quote, onClose }) {
   )
 }
 
-function PDFAction({ cotizacionId, tenant }) {
+function PDFAction({ cotizacionId, tenant, isPro }) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
 
@@ -432,7 +457,7 @@ function PDFAction({ cotizacionId, tenant }) {
 
     return (
       <PDFDownloadLink 
-        document={<CotizacionPDF cotizacion={data} tenant={tenant} />} 
+        document={<CotizacionPDF cotizacion={data} tenant={tenant} isPro={isPro} />} 
         fileName={nombreArchivo}
         className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-all flex items-center justify-center"
       >

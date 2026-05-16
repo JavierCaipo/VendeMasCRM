@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
   }
 })
 
-export default React.memo(function CotizacionPDF({ cotizacion, tenant }) {
+export default React.memo(function CotizacionPDF({ cotizacion, tenant, isPro }) {
   if (!cotizacion) return null;
 
   const totalFinal = parseFloat(cotizacion.total || 0);
@@ -345,13 +345,23 @@ export default React.memo(function CotizacionPDF({ cotizacion, tenant }) {
 
         {/* ── FOOTER ── */}
         <View style={styles.footer}>
+          {!isPro && (
+            <View style={{ marginBottom: 10, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+               <Text style={{ fontSize: 8, fontWeight: 'bold', color: '#6366F1', textAlign: 'center' }}>
+                 Potenciado por VendeMas CRM — Gestión Comercial Inteligente
+               </Text>
+               <Text style={{ fontSize: 6, color: '#94A3B8', textAlign: 'center', marginTop: 2 }}>
+                 Moderniza tu proceso de ventas en www.vendemas.app
+               </Text>
+            </View>
+          )}
           <Text style={styles.footerText}>
             {tenant.sitio_web ? `${tenant.sitio_web}  •  ` : ''}
             {tenant.correo_ventas}  •  
             {tenant.telefono}
           </Text>
           <Text style={[styles.footerText, { color: '#64748B', fontWeight: 'bold' }]}>
-            Generado por {cotizacion.agente?.nombre_completo || 'VendeMas CRM'}
+            Generado por {cotizacion.agente?.nombre_completo || (isPro ? tenant.nombre : 'VendeMas CRM')}
           </Text>
         </View>
 

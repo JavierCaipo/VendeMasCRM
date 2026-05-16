@@ -6,13 +6,16 @@ import { useState, useEffect, useCallback } from 'react'
 import { Users, Plus, UploadCloud, Search, Loader2, Edit, Trash2, CheckCircle2, AlertCircle, UserCircle, MessageSquare, X } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { useTenant } from '../context/TenantContext'
+import { useFreemium } from '../hooks/useFreemium'
 import ClienteModal from '../components/clientes/ClienteModal'
 import CsvImportModal from '../components/clientes/CsvImportModal'
 import ContactosModal from '../components/clientes/ContactosModal'
 import ClienteTimeline from '../components/crm/ClienteTimeline'
+import PaywallModal from '../components/common/PaywallModal'
 
 export default function ClientesView() {
   const { tenant } = useTenant()
+  const { checkLimit } = useFreemium()
 
   const [clientes, setClientes] = useState([])
   const [comerciales, setComerciales] = useState([])
@@ -26,6 +29,8 @@ export default function ClientesView() {
   // Modals
   const [modalOpen, setModalOpen]       = useState(false)
   const [csvModalOpen, setCsvModalOpen] = useState(false)
+  const [paywallOpen, setPaywallOpen]   = useState(false)
+  const [paywallReason, setPaywallReason] = useState('')
   const [contactosModalOpen, setContactosModalOpen] = useState(false)
   const [clienteToEdit, setClienteToEdit] = useState(null)
   const [clienteForContactos, setClienteForContactos] = useState(null)
@@ -138,7 +143,15 @@ export default function ClientesView() {
         <div className="flex items-center gap-2">
           {/* Botón Importar CSV */}
           <button
-            onClick={() => setCsvModalOpen(true)}
+            onClick={() => {
+              const limit = checkLimit('BULK_IMPORT')
+              if (!limit.allowed) {
+                setPaywallReason(limit.reason)
+                setPaywallOpen(true)
+              } else {
+                setCsvModalOpen(true)
+              }
+            }}
             className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium glass border border-white/10 hover:bg-white/10 text-slate-300 transition-all"
           >
             <UploadCloud size={15} />
@@ -312,6 +325,12 @@ export default function ClientesView() {
         isOpen={contactosModalOpen}
         onClose={() => setContactosModalOpen(false)}
         cliente={clienteForContactos}
+      />
+
+      <PaywallModal 
+        isOpen={paywallOpen}
+        onClose={() => setPaywallOpen(false)}
+        reason={paywallReason}
       />
 
       {/* ── Toast ── */}
