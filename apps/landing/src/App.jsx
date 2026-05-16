@@ -5,8 +5,10 @@ import {
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from './lib/supabase'
+import FutureAnimation from './components/hero/FutureAnimation'
+import RegistrationModal from './components/RegistrationModal'
 
-const Nav = () => (
+const Nav = ({ onGetStarted }) => (
   <nav className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-6 py-4 glass border-b border-white/5 bg-slate-950/50">
     <div className="flex items-center gap-2">
       <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
@@ -20,15 +22,18 @@ const Nav = () => (
       <a href="#testimonials" className="text-xs font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-widest">Testimonios</a>
     </div>
     <div className="flex items-center gap-4">
-      <a href="https://app.vendemas.app/login" className="text-xs font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-widest">Entrar</a>
-      <a href="#pricing" className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black rounded-xl transition-all shadow-lg shadow-indigo-500/25 uppercase tracking-widest">
+      <a href="https://vendemas-crm.vercel.app/login" className="text-xs font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-widest">Entrar</a>
+      <button 
+        onClick={onGetStarted}
+        className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black rounded-xl transition-all shadow-lg shadow-indigo-500/25 uppercase tracking-widest cursor-pointer"
+      >
         Empezar Gratis
-      </a>
+      </button>
     </div>
   </nav>
 )
 
-const Hero = () => (
+const Hero = ({ onGetStarted }) => (
   <section className="relative pt-32 pb-20 px-6 overflow-hidden">
     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-full -z-10 opacity-20 pointer-events-none">
       <div className="absolute top-20 left-0 w-96 h-96 bg-indigo-500 rounded-full blur-[120px]" />
@@ -52,23 +57,19 @@ const Hero = () => (
       </p>
 
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-        <a href="#pricing" className="w-full sm:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-black rounded-2xl transition-all shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-2 uppercase tracking-widest">
+        <button 
+          onClick={onGetStarted}
+          className="w-full sm:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-black rounded-2xl transition-all shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-2 uppercase tracking-widest cursor-pointer"
+        >
           Crear cuenta gratuita <ArrowRight size={18} />
-        </a>
-        <a href="https://demo.vendemas.app" className="w-full sm:w-auto px-8 py-4 bg-white/5 hover:bg-white/10 text-white text-sm font-black rounded-2xl border border-white/10 transition-all flex items-center justify-center gap-2 uppercase tracking-widest">
+        </button>
+        <a href="https://vendemas-crm.vercel.app/login" className="w-full sm:w-auto px-8 py-4 bg-white/5 hover:bg-white/10 text-white text-sm font-black rounded-2xl border border-white/10 transition-all flex items-center justify-center gap-2 uppercase tracking-widest">
           Ver demo en vivo
         </a>
       </div>
 
       <div className="pt-20">
-        <div className="relative glass rounded-[2.5rem] border border-white/10 p-2 shadow-2xl">
-           <img 
-             src="https://images.unsplash.com/photo-1551288049-bbbda536639a?auto=format&fit=crop&q=80&w=2070" 
-             alt="Dashboard Preview" 
-             className="rounded-[2rem] w-full h-auto opacity-90"
-           />
-           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent rounded-[2rem]" />
-        </div>
+        <FutureAnimation />
       </div>
     </div>
   </section>
@@ -84,11 +85,14 @@ const FeatureCard = ({ icon: Icon, title, desc, color }) => (
   </div>
 )
 
-const PricingTable = ({ pricing, loading }) => {
+const PricingTable = ({ pricing, loading, onGetStarted }) => {
   const [isAnnual, setIsAnnual] = useState(false)
   const precioUsd = pricing?.precio_mensual_usd || 29
   const tipoCambio = pricing?.tipo_cambio_pen || 3.8
   
+  const salesMsg = "¡Hola VendeMas! Me interesa implementar su CRM next-gen 2035 para mi equipo comercial. ¿Me pueden dar detalles?"
+  const salesWaUrl = `https://wa.me/18156566056?text=${encodeURIComponent(salesMsg)}`
+
   return (
     <section id="pricing" className="py-24 px-6 relative">
       <div className="max-w-6xl mx-auto">
@@ -110,7 +114,7 @@ const PricingTable = ({ pricing, loading }) => {
 
         <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {/* Plan Starter */}
-          <div className="glass p-10 rounded-[3rem] border border-white/5 flex flex-col">
+          <div className="glass p-10 rounded-[3rem] border border-white/5 flex flex-col hover:border-indigo-500/10 transition-all duration-300">
             <div className="space-y-2 mb-8">
               <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Para Emprendedores</span>
               <h3 className="text-2xl font-black text-white uppercase">Starter</h3>
@@ -139,13 +143,16 @@ const PricingTable = ({ pricing, loading }) => {
               ))}
             </ul>
 
-            <button className="w-full py-4 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-sm font-black uppercase tracking-widest border border-white/10 transition-all">
+            <button 
+              onClick={onGetStarted}
+              className="w-full py-4 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-sm font-black uppercase tracking-widest border border-white/10 transition-all cursor-pointer"
+            >
               Empezar Ahora
             </button>
           </div>
 
           {/* Plan PRO */}
-          <div className="relative glass p-10 rounded-[3rem] border border-indigo-500/40 bg-indigo-600/5 shadow-2xl shadow-indigo-500/10 flex flex-col scale-105">
+          <div className="relative glass p-10 rounded-[3rem] border border-indigo-500/40 bg-indigo-600/5 shadow-2xl shadow-indigo-500/10 flex flex-col scale-105 hover:border-indigo-500/60 transition-all duration-300">
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-indigo-600 text-white text-[10px] font-black rounded-full uppercase tracking-widest shadow-xl">
               Más Popular
             </div>
@@ -192,9 +199,22 @@ const PricingTable = ({ pricing, loading }) => {
               ))}
             </ul>
 
-            <button className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-black uppercase tracking-widest shadow-xl shadow-indigo-500/30 transition-all flex items-center justify-center gap-2">
-              Mejorar a PRO <Rocket size={18} />
-            </button>
+            <div className="space-y-3">
+              <button 
+                onClick={onGetStarted}
+                className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-black uppercase tracking-widest shadow-xl shadow-indigo-500/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                Probar Gratis PRO <Rocket size={18} />
+              </button>
+              <a 
+                href={salesWaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3.5 rounded-2xl bg-transparent border border-indigo-500/30 hover:border-indigo-500/60 hover:bg-indigo-500/5 text-indigo-400 text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                Hablar con ventas
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -222,6 +242,13 @@ const X = ({ className, size }) => (
 export default function App() {
   const [pricing, setPricing] = useState({ precio_mensual_usd: 29, tipo_cambio_pen: 3.8 })
   const [loading, setLoading] = useState(true)
+  const [isRegOpen, setIsRegOpen] = useState(false)
+  const [infoModal, setInfoModal] = useState({ isOpen: false, title: '', content: '' })
+
+  const salesMsg = "¡Hola VendeMas! Me interesa implementar su CRM next-gen 2035 para mi equipo comercial. ¿Me pueden dar detalles?"
+  const salesWaUrl = `https://wa.me/18156566056?text=${encodeURIComponent(salesMsg)}`
+  const supportMsg = "¡Hola Soporte VendeMas! Necesito ayuda con mi cuenta comercial."
+  const supportWaUrl = `https://wa.me/18156566056?text=${encodeURIComponent(supportMsg)}`
 
   useEffect(() => {
     async function fetchPricing() {
@@ -244,11 +271,49 @@ export default function App() {
     fetchPricing()
   }, [])
 
+  const openPrivacy = () => {
+    setInfoModal({
+      isOpen: true,
+      title: "Políticas de Privacidad y Confidencialidad B2B",
+      content: (
+        <div className="space-y-4">
+          <p className="font-bold text-white">Última actualización: Mayo 2026</p>
+          <p>En VendeMas Business, valoramos y protegemos la privacidad de su organización comercial. Esta política de privacidad detalla la forma en que recopilamos, encriptamos y administramos la información transaccional y de sus clientes.</p>
+          <h4 className="font-bold text-white uppercase text-xs">1. Protección de Datos y RLS</h4>
+          <p>Toda la información registrada por sus usuarios en la base de datos de VendeMas está protegida mediante políticas estrictas de Seguridad a Nivel de Fila (RLS) de PostgreSQL. Ningún tercero, incluidos otros inquilinos (tenants), podrá acceder a sus cotizaciones, prospectos o pipeline comercial.</p>
+          <h4 className="font-bold text-white uppercase text-xs">2. Integración con Supabase y Mercado Pago</h4>
+          <p>Al utilizar nuestra infraestructura, sus credenciales y sesiones de autenticación se gestionan bajo estándares bancarios. Los datos de facturación se procesan de forma externa y segura a través de pasarelas de pago de confianza como Mercado Pago.</p>
+          <h4 className="font-bold text-white uppercase text-xs">3. Derechos sobre los datos</h4>
+          <p>Su negocio retiene la propiedad absoluta de toda la información cargada. Puede exportar de forma completa sus clientes e historial de cotizaciones en cualquier momento sin restricciones operativas.</p>
+        </div>
+      )
+    })
+  }
+
+  const openTerms = () => {
+    setInfoModal({
+      isOpen: true,
+      title: "Términos del Servicio y SLA Corporativo",
+      content: (
+        <div className="space-y-4">
+          <p className="font-bold text-white">Última actualización: Mayo 2026</p>
+          <p>Al registrarse y activar un portal Starter o PRO en VendeMas Business, su organización acepta plenamente las siguientes condiciones de servicio y garantías de operatividad comercial.</p>
+          <h4 className="font-bold text-white uppercase text-xs">1. Uso del Software y Licenciamiento</h4>
+          <p>VendeMas concede a su empresa una licencia de uso de software como servicio (SaaS) no exclusiva y limitada a los límites de almacenamiento y usuarios estipulados según el plan contratado (Starter o PRO).</p>
+          <h4 className="font-bold text-white uppercase text-xs">2. Garantía de Disponibilidad (SLA)</h4>
+          <p>Nos comprometemos a brindar una disponibilidad de plataforma del 99.9% anual para garantizar que su equipo de ventas pueda cotizar en tiempo real en la nube sin interrupciones críticas en el campo.</p>
+          <h4 className="font-bold text-white uppercase text-xs">3. Límite de Responsabilidad</h4>
+          <p>VendeMas actúa como facilitador tecnológico. No nos hacemos responsables por cierres comerciales no consolidados o interpretaciones de sentimientos erróneas por el motor de inteligencia artificial.</p>
+        </div>
+      )
+    })
+  }
+
   return (
     <div className="bg-[#0B0F19] min-h-screen text-slate-200 selection:bg-indigo-500/30">
-      <Nav />
+      <Nav onGetStarted={() => setIsRegOpen(true)} />
       <main>
-        <Hero />
+        <Hero onGetStarted={() => setIsRegOpen(true)} />
         
         <section id="features" className="py-24 px-6 bg-slate-950/30">
           <div className="max-w-6xl mx-auto">
@@ -298,7 +363,80 @@ export default function App() {
           </div>
         </section>
 
-        <PricingTable pricing={pricing} loading={loading} />
+        <PricingTable pricing={pricing} loading={loading} onGetStarted={() => setIsRegOpen(true)} />
+
+        {/* SECCIÓN DE TESTIMONIOS PERSUASIVOS */}
+        <section id="testimonials" className="py-24 px-6 bg-slate-950/20 border-t border-b border-white/5">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16 space-y-4">
+              <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.25em]">Casos de Éxito Reales</span>
+              <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight uppercase">El impacto en nuestros clientes.</h2>
+              <p className="text-slate-500 max-w-2xl mx-auto font-medium">Empresas comerciales e industriales B2B nos eligen para liderar su transformación de ventas.</p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {/* Testimonio 1 */}
+              <div className="glass p-8 rounded-[2.5rem] border border-white/5 flex flex-col justify-between hover:border-indigo-500/10 transition-all duration-300">
+                <div className="space-y-6">
+                  <div className="flex gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Crown key={i} size={12} className="text-amber-400 fill-amber-400" />
+                    ))}
+                  </div>
+                  <p className="text-sm text-slate-300 leading-relaxed font-semibold italic">
+                    "VendeMas transformó nuestra forma de cotizar. En la industria metalmecánica, la velocidad es clave. Ahora enviamos propuestas firmadas desde la planta en menos de un minuto y cerramos un 35% más rápido."
+                  </p>
+                </div>
+                <div className="mt-8 flex items-center gap-4 border-t border-white/5 pt-6">
+                  <div>
+                    <h4 className="text-sm font-black text-white uppercase tracking-wider">Carlos Mendoza</h4>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Dir. Operaciones · Aceros del Pacífico</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Testimonio 2 */}
+              <div className="glass p-8 rounded-[2.5rem] border border-white/5 flex flex-col justify-between hover:border-indigo-500/10 transition-all duration-300">
+                <div className="space-y-6">
+                  <div className="flex gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Crown key={i} size={12} className="text-amber-400 fill-amber-400" />
+                    ))}
+                  </div>
+                  <p className="text-sm text-slate-300 leading-relaxed font-semibold italic">
+                    "El análisis de sentimiento con IA nos salvó de perder 3 contratos clave el último trimestre al alertarnos sobre la frustración de los clientes. El pipeline B2B es intuitivo y extremadamente potente."
+                  </p>
+                </div>
+                <div className="mt-8 flex items-center gap-4 border-t border-white/5 pt-6">
+                  <div>
+                    <h4 className="text-sm font-black text-white uppercase tracking-wider">Sofía Valenzuela</h4>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Gerente Comercial · Logística Global S.A.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Testimonio 3 */}
+              <div className="glass p-8 rounded-[2.5rem] border border-white/5 flex flex-col justify-between hover:border-indigo-500/10 transition-all duration-300">
+                <div className="space-y-6">
+                  <div className="flex gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Crown key={i} size={12} className="text-amber-400 fill-amber-400" />
+                    ))}
+                  </div>
+                  <p className="text-sm text-slate-300 leading-relaxed font-semibold italic">
+                    "La marca blanca y la facilidad de uso del cotizador express nos dio el nivel de profesionalismo de una multinacional desde el primer día. Totalmente recomendado para empresas medianas en crecimiento."
+                  </p>
+                </div>
+                <div className="mt-8 flex items-center gap-4 border-t border-white/5 pt-6">
+                  <div>
+                    <h4 className="text-sm font-black text-white uppercase tracking-wider">Mateo Guerrero</h4>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Fundador · TecnoRedes Industrias</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
         
         {/* CTA FINAL */}
         <section className="py-24 px-6">
@@ -310,19 +448,27 @@ export default function App() {
                <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight">¿Listo para vender más?</h2>
                <p className="text-slate-400 text-lg max-w-xl mx-auto font-medium">Únete a cientos de empresas que ya están optimizando su operación con VendeMas CRM.</p>
                <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-                  <button className="px-10 py-5 bg-white text-slate-950 text-sm font-black rounded-2xl hover:bg-slate-200 transition-all uppercase tracking-widest shadow-2xl">
+                  <button 
+                    onClick={() => setIsRegOpen(true)}
+                    className="px-10 py-5 bg-white text-slate-950 text-sm font-black rounded-2xl hover:bg-slate-200 transition-all uppercase tracking-widest shadow-2xl cursor-pointer"
+                  >
                     Crear mi cuenta gratis
                   </button>
-                  <button className="px-10 py-5 bg-transparent text-white text-sm font-black rounded-2xl border border-white/20 hover:bg-white/5 transition-all uppercase tracking-widest">
+                  <a 
+                    href={salesWaUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-10 py-5 bg-transparent text-white text-sm font-black rounded-2xl border border-white/20 hover:bg-white/5 transition-all uppercase tracking-widest flex items-center justify-center"
+                  >
                     Hablar con ventas
-                  </button>
+                  </a>
                </div>
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="py-12 px-6 border-t border-white/5">
+      <footer className="py-12 px-6 border-t border-white/5 bg-slate-950/20">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center">
@@ -336,12 +482,43 @@ export default function App() {
           </p>
           
           <div className="flex gap-6">
-            <a href="#" className="text-[10px] text-slate-500 hover:text-white uppercase font-bold tracking-widest transition-colors">Privacidad</a>
-            <a href="#" className="text-[10px] text-slate-500 hover:text-white uppercase font-bold tracking-widest transition-colors">Términos</a>
-            <a href="#" className="text-[10px] text-slate-500 hover:text-white uppercase font-bold tracking-widest transition-colors">Soporte</a>
+            <button onClick={openPrivacy} className="text-[10px] text-slate-500 hover:text-white uppercase font-bold tracking-widest transition-colors cursor-pointer bg-transparent border-none">Privacidad</button>
+            <button onClick={openTerms} className="text-[10px] text-slate-500 hover:text-white uppercase font-bold tracking-widest transition-colors cursor-pointer bg-transparent border-none">Términos</button>
+            <a href={supportWaUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-slate-500 hover:text-white uppercase font-bold tracking-widest transition-colors">Soporte</a>
           </div>
         </div>
       </footer>
+
+      {/* MODAL DE REGISTRO PLG */}
+      <RegistrationModal isOpen={isRegOpen} onClose={() => setIsRegOpen(false)} />
+
+      {/* MODAL DE INFORMACIÓN DETALLADA (LEGAL/TÉRMINOS) */}
+      <AnimatePresence>
+        {infoModal.isOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="relative w-full max-w-2xl overflow-hidden rounded-[2.5rem] border border-white/10 glass bg-slate-950 p-8 shadow-2xl"
+            >
+              {/* Cerrar */}
+              <button
+                onClick={() => setInfoModal({ isOpen: false, title: '', content: '' })}
+                className="absolute top-6 right-6 p-2 rounded-xl bg-white/5 border border-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X size={16} />
+              </button>
+              <div className="space-y-6">
+                <h3 className="text-xl font-black text-white uppercase tracking-tight">{infoModal.title}</h3>
+                <div className="text-slate-400 text-sm font-medium leading-relaxed max-h-[350px] overflow-y-auto pr-2 space-y-4">
+                  {infoModal.content}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

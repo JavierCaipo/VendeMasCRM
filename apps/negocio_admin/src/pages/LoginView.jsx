@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import {
-  ShieldCheck, Loader2, AlertCircle, Eye, EyeOff, Lock, Mail
+  ShieldCheck, Loader2, AlertCircle, Eye, EyeOff, Lock, Mail, CheckCircle2
 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 
@@ -42,11 +42,26 @@ function InputField({ label, icon: Icon, name, type = 'text', value, onChange,
 // ── Main Component ────────────────────────────────────────────
 export default function LoginView() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   
   const [form, setForm] = useState({ email: '', password: '' })
   const [showPwd, setShowPwd] = useState(false)
   const [loading, setLoading] = useState(false)
   const [globalError, setGlobalError] = useState(null)
+  const [plgSuccess, setPlgSuccess] = useState(false)
+
+  useEffect(() => {
+    const emailParam = searchParams.get('email')
+    const registered = searchParams.get('registered')
+    const plg = searchParams.get('plg')
+
+    if (emailParam) {
+      setForm(prev => ({ ...prev, email: emailParam }))
+    }
+    if (registered === 'true' && plg === 'true') {
+      setPlgSuccess(true)
+    }
+  }, [searchParams])
 
   function handleChange(e) {
     const { name, value } = e.target
@@ -101,6 +116,17 @@ export default function LoginView() {
 
           {/* Formulario */}
           <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+
+            {/* Banner PLG Exitoso */}
+            {plgSuccess && (
+              <div className="flex items-start gap-2.5 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs">
+                <CheckCircle2 size={16} className="flex-shrink-0 mt-0.5 text-emerald-400" />
+                <div>
+                  <p className="font-bold text-white uppercase tracking-wider mb-0.5 text-[9px]">¡Portal Starter Creado!</p>
+                  <p className="leading-relaxed">Tu CRM Next-Gen 2035 ha sido provisionado. Inicia sesión para comenzar.</p>
+                </div>
+              </div>
+            )}
 
             {/* Error global */}
             {globalError && (
