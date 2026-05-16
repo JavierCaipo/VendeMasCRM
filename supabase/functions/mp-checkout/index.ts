@@ -57,11 +57,13 @@ Deno.serve(async (req: Request) => {
     console.log(`[mp-checkout] Negocio: ${negocio?.nombre} (${negocio_id})`)
     console.log(`[mp-checkout] Precio: $${precio_usd} USD × ${tipo_cambio} = S/ ${montoLocal} PEN`)
 
-    // 3. Determinar back_url base dinámicamente (env var → fallback a header Origin)
-    const appUrl = Deno.env.get('APP_URL')
-      ?? req.headers.get('origin')
-      ?? 'https://vendemas-crm.vercel.app'
-    const backUrlBase = appUrl.replace(/\/$/, '') // quitar trailing slash
+    // 3. Determinar back_url dinámicamente (origin → env var → fallback)
+    const backUrl = req.headers.get('origin')
+      || Deno.env.get('APP_URL')
+      || 'https://vendemas-crm.vercel.app'
+    const backUrlClean = backUrl.replace(/\/$/, '') // quitar trailing slash
+
+    console.log(`[mp-checkout] back_url: ${backUrlClean}/configuracion?pago=exito`)
 
     // 4. Crear suscripción recurrente (Preapproval) en Mercado Pago
     const response = await fetch('https://api.mercadopago.com/preapproval', {
@@ -80,11 +82,7 @@ Deno.serve(async (req: Request) => {
           transaction_amount: montoLocal,
           currency_id:        "PEN"
         },
-        back_urls: {
-          success: `${backUrlBase}/configuracion?pago=exito`,
-          failure: `${backUrlBase}/configuracion?pago=error`,
-          pending: `${backUrlBase}/configuracion?pago=pendiente`,
-        },
+        back_url: `${backUrlClean}/configuracion?pago=exito`,
         status: "pending"
       })
     })

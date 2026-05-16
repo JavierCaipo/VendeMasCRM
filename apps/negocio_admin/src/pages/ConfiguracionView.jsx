@@ -28,7 +28,7 @@ export default function ConfiguracionView() {
   const [toast,   setToast]   = useState(null)
   const [paywall, setPaywall] = useState({ open: false, reason: '' })
   const [isLoadingCancel, setIsLoadingCancel] = useState(false)
-  const [saasConfig, setSaasConfig] = useState({ precio_mensual_usd: 29.0, tipo_cambio_pen: 3.8 })
+  const [saasConfig, setSaasConfig] = useState({ precio_mensual_usd: 0, tipo_cambio_pen: 0 })
   const [isLoadingConfig, setIsLoadingConfig] = useState(true)
 
   // Cargar datos iniciales del contexto
