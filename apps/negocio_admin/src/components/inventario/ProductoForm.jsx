@@ -21,7 +21,7 @@ export default function ProductoForm({ isOpen, onClose, onSuccess, onError, prod
   const [fetchingData, setFetchingData] = useState(true)
   const [categorias, setCategorias] = useState([])
   const [almacenes, setAlmacenes] = useState([])
-  const [paywall, setPaywall] = useState({ open: false, reason: '' })
+  const [showPaywall, setShowPaywall] = useState(false)
 
   const [formData, setFormData] = useState({
     nombre: '',
@@ -159,15 +159,21 @@ export default function ProductoForm({ isOpen, onClose, onSuccess, onError, prod
     }
 
     // Para PDFs, mantenemos subida inmediata por simplicidad
-    setPremiumError(null)
     setUploading(prev => ({ ...prev, docs: true }))
+
+    const plan = tenant?.plan || 'starter'
 
     try {
       for (let file of files) {
-        // --- Lógica Freemium para Archivos ---
-        const limitStatus = checkLimit('FILE_SIZE', file.size)
-        if (!limitStatus.allowed) {
-          setPaywall({ open: true, reason: limitStatus.reason })
+        // --- Lógica de Límites Estricta ---
+        if (plan === 'starter' && file.size > 2 * 1024 * 1024) {
+          setShowPaywall(true)
+          setUploading(prev => ({ ...prev, docs: false }))
+          return
+        }
+
+        if (plan === 'pro' && file.size > 20 * 1024 * 1024) {
+          onError?.("El archivo supera el límite máximo de 20MB")
           setUploading(prev => ({ ...prev, docs: false }))
           return
         }
@@ -638,9 +644,9 @@ export default function ProductoForm({ isOpen, onClose, onSuccess, onError, prod
 
         {/* ── Paywall Modal ── */}
       <PaywallModal 
-        isOpen={paywall.open} 
-        onClose={() => setPaywall({ open: false, reason: '' })} 
-        reason={paywall.reason} 
+        isOpen={showPaywall} 
+        onClose={() => setShowPaywall(false)} 
+        reason="El almacenamiento de archivos técnicos pesados es una funcionalidad exclusiva del Plan PRO."
       />
 
     </div>
