@@ -54,9 +54,14 @@ export default function PaywallModal({ isOpen, onClose, reason }) {
       });
 
       if (error) throw new Error(error.message || 'Error al conectar con la pasarela');
+      
+      // Manejo de error de negocio (status 200 pero success false)
+      if (data?.success === false) {
+        throw new Error(data.error || "Error desconocido en el proceso de pago.");
+      }
 
-      if (data?.init_point) {
-        window.location.href = data.init_point;
+      if (data?.success && data?.data?.init_point) {
+        window.location.href = data.data.init_point;
       } else {
         throw new Error("Respuesta inválida de Mercado Pago.");
       }
