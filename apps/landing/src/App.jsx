@@ -134,13 +134,13 @@ const Hero = ({ onGetStarted }) => (
       <div className="flex flex-col items-center md:flex-row justify-center gap-4 pt-4 w-full px-4">
         <button 
           onClick={onGetStarted}
-          className="w-full md:w-auto px-6 py-4 h-14 bg-indigo-600 hover:bg-indigo-500 text-white text-base sm:text-lg font-black rounded-2xl transition-all shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-2 uppercase tracking-widest cursor-pointer text-center whitespace-nowrap"
+          className="w-full max-w-[280px] sm:max-w-none md:w-auto px-6 py-4 bg-indigo-600 hover:bg-indigo-500 text-white text-base sm:text-lg font-black rounded-2xl transition-all shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-2 uppercase tracking-widest cursor-pointer text-center sm:whitespace-nowrap"
         >
           Crear cuenta gratuita <ArrowRight size={18} />
         </button>
         <button 
           onClick={onGetStarted}
-          className="w-full md:w-auto px-6 py-4 h-14 bg-white/5 hover:bg-white/10 text-white text-base sm:text-lg font-black rounded-2xl border border-white/10 transition-all flex items-center justify-center gap-2 uppercase tracking-widest cursor-pointer text-center whitespace-nowrap"
+          className="w-full max-w-[280px] sm:max-w-none md:w-auto px-6 py-4 bg-white/5 hover:bg-white/10 text-white text-base sm:text-lg font-black rounded-2xl border border-white/10 transition-all flex items-center justify-center gap-2 uppercase tracking-widest cursor-pointer text-center sm:whitespace-nowrap"
         >
           Ver demo en vivo
         </button>
