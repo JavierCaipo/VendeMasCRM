@@ -56,16 +56,16 @@ const Hero = ({ onGetStarted }) => (
         gestionar prospectos con IA y tener control total del embudo.
       </p>
 
-      <div className="flex flex-col md:flex-row items-center justify-center gap-4 pt-4">
+      <div className="flex flex-col items-center md:flex-row justify-center gap-4 pt-4 w-full px-4">
         <button 
           onClick={onGetStarted}
-          className="w-full md:w-auto px-8 py-4 h-14 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-black rounded-2xl transition-all shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-2 uppercase tracking-widest cursor-pointer"
+          className="w-full max-w-sm md:w-auto px-8 py-4 h-14 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-black rounded-2xl transition-all shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-2 uppercase tracking-widest cursor-pointer text-center"
         >
           Crear cuenta gratuita <ArrowRight size={18} />
         </button>
         <button 
           onClick={onGetStarted}
-          className="w-full md:w-auto px-8 py-4 h-14 bg-white/5 hover:bg-white/10 text-white text-sm font-black rounded-2xl border border-white/10 transition-all flex items-center justify-center gap-2 uppercase tracking-widest cursor-pointer"
+          className="w-full max-w-sm md:w-auto px-8 py-4 h-14 bg-white/5 hover:bg-white/10 text-white text-sm font-black rounded-2xl border border-white/10 transition-all flex items-center justify-center gap-2 uppercase tracking-widest cursor-pointer text-center"
         >
           Ver demo en vivo
         </button>
@@ -450,10 +450,10 @@ export default function App() {
             <div className="relative space-y-8">
                <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight">¿Listo para vender más?</h2>
                <p className="text-slate-400 text-lg max-w-xl mx-auto font-medium">Únete a cientos de empresas que ya están optimizando su operación con VendeMas CRM.</p>
-               <div className="pt-4 flex flex-col md:flex-row items-center justify-center gap-4">
+               <div className="pt-4 flex flex-col items-center md:flex-row justify-center gap-4 w-full px-4">
                   <button 
                     onClick={() => setIsRegOpen(true)}
-                    className="w-full md:w-auto px-10 py-5 h-14 bg-white text-slate-950 text-sm font-black rounded-2xl hover:bg-slate-200 transition-all uppercase tracking-widest shadow-2xl cursor-pointer"
+                    className="w-full max-w-sm md:w-auto px-10 py-5 h-14 bg-white text-slate-950 text-sm font-black rounded-2xl hover:bg-slate-200 transition-all uppercase tracking-widest shadow-2xl cursor-pointer text-center justify-center flex items-center"
                   >
                     Crear mi cuenta gratis
                   </button>
@@ -461,7 +461,7 @@ export default function App() {
                     href={salesWaUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full md:w-auto px-10 py-5 h-14 bg-transparent text-white text-sm font-black rounded-2xl border border-white/20 hover:bg-white/5 transition-all uppercase tracking-widest flex items-center justify-center cursor-pointer"
+                    className="w-full max-w-sm md:w-auto px-10 py-5 h-14 bg-transparent text-white text-sm font-black rounded-2xl border border-white/20 hover:bg-white/5 transition-all uppercase tracking-widest flex items-center justify-center cursor-pointer text-center"
                   >
                     Hablar con ventas
                   </a>

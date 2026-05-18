@@ -15,6 +15,8 @@ import {
   Bell,
   Sun,
   Moon,
+  Menu,
+  X,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
 
@@ -26,6 +28,7 @@ const NAV_ITEMS = [
 
 export default function SuperAdminLayout({ user, darkMode, onToggleDark }) {
   const [collapsed, setCollapsed] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const navigate = useNavigate()
 
   async function handleLogout() {
@@ -41,12 +44,114 @@ export default function SuperAdminLayout({ user, darkMode, onToggleDark }) {
     'text-slate-400 hover:text-slate-100 hover:bg-white/5'
 
   return (
-    <div className={`flex h-screen w-screen overflow-hidden bg-mesh ${darkMode ? 'dark' : ''}`}>
+    <div className={`flex flex-col md:flex-row h-screen w-screen overflow-hidden bg-mesh ${darkMode ? 'dark' : ''}`}>
 
-      {/* ── SIDEBAR ── */}
+      {/* ── MOBILE HEADER ── */}
+      <div className="flex md:hidden items-center justify-between px-4 py-3 glass border-b border-white/10 z-30 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="p-2 -ml-2 rounded-xl text-slate-400 hover:text-white transition-all bg-white/5 active:scale-95"
+            aria-label="Abrir menú"
+          >
+            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
+              <Shield size={16} className="text-indigo-400" />
+            </div>
+            <span className="text-xs font-black text-slate-100 uppercase tracking-wider">SuperAdmin</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onToggleDark}
+            className="p-2 rounded-lg text-slate-400 hover:text-slate-200 transition-all"
+            title="Alternar tema"
+          >
+            {darkMode ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
+          <div className="w-7 h-7 rounded-lg bg-indigo-500/30 flex items-center justify-center">
+            <span className="text-xs font-bold text-indigo-300">
+              {user?.email?.[0]?.toUpperCase() ?? 'S'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── MOBILE DRAWER (SIDEBAR OVERLAY) ── */}
+      <div 
+        className={`
+          fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-sm transition-all duration-300 md:hidden
+          ${mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
+        `}
+        onClick={() => setMobileOpen(false)}
+      >
+        <aside
+          className={`
+            fixed top-0 bottom-0 left-0 w-[240px] bg-slate-950 border-r border-white/10 z-50 flex flex-col p-4 transition-transform duration-300 ease-in-out
+            ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
+          `}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Drawer Header */}
+          <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
+                <Shield size={16} className="text-indigo-400" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-white uppercase tracking-wider leading-tight">SuperAdmin</p>
+                <p className="text-[9px] text-slate-500">Panel de Control</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setMobileOpen(false)}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white bg-white/5"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          {/* Nav */}
+          <nav className="flex-1 space-y-1">
+            {NAV_ITEMS.map(({ to, icon: Icon, label }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={to === '/'}
+                onClick={() => setMobileOpen(false)}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all ${
+                    isActive ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  }`
+                }
+              >
+                <Icon size={18} />
+                <span>{label}</span>
+              </NavLink>
+            ))}
+          </nav>
+
+          {/* Drawer Footer / Logout */}
+          <button
+            onClick={() => {
+              setMobileOpen(false);
+              handleLogout();
+            }}
+            className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-all border border-transparent hover:border-red-500/20 mt-auto"
+          >
+            <LogOut size={18} />
+            <span>Cerrar sesión</span>
+          </button>
+        </aside>
+      </div>
+
+      {/* ── SIDEBAR (DESKTOP) ── */}
       <aside
         className={`
-          glass flex flex-col flex-shrink-0 transition-all duration-300 ease-in-out
+          hidden md:flex flex-col flex-shrink-0 transition-all duration-300 ease-in-out glass
           ${collapsed ? 'w-[68px]' : 'w-[220px]'}
           border-r border-white/10 z-20
         `}
@@ -94,8 +199,8 @@ export default function SuperAdminLayout({ user, darkMode, onToggleDark }) {
       {/* ── MAIN AREA ── */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
 
-        {/* ── HEADER ── */}
-        <header className="glass border-b border-white/10 flex items-center justify-between px-6 py-3 flex-shrink-0 z-10">
+        {/* ── HEADER (DESKTOP ONLY) ── */}
+        <header className="hidden md:flex glass border-b border-white/10 items-center justify-between px-6 py-3 flex-shrink-0 z-10">
           <div>
             <h1 className="text-base font-semibold text-slate-100">Panel de Administración</h1>
             <p className="text-xs text-slate-400">Gestión Global del SaaS</p>
@@ -144,7 +249,7 @@ export default function SuperAdminLayout({ user, darkMode, onToggleDark }) {
         </header>
 
         {/* ── CONTENT ── */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-4 md:p-8">
           <Outlet />
         </main>
       </div>

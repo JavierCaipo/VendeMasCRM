@@ -272,77 +272,79 @@ export default function BusinessManager() {
             </p>
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-white/8">
-                {['Negocio', 'Subdominio', 'Estado', 'Creado', 'Acciones'].map(h => (
-                  <th
-                    key={h}
-                    className="px-5 py-3.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider"
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {filtered.map(negocio => (
-                <tr
-                  key={negocio.id}
-                  className="hover:bg-white/3 transition-colors group"
-                >
-                  {/* Nombre */}
-                  <td className="px-5 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/25 flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs font-bold text-indigo-400">
-                          {negocio.nombre?.[0]?.toUpperCase() ?? '?'}
-                        </span>
-                      </div>
-                      <span className="font-medium text-slate-200">{negocio.nombre}</span>
-                    </div>
-                  </td>
-
-                  {/* Subdominio */}
-                  <td className="px-5 py-4">
-                    <span className="flex items-center gap-1.5 text-slate-400 font-mono text-xs">
-                      <Globe size={11} />
-                      {negocio.subdominio}.vendemas.app
-                    </span>
-                  </td>
-
-                  {/* Estado */}
-                  <td className="px-5 py-4">
-                    <StatusBadge estado={negocio.estado} />
-                  </td>
-
-                  {/* Fecha */}
-                  <td className="px-5 py-4 text-slate-500 text-xs">
-                    {negocio.fecha_creacion
-                      ? new Date(negocio.fecha_creacion).toLocaleDateString('es-PE', {
-                          day: '2-digit', month: 'short', year: 'numeric',
-                        })
-                      : '—'}
-                  </td>
-
-                  {/* Acciones */}
-                  <td className="px-5 py-4">
-                    <div className="flex items-center gap-2">
-                      <StatusToggle
-                        negocio={negocio}
-                        onToggle={handleToggle}
-                        loading={togglingId === negocio.id}
-                      />
-                      <CopyInviteButton
-                        negocio={negocio}
-                        onCopied={(msg) => showToast('success', msg)}
-                      />
-                    </div>
-                  </td>
+          <div className="overflow-x-auto w-full shadow-sm rounded-lg">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-white/8">
+                  {['Negocio', 'Subdominio', 'Estado', 'Creado', 'Acciones'].map(h => (
+                    <th
+                      key={h}
+                      className="px-5 py-3.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap"
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {filtered.map(negocio => (
+                  <tr
+                    key={negocio.id}
+                    className="hover:bg-white/3 transition-colors group"
+                  >
+                    {/* Nombre */}
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/25 flex items-center justify-center flex-shrink-0">
+                          <span className="text-xs font-bold text-indigo-400">
+                            {negocio.nombre?.[0]?.toUpperCase() ?? '?'}
+                          </span>
+                        </div>
+                        <span className="font-medium text-slate-200">{negocio.nombre}</span>
+                      </div>
+                    </td>
+
+                    {/* Subdominio */}
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <span className="flex items-center gap-1.5 text-slate-400 font-mono text-xs">
+                        <Globe size={11} />
+                        {negocio.subdominio}.vendemas.app
+                      </span>
+                    </td>
+
+                    {/* Estado */}
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <StatusBadge estado={negocio.estado} />
+                    </td>
+
+                    {/* Fecha */}
+                    <td className="px-5 py-4 text-slate-500 text-xs whitespace-nowrap">
+                      {negocio.fecha_creacion
+                        ? new Date(negocio.fecha_creacion).toLocaleDateString('es-PE', {
+                            day: '2-digit', month: 'short', year: 'numeric',
+                          })
+                        : '—'}
+                    </td>
+
+                    {/* Acciones */}
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <StatusToggle
+                          negocio={negocio}
+                          onToggle={handleToggle}
+                          loading={togglingId === negocio.id}
+                        />
+                        <CopyInviteButton
+                          negocio={negocio}
+                          onCopied={(msg) => showToast('success', msg)}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
