@@ -528,7 +528,7 @@ export default function App() {
                <div className="pt-4 flex flex-col items-center md:flex-row justify-center gap-4 w-full px-4">
                   <button 
                     onClick={() => setIsRegOpen(true)}
-                    className="w-full max-w-sm md:w-auto px-10 py-5 h-14 bg-white text-slate-950 text-sm font-black rounded-2xl hover:bg-slate-200 transition-all uppercase tracking-widest shadow-2xl cursor-pointer text-center justify-center flex items-center"
+                    className="w-full max-w-[280px] sm:max-w-none md:w-auto px-6 py-4 bg-white text-slate-950 text-base sm:text-lg font-black rounded-2xl hover:bg-slate-200 transition-all uppercase tracking-widest shadow-2xl cursor-pointer text-center justify-center flex items-center sm:whitespace-nowrap"
                   >
                     Crear mi cuenta gratis
                   </button>
@@ -536,7 +536,7 @@ export default function App() {
                     href={salesWaUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full max-w-sm md:w-auto px-10 py-5 h-14 bg-transparent text-white text-sm font-black rounded-2xl border border-white/20 hover:bg-white/5 transition-all uppercase tracking-widest flex items-center justify-center cursor-pointer text-center"
+                    className="w-full max-w-[280px] sm:max-w-none md:w-auto px-6 py-4 bg-transparent text-white text-base sm:text-lg font-black rounded-2xl border border-white/20 hover:bg-white/5 transition-all uppercase tracking-widest flex items-center justify-center cursor-pointer text-center sm:whitespace-nowrap"
                   >
                     Hablar con ventas
                   </a>
