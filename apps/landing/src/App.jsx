@@ -63,9 +63,12 @@ const Hero = ({ onGetStarted }) => (
         >
           Crear cuenta gratuita <ArrowRight size={18} />
         </button>
-        <a href="https://vendemas-crm.vercel.app/login" className="w-full sm:w-auto px-8 py-4 bg-white/5 hover:bg-white/10 text-white text-sm font-black rounded-2xl border border-white/10 transition-all flex items-center justify-center gap-2 uppercase tracking-widest">
+        <button 
+          onClick={onGetStarted}
+          className="w-full sm:w-auto px-8 py-4 bg-white/5 hover:bg-white/10 text-white text-sm font-black rounded-2xl border border-white/10 transition-all flex items-center justify-center gap-2 uppercase tracking-widest cursor-pointer"
+        >
           Ver demo en vivo
-        </a>
+        </button>
       </div>
 
       <div className="pt-20">

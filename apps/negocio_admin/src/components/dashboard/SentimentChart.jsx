@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Sparkles, Loader2, TrendingUp, TrendingDown, Minus, MessageSquare, ChevronRight } from 'lucide-react'
+import { Sparkles, Loader2, TrendingUp, TrendingDown, Minus, MessageSquare, ChevronRight, Crown } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../context/TenantContext'
 
