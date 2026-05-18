@@ -1,37 +1,112 @@
 import { useState, useEffect } from 'react'
 import { 
   ShieldCheck, Zap, BarChart3, Users, 
-  Rocket, Check, ArrowRight, Layout, Smartphone, Crown, Sparkles
+  Rocket, Check, ArrowRight, Layout, Smartphone, Crown, Sparkles,
+  Menu, X as XIcon
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from './lib/supabase'
 import FutureAnimation from './components/hero/FutureAnimation'
 import RegistrationModal from './components/RegistrationModal'
 
-const Nav = ({ onGetStarted }) => (
-  <nav className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-6 py-4 glass border-b border-white/5 bg-slate-950/50">
-    <div className="flex items-center gap-2">
-      <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-        <Zap size={20} className="text-white fill-current" />
+const Nav = ({ onGetStarted }) => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  return (
+    <nav className="fixed top-0 inset-x-0 z-50 px-6 py-4 glass border-b border-white/5 bg-slate-950/50">
+      <div className="flex items-center justify-between max-w-6xl mx-auto">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+            <Zap size={20} className="text-white fill-current" />
+          </div>
+          <span className="text-lg font-black text-white tracking-tighter uppercase">VendeMas</span>
+        </div>
+
+        {/* Desktop Menu Links */}
+        <div className="hidden md:flex items-center gap-8">
+          <a href="#features" className="text-xs font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-widest">Funciones</a>
+          <a href="#pricing" className="text-xs font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-widest">Precios</a>
+          <a href="#testimonials" className="text-xs font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-widest">Testimonios</a>
+        </div>
+
+        {/* Desktop Access Buttons */}
+        <div className="hidden md:flex items-center gap-4">
+          <a href="https://vendemas-crm.vercel.app/login" className="text-xs font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-widest">Entrar</a>
+          <button 
+            onClick={onGetStarted}
+            className="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black rounded-xl transition-all shadow-lg shadow-indigo-500/25 uppercase tracking-widest cursor-pointer"
+          >
+            Empezar Gratis
+          </button>
+        </div>
+
+        {/* Mobile Hamburger Button */}
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="flex md:hidden p-2 rounded-xl text-slate-400 hover:text-white bg-white/5 active:scale-95 transition-all"
+          aria-label="Abrir menú"
+        >
+          {isMobileMenuOpen ? <XIcon size={20} /> : <Menu size={20} />}
+        </button>
       </div>
-      <span className="text-lg font-black text-white tracking-tighter uppercase">VendeMas</span>
-    </div>
-    <div className="hidden md:flex items-center gap-8">
-      <a href="#features" className="text-xs font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-widest">Funciones</a>
-      <a href="#pricing" className="text-xs font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-widest">Precios</a>
-      <a href="#testimonials" className="text-xs font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-widest">Testimonios</a>
-    </div>
-    <div className="flex items-center gap-4">
-      <a href="https://vendemas-crm.vercel.app/login" className="text-xs font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-widest">Entrar</a>
-      <button 
-        onClick={onGetStarted}
-        className="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black rounded-xl transition-all shadow-lg shadow-indigo-500/25 uppercase tracking-widest cursor-pointer"
-      >
-        Empezar Gratis
-      </button>
-    </div>
-  </nav>
-)
+
+      {/* Mobile Drawer Menu Panel */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
+            className="absolute top-full inset-x-0 mt-1 mx-4 p-6 glass border border-white/10 rounded-2xl bg-[#0B0F19]/98 shadow-2xl flex flex-col gap-6 md:hidden z-40"
+          >
+            <div className="flex flex-col gap-4 text-center">
+              <a 
+                href="#features" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-sm font-bold text-slate-300 hover:text-white transition-colors py-2 uppercase tracking-widest border-b border-white/5"
+              >
+                Funciones
+              </a>
+              <a 
+                href="#pricing" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-sm font-bold text-slate-300 hover:text-white transition-colors py-2 uppercase tracking-widest border-b border-white/5"
+              >
+                Precios
+              </a>
+              <a 
+                href="#testimonials" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-sm font-bold text-slate-300 hover:text-white transition-colors py-2 uppercase tracking-widest border-b border-white/5"
+              >
+                Testimonios
+              </a>
+            </div>
+
+            <div className="flex flex-col gap-4 pt-2">
+              <a 
+                href="https://vendemas-crm.vercel.app/login" 
+                className="w-full text-center py-3 bg-white/5 hover:bg-white/10 text-white text-xs font-black rounded-xl border border-white/10 transition-all uppercase tracking-widest"
+              >
+                Entrar
+              </a>
+              <button 
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  onGetStarted();
+                }}
+                className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black rounded-xl transition-all shadow-lg shadow-indigo-500/25 uppercase tracking-widest cursor-pointer"
+              >
+                Empezar Gratis
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </nav>
+  )
+}
 
 const Hero = ({ onGetStarted }) => (
   <section className="relative pt-32 pb-20 px-6 overflow-hidden">
@@ -59,13 +134,13 @@ const Hero = ({ onGetStarted }) => (
       <div className="flex flex-col items-center md:flex-row justify-center gap-4 pt-4 w-full px-4">
         <button 
           onClick={onGetStarted}
-          className="w-full max-w-sm md:w-auto px-8 py-4 h-14 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-black rounded-2xl transition-all shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-2 uppercase tracking-widest cursor-pointer text-center"
+          className="w-full md:w-auto px-6 py-4 h-14 bg-indigo-600 hover:bg-indigo-500 text-white text-base sm:text-lg font-black rounded-2xl transition-all shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-2 uppercase tracking-widest cursor-pointer text-center whitespace-nowrap"
         >
           Crear cuenta gratuita <ArrowRight size={18} />
         </button>
         <button 
           onClick={onGetStarted}
-          className="w-full max-w-sm md:w-auto px-8 py-4 h-14 bg-white/5 hover:bg-white/10 text-white text-sm font-black rounded-2xl border border-white/10 transition-all flex items-center justify-center gap-2 uppercase tracking-widest cursor-pointer text-center"
+          className="w-full md:w-auto px-6 py-4 h-14 bg-white/5 hover:bg-white/10 text-white text-base sm:text-lg font-black rounded-2xl border border-white/10 transition-all flex items-center justify-center gap-2 uppercase tracking-widest cursor-pointer text-center whitespace-nowrap"
         >
           Ver demo en vivo
         </button>
