@@ -85,7 +85,7 @@ export default function RegistrationModal({ isOpen, onClose }) {
           initial={{ scale: 0.95, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 20 }}
-          className="relative w-full max-w-md overflow-hidden rounded-[2.5rem] border border-white/10 glass bg-slate-950 p-8 shadow-2xl"
+          className="relative w-[95%] sm:w-full max-w-md max-h-[90vh] overflow-y-auto rounded-[2.5rem] border border-white/10 glass bg-slate-950 p-8 shadow-2xl"
         >
           {/* Botón de Cerrar */}
           <button

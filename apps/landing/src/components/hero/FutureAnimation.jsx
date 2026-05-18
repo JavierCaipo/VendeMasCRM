@@ -14,7 +14,7 @@ export default function FutureAnimation() {
   })
 
   return (
-    <div className="relative w-full aspect-[16/10] md:aspect-[16/9] rounded-[2.5rem] bg-slate-950/20 border border-white/5 overflow-hidden flex items-center justify-center p-6 md:p-12">
+    <div className="relative w-full h-auto md:aspect-[16/9] rounded-[2.5rem] bg-slate-950/20 border border-white/5 overflow-hidden flex items-center justify-center p-4 sm:p-6 md:p-12">
       {/* Fondo Radial de Brillo */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.08)_0%,rgba(16,185,129,0.03)_50%,transparent_100%)] pointer-events-none" />
       
@@ -22,12 +22,12 @@ export default function FutureAnimation() {
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff02_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none" />
 
       {/* COMPOSICIÓN BENTO BOX SUPERPUESTA EN PERSPECTIVA */}
-      <div className="relative w-full h-full max-w-4xl flex items-center justify-center">
+      <div className="relative w-full h-auto md:h-full max-w-4xl flex flex-col md:block gap-6 md:gap-0 py-6 md:py-0">
         
         {/* TARJETA 1: CENTRO (Mini-Dashboard de IA) */}
         <motion.div
           animate={floatingAnimation(0)}
-          className="absolute z-20 w-[90%] md:w-[60%] glass border border-white/10 rounded-3xl p-6 shadow-[0_30px_100px_rgba(0,0,0,0.8)] backdrop-blur-2xl"
+          className="relative md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 z-20 w-full md:w-[60%] glass border border-white/10 rounded-3xl p-6 shadow-[0_30px_100px_rgba(0,0,0,0.8)] backdrop-blur-2xl"
         >
           {/* Header del Dashboard */}
           <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
@@ -89,7 +89,7 @@ export default function FutureAnimation() {
         {/* TARJETA 2: FLOTANDO IZQUIERDA (WhatsApp Anti-Spam Widget) */}
         <motion.div
           animate={floatingAnimation(1.5)}
-          className="absolute z-30 left-[-5%] md:left-[2%] top-[10%] md:top-[15%] w-[48%] md:w-[32%] glass border border-emerald-500/25 bg-slate-950/80 rounded-2xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.6)] backdrop-blur-xl flex flex-col gap-3 text-left"
+          className="relative md:absolute z-30 md:left-[2%] md:top-[15%] w-full md:w-[32%] glass border border-emerald-500/25 bg-slate-950/80 rounded-2xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.6)] backdrop-blur-xl flex flex-col gap-3 text-left"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
@@ -121,7 +121,7 @@ export default function FutureAnimation() {
         {/* TARJETA 3: FLOTANDO DERECHA (Gráfico de Ingresos) */}
         <motion.div
           animate={floatingAnimation(0.8)}
-          className="absolute z-10 right-[-5%] md:right-[2%] bottom-[8%] md:bottom-[12%] w-[50%] md:w-[34%] glass border border-indigo-500/25 bg-slate-950/80 rounded-2xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.6)] backdrop-blur-xl flex flex-col gap-2.5 text-left"
+          className="relative md:absolute z-10 md:right-[2%] md:bottom-[12%] w-full md:w-[34%] glass border border-indigo-500/25 bg-slate-950/80 rounded-2xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.6)] backdrop-blur-xl flex flex-col gap-2.5 text-left"
         >
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-1.5">

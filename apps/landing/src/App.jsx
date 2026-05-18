@@ -25,7 +25,7 @@ const Nav = ({ onGetStarted }) => (
       <a href="https://vendemas-crm.vercel.app/login" className="text-xs font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-widest">Entrar</a>
       <button 
         onClick={onGetStarted}
-        className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black rounded-xl transition-all shadow-lg shadow-indigo-500/25 uppercase tracking-widest cursor-pointer"
+        className="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black rounded-xl transition-all shadow-lg shadow-indigo-500/25 uppercase tracking-widest cursor-pointer"
       >
         Empezar Gratis
       </button>
@@ -46,7 +46,7 @@ const Hero = ({ onGetStarted }) => (
         <span className="text-[10px] font-black text-indigo-300 uppercase tracking-widest">CRM B2B de Próxima Generación</span>
       </div>
       
-      <h1 className="text-5xl md:text-7xl font-black text-white leading-[1.1] tracking-tight">
+      <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white leading-[1.1] tracking-tight">
         Multiplica tus cierres <br /> 
         <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent">sin el caos operativo.</span>
       </h1>
@@ -56,16 +56,16 @@ const Hero = ({ onGetStarted }) => (
         gestionar prospectos con IA y tener control total del embudo.
       </p>
 
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+      <div className="flex flex-col md:flex-row items-center justify-center gap-4 pt-4">
         <button 
           onClick={onGetStarted}
-          className="w-full sm:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-black rounded-2xl transition-all shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-2 uppercase tracking-widest cursor-pointer"
+          className="w-full md:w-auto px-8 py-4 h-14 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-black rounded-2xl transition-all shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-2 uppercase tracking-widest cursor-pointer"
         >
           Crear cuenta gratuita <ArrowRight size={18} />
         </button>
         <button 
           onClick={onGetStarted}
-          className="w-full sm:w-auto px-8 py-4 bg-white/5 hover:bg-white/10 text-white text-sm font-black rounded-2xl border border-white/10 transition-all flex items-center justify-center gap-2 uppercase tracking-widest cursor-pointer"
+          className="w-full md:w-auto px-8 py-4 h-14 bg-white/5 hover:bg-white/10 text-white text-sm font-black rounded-2xl border border-white/10 transition-all flex items-center justify-center gap-2 uppercase tracking-widest cursor-pointer"
         >
           Ver demo en vivo
         </button>
@@ -115,7 +115,7 @@ const PricingTable = ({ pricing, loading, onGetStarted }) => {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {/* Plan Starter */}
           <div className="glass p-10 rounded-[3rem] border border-white/5 flex flex-col hover:border-indigo-500/10 transition-all duration-300">
             <div className="space-y-2 mb-8">
@@ -155,7 +155,7 @@ const PricingTable = ({ pricing, loading, onGetStarted }) => {
           </div>
 
           {/* Plan PRO */}
-          <div className="relative glass p-10 rounded-[3rem] border border-indigo-500/40 bg-indigo-600/5 shadow-2xl shadow-indigo-500/10 flex flex-col scale-105 hover:border-indigo-500/60 transition-all duration-300">
+          <div className="relative glass p-10 rounded-[3rem] border border-indigo-500/40 bg-indigo-600/5 shadow-2xl shadow-indigo-500/10 flex flex-col scale-100 md:scale-105 hover:border-indigo-500/60 transition-all duration-300">
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-indigo-600 text-white text-[10px] font-black rounded-full uppercase tracking-widest shadow-xl">
               Más Popular
             </div>
@@ -325,7 +325,7 @@ export default function App() {
               <p className="text-slate-500 max-w-2xl mx-auto font-medium">Todo lo que necesitas para escalar tu operación comercial de 0 a 100.</p>
             </div>
             
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
               <FeatureCard 
                 icon={BarChart3} 
                 title="Dashboard Gerencial" 
@@ -377,7 +377,7 @@ export default function App() {
               <p className="text-slate-500 max-w-2xl mx-auto font-medium">Empresas comerciales e industriales B2B nos eligen para liderar su transformación de ventas.</p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
               {/* Testimonio 1 */}
               <div className="glass p-8 rounded-[2.5rem] border border-white/5 flex flex-col justify-between hover:border-indigo-500/10 transition-all duration-300">
                 <div className="space-y-6">
@@ -450,10 +450,10 @@ export default function App() {
             <div className="relative space-y-8">
                <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight">¿Listo para vender más?</h2>
                <p className="text-slate-400 text-lg max-w-xl mx-auto font-medium">Únete a cientos de empresas que ya están optimizando su operación con VendeMas CRM.</p>
-               <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+               <div className="pt-4 flex flex-col md:flex-row items-center justify-center gap-4">
                   <button 
                     onClick={() => setIsRegOpen(true)}
-                    className="px-10 py-5 bg-white text-slate-950 text-sm font-black rounded-2xl hover:bg-slate-200 transition-all uppercase tracking-widest shadow-2xl cursor-pointer"
+                    className="w-full md:w-auto px-10 py-5 h-14 bg-white text-slate-950 text-sm font-black rounded-2xl hover:bg-slate-200 transition-all uppercase tracking-widest shadow-2xl cursor-pointer"
                   >
                     Crear mi cuenta gratis
                   </button>
@@ -461,7 +461,7 @@ export default function App() {
                     href={salesWaUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-10 py-5 bg-transparent text-white text-sm font-black rounded-2xl border border-white/20 hover:bg-white/5 transition-all uppercase tracking-widest flex items-center justify-center"
+                    className="w-full md:w-auto px-10 py-5 h-14 bg-transparent text-white text-sm font-black rounded-2xl border border-white/20 hover:bg-white/5 transition-all uppercase tracking-widest flex items-center justify-center cursor-pointer"
                   >
                     Hablar con ventas
                   </a>
