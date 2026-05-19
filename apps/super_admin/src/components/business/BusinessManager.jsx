@@ -6,7 +6,7 @@ import { useEffect, useState, useCallback } from 'react'
 import {
   Building2, Plus, RefreshCw, Search,
   CheckCircle2, AlertCircle, Loader2, Globe, ToggleLeft, ToggleRight,
-  Link2, Copy, Check,
+  Link2, Copy, Check, Trash2,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
 import NewTenantModal from './NewTenantModal'
@@ -134,6 +134,26 @@ export default function BusinessManager() {
   const [togglingId,   setTogglingId]   = useState(null)
   const [toast,        setToast]        = useState(null)
   const [modalOpen,    setModalOpen]    = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleting,     setDeleting]     = useState(false)
+
+  async function handleDelete() {
+    if (!deleteTarget) return
+    setDeleting(true)
+    const { error } = await supabase
+      .from('negocios')
+      .delete()
+      .eq('id', deleteTarget.id)
+
+    if (error) {
+      showToast('error', `Error al eliminar negocio: ${error.message}`)
+    } else {
+      setNegocios(prev => prev.filter(n => n.id !== deleteTarget.id))
+      showToast('success', `Negocio "${deleteTarget.nombre}" eliminado correctamente ✅`)
+      setDeleteTarget(null)
+    }
+    setDeleting(false)
+  }
 
   // ── Fetch ──────────────────────────────────────────────────
   const fetchNegocios = useCallback(async () => {
@@ -338,6 +358,14 @@ export default function BusinessManager() {
                           negocio={negocio}
                           onCopied={(msg) => showToast('success', msg)}
                         />
+                        <button
+                          onClick={() => setDeleteTarget(negocio)}
+                          title="Eliminar negocio"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-red-500/30 text-red-500 hover:text-red-600 hover:bg-red-50/10 transition-all duration-200"
+                        >
+                          <Trash2 size={14} />
+                          Eliminar
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -354,6 +382,44 @@ export default function BusinessManager() {
         onClose={() => setModalOpen(false)}
         onSuccess={fetchNegocios}
       />
+
+      {/* ── Confirmation Modal ── */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4">
+          <div className="glass max-w-md w-full p-6 rounded-2xl border border-red-500/25 bg-[#0B0F19] text-slate-100 shadow-2xl relative">
+            <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2 mb-3">
+              <AlertCircle className="text-rose-500 animate-pulse" size={20} />
+              Confirmar Eliminación
+            </h3>
+            <p className="text-sm text-slate-300 leading-relaxed mb-6">
+              ¿Estás seguro de que deseas eliminar permanentemente el negocio <strong className="text-indigo-400 font-semibold">{deleteTarget.nombre}</strong>? Esta acción no se puede deshacer.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="px-4 py-2 rounded-xl text-sm font-semibold border border-white/10 hover:bg-white/5 transition-all text-slate-300 hover:text-white"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 disabled:bg-red-600/50 text-white text-sm font-semibold transition-all shadow-lg shadow-red-500/20"
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    Eliminando...
+                  </>
+                ) : (
+                  'Eliminar'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Toast ── */}
       <Toast toast={toast} />
