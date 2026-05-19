@@ -51,7 +51,8 @@ export default function RegistrationModal({ isOpen, onClose }) {
             nombre_completo: form.name.trim(),
             rol: 'admin_negocio',
             empresa: empresaName,
-            documento: mockDoc
+            documento: mockDoc,
+            plan: 'starter'
           }
         }
       })
